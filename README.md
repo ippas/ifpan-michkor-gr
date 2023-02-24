@@ -24,3 +24,7 @@ Directories:
 - data - useful data, created by scripts/tools/preprocessing
 - analysis - analysis source code
 - results - output ready to present
+
+## Raw
+Dataframe:
+- MGI_EntrezGene.rpt - https://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt
