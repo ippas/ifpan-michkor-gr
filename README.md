@@ -1,4 +1,4 @@
-# Project title (institute-name-subject)
+# GRTraits : Database of GR regulated genes
 
 #### Project logline (technique, organism, tissue type)
 Short description of treatment groups/subjects
