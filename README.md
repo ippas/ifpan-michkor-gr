@@ -71,7 +71,7 @@ To use this script for mouse or human is needed to once configure some informati
 
 Variables: to load specific variables, it's necessary to adapt section:
 
-DICTIONARY SECTION
+DICTIONARY SECTION  
 'gene_list_number', 'gene_list_id', 'source', 'organism'
 
 DATASET SECTION  
