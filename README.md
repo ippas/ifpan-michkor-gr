@@ -18,6 +18,43 @@ Details of analysis
 
 _notes: all files included in the repo need to be referenced, either in README or other .md files. The analysis has to be fully reproducible, in principle the repo should contain code + description of how to run it while data and results kept outside_
 
+FILE DICTIONARY_nervous-cells:
+-> sample script adapted to the publication
+
+IMPORT
+block used to import the necessary packages and modules
+
+DATASET
+Biomart server data set for connection
+Human: 'hsapiens_gene_ensembl'
+Mouse: 'mmusculus_gene_ensembl'
+Rat: 'rnorvegicus_gene_ensembl'
+
+FUNCTIONS - gene_dictionary - creates data dictionaries - biomartParameters - query using gene_name value (mgi_symbol) - biomartHumanOrthologs - separate query for HGNC because you cannot get data from two different attribute cards in one query - biomartParametersbyEnsembl - query using ensembl_id value when gene_name is "NA" - biomartHumanOrthologsbyEnsembl - separate query for HGNC by Ensembl - alias_and_official - function which is loooking for alias and mgi_id for our gene_name value in  
+ MGI_Entrez database if response from Biomart was empty - biomartParameters_mgi - query using mgi_id value - biomartHumanOrthologs_mgi - separate query for HGNC using mgi_id value - updateCellswithAlias - function which updates alias column using MGI_Entrez database in created dictionaries - updateCellswithINFO - function which updates info column using publication source file.
+It compares created dictionaries and publication source file by gene name and add information form different source file columns
+
+LOAD FILES
+load workbook, specific worksheet and variables for next steps
+
+DICTIONARY
+part of code that completes variables and queries to create dictionaries of genes
+
+SCORES
+saving partial scores
+
+SECOND DICTIONARY
+completing dictionaries with values from MGI_Entrez database found by functiom alias_and_official
+
+Add ALIAS
+use of updateCellswithAlias function
+
+Add INFO
+use of updateCellswithINFO function
+
+FILE change_xlsx_TSV:
+-> format conversion
+
 ## About this template
 
 Directories:
