@@ -74,17 +74,17 @@ Variables: to load specific variables, it's necessary to adapt section:
 DICTIONARY SECTION
 'gene_list_number', 'gene_list_id', 'source', 'organism'
 
-DATASET SECTION
-'dataset' for:
-Human: 'hsapiens_gene_ensembl'
-Mouse: 'mmusculus_gene_ensembl'
-Rat: 'rnorvegicus_gene_ensembl
+DATASET SECTION  
+'dataset' for:  
+Human: 'hsapiens_gene_ensembl'  
+Mouse: 'mmusculus_gene_ensembl'  
+Rat: 'rnorvegicus_gene_ensembl'
 
 Files: to load specific source file, it's necessary to adapt section:
 
-PUBLICATION SOURCE
-wb (workbook) and ws (worksheet) variables
-Add INFO
+PUBLICATION SOURCE  
+wb (workbook) and ws (worksheet) variables  
+Add INFO  
 source_file_path and source_sheet variables
 
 For Human organism also is needed to turn off functions related to searchig HGNC, and add variable hgnc = gene_name in two places (variables at DICTIONARY and SECOND DICTIONARY section)
