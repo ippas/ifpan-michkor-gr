@@ -3,6 +3,7 @@
 #### Project logline (technique, organism, tissue type)
 
 Identification of GR-dependent genes
+Organisms: mouse, human, rat
 
 ## Methods
 
@@ -11,12 +12,6 @@ This sections should be a description of preprocessin and analysis ready to be i
 ## Preprocessing
 
 Details of file preprocessing
-
-## Analysis
-
-Details of analysis
-
-_notes: all files included in the repo need to be referenced, either in README or other .md files. The analysis has to be fully reproducible, in principle the repo should contain code + description of how to run it while data and results kept outside_
 
 FILE DICTIONARY_nervous-cells:
 -> sample script adapted to the publication
@@ -54,6 +49,33 @@ use of updateCellswithINFO function
 
 FILE change_xlsx_TSV:
 -> format conversion
+
+## Analysis
+
+Details of analysis
+
+File DICTIONARY_nervous-cells is adapted to search information of rat and add information from specyfic publication source file. To use this script for mouse or human is needed to once configure some information inside because there are many differences between the publications.
+
+Variables: to load specific variables, it's necessary to adapt section:
+
+DICTIONARY SECTION
+'gene_list_number', 'gene_list_id', 'source', 'organism'
+DATASET SECTION
+'dataset' for:
+Human: 'hsapiens_gene_ensembl'
+Mouse: 'mmusculus_gene_ensembl'
+Rat: 'rnorvegicus_gene_ensembl
+
+Files: to load specific source file, it's necessary to adapt section:
+
+PUBLICATION SOURCE
+wb (workbook) and ws (worksheet) variables
+Add INFO
+source_file_path and source_sheet variables
+
+For Human organism also is needed to turn off functions related to searchig HGNC, and add variable hgnc = gene_name in two places (variables at DICTIONARY and SECOND DICTIONARY section)
+
+_notes: all files included in the repo need to be referenced, either in README or other .md files. The analysis has to be fully reproducible, in principle the repo should contain code + description of how to run it while data and results kept outside_
 
 ## About this template
 
