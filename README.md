@@ -14,48 +14,48 @@ This sections should be a description of preprocessin and analysis ready to be i
 Details of file preprocessing
 
 FILE DICTIONARY_nervous-cells:
--> sample script adapted to the publication\
+-> sample script adapted to the publication
 
-IMPORT\
+IMPORT  
 block used to import the necessary packages and modules
 
-DATASET\
+DATASET  
 Biomart server data set for connection
 Human: 'hsapiens_gene_ensembl'
 Mouse: 'mmusculus_gene_ensembl'
 Rat: 'rnorvegicus_gene_ensembl'
 
-FUNCTIONS\
+FUNCTIONS
 
-- gene_dictionary - creates data dictionaries\
-- biomartParameters - query using gene_name value (mgi_symbol)\
-- biomartHumanOrthologs - separate query for HGNC because you cannot get data from two different attribute cards in one query\
-- biomartParametersbyEnsembl - query using ensembl_id value when gene_name is "NA"\
-- biomartHumanOrthologsbyEnsembl - separate query for HGNC by Ensembl\
+- gene_dictionary - creates data dictionaries
+- biomartParameters - query using gene_name value (mgi_symbol)
+- biomartHumanOrthologs - separate query for HGNC because you cannot get data from two different attribute cards in one query
+- biomartParametersbyEnsembl - query using ensembl_id value when gene_name is "NA"
+- biomartHumanOrthologsbyEnsembl - separate query for HGNC by Ensembl
 - alias_and_official - function which is loooking for alias and mgi_id for our gene_name value in  
-  MGI_Entrez database if response from Biomart was empty\
-- biomartParameters_mgi - query using mgi_id value\
-- biomartHumanOrthologs_mgi - separate query for HGNC using mgi_id value\
-- updateCellswithAlias - function which updates alias column using MGI_Entrez database in created dictionaries\
-- updateCellswithINFO - function which updates info column using publication source file.\
-  It compares created dictionaries and publication source file by gene name and add information form different source file columns\
+  MGI_Entrez database if response from Biomart was empty
+- biomartParameters_mgi - query using mgi_id value
+- biomartHumanOrthologs_mgi - separate query for HGNC using mgi_id value
+- updateCellswithAlias - function which updates alias column using MGI_Entrez database in created dictionaries
+- updateCellswithINFO - function which updates info column using publication source file.  
+  It compares created dictionaries and publication source file by gene name and add information form different source file columns
 
-LOAD FILES\
+LOAD FILES  
 load workbook, specific worksheet and variables for next steps
 
-DICTIONARY\
+DICTIONARY  
 part of code that completes variables and queries to create dictionaries of genes
 
-SCORES\
+SCORES  
 saving partial scores
 
-SECOND DICTIONARY\
+SECOND DICTIONARY  
 completing dictionaries with values from MGI_Entrez database found by functiom alias_and_official
 
-Add ALIAS\
+Add ALIAS  
 use of updateCellswithAlias function
 
-Add INFO\
+Add INFO  
 use of updateCellswithINFO function
 
 FILE change_xlsx_TSV:
@@ -65,14 +65,14 @@ FILE change_xlsx_TSV:
 
 Details of analysis
 
-File DICTIONARY_nervous-cells is adapted to search information of rat and add information from specific publication source file.\
+File DICTIONARY_nervous-cells is adapted to search information of rat and add information from specific publication source file.
 
 To use this script for mouse or human is needed to once configure some information inside because there are many differences between the publications.
 
 Variables: to load specific variables, it's necessary to adapt section:
 
 DICTIONARY SECTION
-'gene_list_number', 'gene_list_id', 'source', 'organism'\
+'gene_list_number', 'gene_list_id', 'source', 'organism'
 
 DATASET SECTION
 'dataset' for:
@@ -80,7 +80,7 @@ Human: 'hsapiens_gene_ensembl'
 Mouse: 'mmusculus_gene_ensembl'
 Rat: 'rnorvegicus_gene_ensembl
 
-Files: to load specific source file, it's necessary to adapt section:\
+Files: to load specific source file, it's necessary to adapt section:
 
 PUBLICATION SOURCE
 wb (workbook) and ws (worksheet) variables
