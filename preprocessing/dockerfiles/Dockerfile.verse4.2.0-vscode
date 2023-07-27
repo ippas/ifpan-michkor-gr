@@ -1,0 +1,11 @@
+# Use rocker/verse as base image
+FROM rocker/verse:4.2.0
+
+# Install python and pip
+RUN apt-get update && apt-get install -y python3 python3-pip
+
+# Install radian
+RUN pip3 install radian
+
+# Install the R packages
+RUN R -e "install.packages(c('languageserver', 'httpgd'))"
