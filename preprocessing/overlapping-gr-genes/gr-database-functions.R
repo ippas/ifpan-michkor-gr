@@ -15,18 +15,17 @@ extract_keys_values <- function(data, column, keys) {
     values <- sapply(split_info, function(x) {
       
       # Split the key-value pairs by ':' to separate the keys and the values.
-      # If a pair doesn't contain ':', return the pair and NA.
-      key_value_pairs <- sapply(x, function(y) {
+      key_value_pairs <- lapply(x, function(y) {
         if (grepl(":", y)) {
-          return(strsplit(y, ":"))
+          strsplit(y, ":")[[1]]
         } else {
-          return(list(c(y, NA)))
+          return(c(y, NA))
         }
       })
       
       # Extract the keys and values.
-      keys <- sapply(key_value_pairs, "[[", 1)
-      values <- sapply(key_value_pairs, "[[", 2)
+      keys <- sapply(key_value_pairs, function(z) if(length(z) > 0) z[1] else NA)
+      values <- sapply(key_value_pairs, function(z) if(length(z) > 1) z[2] else NA)
       
       # If the provided key exists, return the corresponding value.
       # If the key doesn't exist, return NA.
