@@ -168,46 +168,39 @@ def updateCellswithAlias(mgi_file_path, dictionary_file_path, alias_file_path):
    
 
  
-def updateCellswithINFO(source_file, alias_file_path, info_file_path):
+def updateCellswithINFO(source_file_path, alias_file_path, info_file_path):
     
-    with open(source_file, 'r') as f:
-        lines = f.readlines()
-        info_data = [line.strip().split('\t') for line in lines[1:]]
-        for i, row in enumerate(info_data):
-            if len(row) <= 3:
-                print(f"Row {i+1} is too short: {row}")
-    ls_row_g_name = [row[3] for row in info_data[:-1]]
+    # Read source_file
+    with open(source_file_path, 'r') as f:
+        csv_reader = csv.reader(f, delimiter='\t')
+        headers = next(csv_reader)
+        info_data = [row for row in csv_reader]
 
+    ls_row_g_name = [row[headers.index('gene_name')] for row in info_data]
+
+    # Read alias_file
     with open(alias_file_path, 'r') as f:
-        lines = f.readlines()
-        alias_data = [line.strip().split('\t') for line in lines[1:]]
-    
-    # Check for sufficient length and filter out insufficient rows
-    filtered_alias_data = []
-    for i, row in enumerate(alias_data):
-        if len(row) <= 9:
-            print(f"Row {i+1} has insufficient length: {row}")
-        else:
-            filtered_alias_data.append(row)
-    print(filtered_alias_data)
+        csv_reader = csv.reader(f, delimiter='\t')
+        alias_headers = next(csv_reader)
+        alias_data = [row for row in csv_reader]
+
+    ls_row_2 = [row[1] for row in alias_data] 
+
+    # Comparing both
+    for id, alias in enumerate(ls_row_2):
+        for j, g_name in enumerate(ls_row_g_name):
+            try:
+                if g_name.lower() == alias.lower():
+                    print(f"Found a match for {g_name.lower()} and {alias.lower()}")
+                    new_data = '|'.join([f"{headers[i]}:" + str(info_data[j][i]) for i in range(4, len(headers))])
+                    alias_data[id][10] = new_data 
+
+            except Exception as e:
+                print(f"An exception occurred: {e}")
                 
-           
-    ls_row_2 = [row[1] for row in alias_data]
-    ls_row_10 = [row[9].replace(" ","") for row in alias_data]
-    header = alias_data[0][3:]
-
-    
-    for id, (alias,info) in enumerate(zip(ls_row_2,ls_row_10)):
-        print(alias)
-        for j, g_name in enumerate(ls_row_g_name):   
-            
-            if g_name.lower() == alias.lower():
-                print(f"Found a match for {g_name.lower()} and {alias.lower()}")
-                new_data = '|'.join([header[i] + info_data[j][i] for i in range(len(header))])
-                alias_data[id][10] = new_data
-        
-    # Save the modified alias file
-    with open(info_file_path, 'w') as f:
+    # Write to file info
+    with open(info_file_path, 'w', newline='') as f:
+        csv_writer = csv.writer(f, delimiter='\t')
+        csv_writer.writerow(alias_headers)
         for row in alias_data:
-            f.write('\t'.join(row) + '\n')
-
+            csv_writer.writerow(row)
