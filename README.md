@@ -13,17 +13,17 @@ This sections should be a description of preprocessin and analysis ready to be i
 
 Details of file preprocessing
 
-FILE DICTIONARY_nervous-cells:
--> sample script adapted to the publication
+FILE DICTIONARY_:
+-> sample script adapted to the set of publications
 
 IMPORT
 block used to import the necessary packages and modules
 
 DATASET
 Biomart server data set for connection
-Human: 'hsapiens_gene_ensembl'
-Mouse: 'mmusculus_gene_ensembl'
-Rat: 'rnorvegicus_gene_ensembl'
+    Human: 'hsapiens_gene_ensembl'
+    Mouse: 'mmusculus_gene_ensembl'
+    Rat: 'rnorvegicus_gene_ensembl'
 
 FUNCTIONS - gene_dictionary - creates data dictionaries - biomartParameters - query using gene_name value (mgi_symbol) - biomartHumanOrthologs - separate query for HGNC because you cannot get data from two different attribute cards in one query - biomartParametersbyEnsembl - query using ensembl_id value when gene_name is "NA" - biomartHumanOrthologsbyEnsembl - separate query for HGNC by Ensembl - alias_and_official - function which is loooking for alias and mgi_id for our gene_name value in  
  MGI_Entrez database if response from Biomart was empty - biomartParameters_mgi - query using mgi_id value - biomartHumanOrthologs_mgi - separate query for HGNC using mgi_id value - updateCellswithAlias - function which updates alias column using MGI_Entrez database in created dictionaries - updateCellswithINFO - function which updates info column using publication source file.
@@ -62,14 +62,15 @@ DICTIONARY SECTION
 'gene_list_number', 'gene_list_id', 'source', 'organism'
 DATASET SECTION
 'dataset' for:
-Human: 'hsapiens_gene_ensembl'
-Mouse: 'mmusculus_gene_ensembl'
-Rat: 'rnorvegicus_gene_ensembl
+    Human: 'hsapiens_gene_ensembl'
+    Mouse: 'mmusculus_gene_ensembl'
+    Rat: 'rnorvegicus_gene_ensembl'
 
 Files: to load specific source file, it's necessary to adapt section:
 
 PUBLICATION SOURCE
 wb (workbook) and ws (worksheet) variables
+
 Add INFO
 source_file_path and source_sheet variables
 
