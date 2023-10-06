@@ -92,7 +92,8 @@ Directories:
 ## Raw
 
 Dataframe:
-
+- https://www.omicspred.org/Scores/Metabolon/INTERVAL
+- https://www.omicspred.org/Scores/Nightingale/INTERVAL
 - MGI_EntrezGene.rpt - https://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt
 - ifpan-GR-database-papers.xlsx (matzieb)
 - 12868_2017_352_MOESM1_ESM_02.xlsx (michkor publication)
