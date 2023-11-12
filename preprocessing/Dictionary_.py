@@ -1,22 +1,21 @@
-# IMPORTS
 from functions_dictionary import *
 
-
 ## LOAD START FILES
-source_file = r'prefrontal-cortex.tsv'
-src = 'prefrontal-cortex'
+source_file = r'split_file_40.tsv'
+src = 'nervous_290180230_40'
 mgi_file_path = r'..\MGI_EntrezGene.tsv'
 
 
 #SOURCE FILE
-publication_df = pd.read_csv(source_file, sep='\t', usecols=[1,2,6], skiprows=1, names=['pmid','gene_name','species'])
+publication_df = pd.read_csv(source_file, sep='\t', keep_default_na=False, usecols=[1,2,3,6], skiprows=1, names=['pmid','gene_name','ensembl_id','species'])
 publication_geneName = publication_df['gene_name'].tolist()
+ensembl_gene = publication_df['ensembl_id'].tolist()
 source_number = str(publication_df['pmid'][1])
 species = str(publication_df['species'][6])
 print(species)
 
 
-# MGI
+# M`GI
 mgi_df = pd.read_csv(mgi_file_path, sep='\t', header=None, usecols=[0, 1, 9], skiprows=1, names=['GeneName', 'EntrezGene', 'Alias'])
 ls_row_1 = mgi_df['GeneName'].tolist()
 ls_row_2 = mgi_df['EntrezGene'].tolist()
@@ -28,20 +27,23 @@ ls_row_10 = mgi_df['Alias'].tolist()
 server = BiomartServer('http://www.ensembl.org/biomart')
 if species == 'mouse':
     dataset = server.datasets['mmusculus_gene_ensembl']
+    obiekt = musMusculus()
 elif species == 'rat':
     dataset = server.datasets['rnorvegicus_gene_ensembl']
+    obiekt = rattusNorvegicus()
 elif species == 'human':
     dataset = server.datasets['hsapiens_gene_ensembl']
+    obiekt = homoSapiens()
+    print(dataset)
 else:
     print('ERROR: animal not found')
     
 
 
 # CHANGE_VAR
-gene_list_number = 35
-source = 'pmid:' + source_number            # => cluster   
+gene_list_number = 801
+source = 'pmid:' + source_number        # => cluster   
 gene_list_id = 'all_significant_genes_' + source_number
-
 
 
 # LISTS
@@ -51,23 +53,69 @@ ls_notResponse = []
 ls_notResponse_after = []
 
 
-# DICTIONARY
 alias = 'NA'
 info = 'NA'
+previous_gene_name = None
+previous_gene_data = {}
+
 
 for i in range(len(publication_geneName)):
     gene_name = publication_geneName[i]
     
-    if gene_name != '':
-
-        # VARIABLES
-        index = i + 1
-
-        ensembl_gene_id_temp = []
-        ensembl_transcript_id_temp = []
-        refseq_mrna_temp = []
-
-        ls_biomartParameters = biomartParameters(gene_name, dataset)
+    # VARIABLES
+    index = i + 1
+    ensembl_gene_id_temp = []
+    ensembl_transcript_id_temp = []
+    refseq_mrna_temp = []
+    ensembl_gene_id = ensembl_gene[i]
+    print(ensembl_gene_id)
+    
+    if gene_name == '':
+        continue
+    
+    elif gene_name == 'NA':
+        ensembl_gene_id = str('NA')
+        ensembl_transcript_id = str('NA')
+        refseq_mrna = str('NA')
+        hgnc_symbol = str('NA')
+        temp_gene_dictionary = gene_dictionary(index,
+                                            gene_name,
+                                            gene_list_number,
+                                            gene_list_id,
+                                            source,
+                                            ensembl_gene_id,
+                                            ensembl_transcript_id, 
+                                            refseq_mrna,
+                                            hgnc_symbol,
+                                            alias,
+                                            info)
+        ls_geneDictionaries.append(temp_gene_dictionary)
+        print(temp_gene_dictionary)
+        
+    elif gene_name == previous_gene_name:
+        # Use the same data as the previous gene
+        ensembl_gene_id = previous_gene_data.get('ensembl_gene_id', '')
+        ensembl_transcript_id = previous_gene_data.get('ensembl_transcript_id', '')
+        refseq_mrna = previous_gene_data.get('refseq_mrna', '')
+        hgnc_symbol = previous_gene_data.get('hgnc_symbol', '')
+        
+        temp_gene_dictionary = gene_dictionary(index,
+                                            gene_name,
+                                            gene_list_number,
+                                            gene_list_id,
+                                            source,
+                                            ensembl_gene_id,
+                                            ensembl_transcript_id, 
+                                            refseq_mrna,
+                                            hgnc_symbol,
+                                            alias,
+                                            info)
+        ls_geneDictionaries.append(temp_gene_dictionary)
+        print(temp_gene_dictionary)
+        
+        
+    else:
+        ls_biomartParameters = obiekt.biomartParameters(gene_name, dataset)
         if not ls_biomartParameters:
             ls_notResponse.append(gene_name)
             print(ls_notResponse)
@@ -87,28 +135,40 @@ for i in range(len(publication_geneName)):
         
         
         # ORTHOLOGS
-        ls_biomartHumanOrthologs = biomartHumanOrthologs(gene_name, dataset)
-        if not ls_biomartHumanOrthologs:
-            hgnc_symbol = 'NA'
+        if species == 'human':
+            hgnc_symbol = gene_name
+        
         else:
-            hgnc_symbol = ls_biomartHumanOrthologs[0][0]
+            ls_biomartHumanOrthologs = obiekt.biomartHumanOrthologs(gene_name, dataset)
+            if not ls_biomartHumanOrthologs:
+                hgnc_symbol = 'NA'
+            else:
+                hgnc_symbol = ls_biomartHumanOrthologs[0][0]
             
         
         temp_gene_dictionary = gene_dictionary(index,
-                                               gene_name,
-                                               gene_list_number,
-                                               gene_list_id,
-                                               source,
-                                               ensembl_gene_id,
-                                               ensembl_transcript_id, 
-                                               refseq_mrna,
-                                               hgnc_symbol,
-                                               alias,
-                                               info)
+                                            gene_name,
+                                            gene_list_number,
+                                            gene_list_id,
+                                            source,
+                                            ensembl_gene_id,
+                                            ensembl_transcript_id, 
+                                            refseq_mrna,
+                                            hgnc_symbol,
+                                            alias,
+                                            info)
 
         ls_geneDictionaries.append(temp_gene_dictionary)
         print(temp_gene_dictionary)
-
+        
+        previous_gene_data = {
+            'ensembl_gene_id': ensembl_gene_id,
+            'ensembl_transcript_id': ensembl_transcript_id,
+            'refseq_mrna': refseq_mrna,
+            'hgnc_symbol': hgnc_symbol
+        }
+    
+    previous_gene_name = gene_name
 
 ### SCORES 
 
@@ -125,6 +185,7 @@ temp_notResponse = r'.\notResponse_' + src + '.tsv'
 with open(temp_notResponse, 'w') as file:
     for line in data1:
         file.write(str(line) + '\n')
+        print(line)
 
 # LOAD notRESPONSE
 ls_notResponse_v2 = pd.read_csv(temp_notResponse, sep='\t', header=None)[0].tolist()
@@ -156,7 +217,7 @@ for i in range(len(mgi_id)):
         refseq_mrna_temp = []
         
 
-        ls_biomartParameters_mgi = biomartParameters_mgi(mgi_ID, dataset)
+        ls_biomartParameters_mgi = obiekt.biomartParameters_mgi(mgi_ID, dataset)
         
         if not ls_biomartParameters_mgi:
             print(gene_name)
@@ -173,19 +234,21 @@ for i in range(len(mgi_id)):
         ensembl_gene_id = '|'.join(list(set(filter(None, ensembl_gene_id_temp))))
         ensembl_transcript_id = '|'.join(list(set(filter(None, ensembl_transcript_id_temp))))
         refseq_mrna = '|'.join(list(set(filter(None, refseq_mrna_temp))))
-         
         
-        ls_biomartHumanOrthologs = biomartHumanOrthologs_mgi(mgi_ID, dataset)
-        if not ls_biomartHumanOrthologs:
-            hgnc_symbol = 'NA'
+        if species == 'human':
+            hgnc_symbol = gene_name
         else:
-            hgnc_symbol = ls_biomartHumanOrthologs[0][0]       
+            ls_biomartHumanOrthologs = obiekt.biomartHumanOrthologs_mgi(mgi_ID, dataset)
+            if not ls_biomartHumanOrthologs:
+                hgnc_symbol = 'NA'
+            else:
+                hgnc_symbol = ls_biomartHumanOrthologs[0][0]       
         
         
         for i, line in enumerate(ls_geneDictionaries):
             columns = line.split('\t')
             desired_gene_name = columns[1].lower()
-            gene_name_lower = gene_name.lower()
+            gene_name_lower = str(gene_name).lower()
             
             if desired_gene_name == gene_name_lower:
                 print(desired_gene_name, gene_name_lower)
@@ -219,10 +282,9 @@ temp_lsnotResponseafter = r'.\ls_notResponse_after_' + src + '.tsv'
 with open(temp_lsnotResponseafter, 'w') as file:
     for line in df4:
         file.write(str(line) + '\n')
-        
+
 ## Add ALIAS
 dictionary_file_path = temp_secDictionary
-
 alias_file_path = r'.\withAlias_' + src + '.tsv'
 updateCellswithAlias(mgi_file_path, dictionary_file_path, alias_file_path)
 

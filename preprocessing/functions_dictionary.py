@@ -3,6 +3,8 @@ import csv
 from biomart import BiomartServer
 import pandas as pd
 import numpy as np
+from gprofiler import GProfiler
+import requests
 
 
 
@@ -35,7 +37,7 @@ def gene_dictionary(index,
 
 
         return dictionary
-   
+
     
 def alias_and_official(ls_notResponse,ls_row_10,ls_row_2,ls_row_1, ls_notResponse_after):
 
@@ -204,28 +206,49 @@ class musMusculus:
     '''
 
                 
-class rattusNorvegicus:
-    
-    def biomartParameters(self, mgi_symbol, dataset):
-        attributes = ['ensembl_gene_id',
-                    'ensembl_transcript_id',
-                    'refseq_mrna']
-        filters = {'external_gene_name':[mgi_symbol]}            # gene_name = mgi_symbol
-        response = dataset.search({'attributes':attributes,'filters':filters})
-        
-        # response convertion
-        values = [line.split("\t") for line in response.text.split("\n") if line.strip()]
-        return values 
+class RattusNorvegicus:
+    def __init__(self):
+        self.gp = GProfiler(return_dataframe=True)
+        self.orth_url = 'https://biit.cs.ut.ee/gprofiler/api/orth/orth/'
 
 
-    def biomartHumanOrthologs(self, mgi_symbol, dataset):
-        attributes = ['hsapiens_homolog_associated_gene_name']
-        filters = {'external_gene_name':[mgi_symbol]}
-        response = dataset.search({'attributes':attributes,'filters':filters})
-        
-        # response_convertion
-        values = [line.split("\t") for line in response.text.split("\n") if line.strip()]
-        return values 
+    def gprofilerGeneAndTranscriptIds(self, mgi_symbol):
+        # Query g:Profiler for the given MGI symbol targeting Ensembl Gene IDs,Ensembl Transcript IDs,RefSeq mRNA IDs
+        ensg_results = self.gp.convert(organism='rnorvegicus', query=[mgi_symbol], target_namespace='ENSG')
+        enst_results = self.gp.convert(organism='rnorvegicus', query=[mgi_symbol], target_namespace='ENST')
+        refseq_mrna_results = self.gp.convert(organism='rnorvegicus', query=[mgi_symbol], target_namespace='REFSEQ_MRNA')
+
+        # Extract the 'converted' columns which contain the IDs
+        ensembl_gene_ids = ensg_results['converted'].dropna().unique().tolist()
+        ensembl_transcript_ids = enst_results['converted'].dropna().unique().tolist()
+        refseq_mrna_ids = refseq_mrna_results['converted'].dropna().unique().tolist()
+
+        return {
+            'ensembl_gene_id': ensembl_gene_ids,
+            'ensembl_transcript_id': ensembl_transcript_ids,
+            'refseq_mrna': refseq_mrna_ids
+        }
+
+    def gprofilerHumanOrthologs(self, rat_gene_symbol):
+        # Define the POST request's parameters for g:Orth
+        payload = {
+            'organism': 'rnorvegicus',
+            'target': 'hsapiens',
+            'query': [rat_gene_symbol],
+        }
+
+        # Send the POST request to g:Orth
+        response = requests.post(self.orth_url, json=payload)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            results = response.json()['result']
+            # Extract the HGNC symbols from the results
+            hgnc_symbols = set([result['name'] for result in results if 'name' in result])
+            return hgnc_symbols
+        else:
+            print(f"Error in g:Orth: {response.status_code} - {response.text}")
+            return 'NA'
 
     '''
     def biomartParametersbyEnsembl(self, ensembl_gene_id):
