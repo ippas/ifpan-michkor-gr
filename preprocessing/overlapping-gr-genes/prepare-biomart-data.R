@@ -42,7 +42,7 @@ animals <- c("human", "mouse", "rat")
 
 # Function to download and process Gene Ontology data
 download_gene_ontology_data <- function(url, animal) {
-  data <- readr::read_tsv(url, skip = 1, comment = "!")
+  data <- readr::read_tsv(url, skip = 1, comment = "!", col_names = F)
   data <- data %>%
     select(3) %>%
     unique() %>%

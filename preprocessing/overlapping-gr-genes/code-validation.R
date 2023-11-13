@@ -6,6 +6,12 @@ gr_gene_database_preprocessing %>%
   filter(label == "34362910_NA_NA")
 
 
+gr_gene_database_raw%>%
+  filter(Source == "michkor-cells-dex") %>% head(2)
+
+
+gr_gene_database_raw %>%  colnames
+
 pairwise_gene_overlap(gr_gene_database_preprocessing, "Gene_name", "label") -> overlap_matrix
 
 gene_set_sizes <- table(unlist(gr_gene_database_preprocessing$label))
@@ -16,7 +22,6 @@ color_palette <- colorRampPalette(c("white", "red"))(100)
 
 
 pheatmap(overlap_matrix, color = color_palette, cluster_rows = TRUE, cluster_cols = TRUE)
-
 
 pheatmap(normalized_overlap_matrix, color = color_palette, cluster_rows = FALSE, cluster_cols = FALSE)
 
