@@ -1,3 +1,8 @@
+install.packages("rentrez")
+library(rentrez)
+install.packages("XML")
+library(XML)
+
 gr_gene_database_preproccesing %>%
   filter(!grepl("omicspred_metabolon", source)) %>%
   filter(!grepl("omicspred_nithingale_", source)) %>%
@@ -101,13 +106,17 @@ tissues_clusters <- c("pmid:NA_adrenal-cortex_NA", "pmid:NA_anterior-thigh_NA", 
 ###
 processing_overlap_results(data = chi2_results_papers ,
                            rows_to_filter = !rownames(chi2_results_papers $p_value_matrix) %in% tissues_clusters,
-                           cols_to_filter = tissues_clusters[10:27]) -> tmp
+                           cols_to_filter = tissues_clusters[10:27],
+                           genes_list = c(papers_gene_list, genes_list["master_gr_weak"])) -> clusters_papers_data
+
+
+# tmp$gene_list_sizes <- c(papers_gene_list, genes_list["master_gr_weak"]) %>% sapply(., length)
 
 draw_custom_heatmap(
-  tmp,
+  clusters_papers_data,
   data_type = "original_data",
-  col_mapping_vector =  setNames(papers_data_preprocessing$label2, papers_data_preprocessing$label),
-  row_mapping_vector =  setNames(papers_data_preprocessing$label2, papers_data_preprocessing$label),
+  # col_mapping_vector =  setNames(papers_data_preprocessing$label2, papers_data_preprocessing$label),
+  # row_mapping_vector =  setNames(papers_data_preprocessing$label2, papers_data_preprocessing$label),
   fdr_threshold = 0.1,
   fdr_thresholds = c(0.05, 0.0001),
   color_rects =  c("green", "#FF00FF"),
@@ -125,12 +134,13 @@ draw_custom_heatmap(
 
 processing_overlap_results(data = chi2_results_papers ,
                            rows_to_filter = !rownames(chi2_results_papers $p_value_matrix) %in% tissues_clusters,
-                           cols_to_filter = tissues_clusters[1:9]) -> tmp
+                           cols_to_filter = tissues_clusters[1:9],
+                           genes_list = c(papers_gene_list, genes_list["master_gr_weak"])) -> tissue_papers_data
 
 draw_custom_heatmap(
-  tmp,
-  data_type = "significant_uniq_data",
-  col_mapping_vector = cluster_vector,
+  tissue_papers_data,
+  data_type = "original_data",
+  col_mapping_vector = tissues_mapping,
   # row_mapping_vector = phenotypes_mapping_vector,
   fdr_threshold = 0.1,
   fdr_thresholds = c(0.05, 0.0001),
@@ -147,110 +157,8 @@ draw_custom_heatmap(
 )
 
 
-###
 
-# Extract significant results for clusters vs papers
-# 1. Filter out rows from the p_value_matrix that are in the excluded_rows
-# 2. Select only the columns related to tissue clusters from 10 to 27
-# 3. Rename the variables for clarity
-# 4. Adjust the p-values for multiple testing using the False Discovery Rate (FDR) method
-# 5. Sort the results by the FDR adjusted p-values
-# 6. Keep only results with FDR < 0.05 and number of overlapping genes > 1
-extract_data(chi2_results_papers, 
-             !rownames(chi2_results_papers$p_value_matrix) %in% tissues_clusters, 
-             tissues_clusters[10:27]) %>% 
-  rename(paper = Var1, cluster = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
-  arrange(fdr) %>% 
-  filter(fdr < 0.05) %>%
-  filter(number_overlap > 1)
-
-# Extract the overlapping genes from the significant results
-# 1. Split the overlapping genes by comma
-# 2. Convert the list to a vector
-# 3. Extract unique gene names
-# 4. Print each gene name on a new line
-extract_data(chi2_results_papers, 
-             !rownames(chi2_results_papers$p_value_matrix) %in% tissues_clusters, 
-             tissues_clusters[10:27]) %>% 
-  rename(paper = Var1, cluster = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
-  arrange(fdr) %>% 
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  .$overlap_genes %>% 
-  strsplit(., split = ",") %>% 
-  unlist %>% 
-  unique() %>% 
-  walk(., ~cat(.x, "\n"))
-
-# Prepare data for heatmap visualization for clusters vs papers
-# 1. Extract the chi2 values for the results
-# 2. Create a heatmap using the pheatmap function
-# 3. Log-transform the data for better visualization
-# 4. Cluster the rows and columns based on similarity
-# 5. Display the chi2 values on the heatmap
-# 6. Use custom labels for rows and columns
-heatmap_papers_clusters <- chi2_results_papers$chi2_value_matrix[!rownames(chi2_results_papers$p_value_matrix) %in% tissues_clusters, tissues_clusters[10:27]]
-
-pheatmap(
-  log2(heatmap_papers_clusters + 1),
-  cluster_rows = TRUE,
-  cluster_cols = TRUE,
-  display_numbers = TRUE,
-  # labels_row = papers_mapping,
-  labels_col = clusters_mapping,
-  fontsize = 12,             
-  fontsize_row = 15,          
-  fontsize_col = 15
-)
-
-#################################
-# results for tissues vs papers #
-#################################
-
-# The following sections repeat the same operations but for tissues vs papers
-# Instead of using tissue clusters from 10 to 27, it uses tissue clusters from 1 to 9
-
-# Extract significant results for tissues vs papers
-extract_data(chi2_results_papers, 
-             !rownames(chi2_results_papers$p_value_matrix) %in% tissues_clusters, 
-             tissues_clusters[1:9]) %>% 
-  rename(paper = Var1, cluster = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
-  arrange(fdr) %>% 
-  filter(fdr < 0.05) %>%
-  filter(number_overlap > 1)
-
-# Extract the overlapping genes from the significant results for tissues vs papers
-extract_data(chi2_results_papers, 
-             !rownames(chi2_results_papers$p_value_matrix) %in% tissues_clusters, 
-             tissues_clusters[1:9]) %>% 
-  rename(paper = Var1, cluster = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
-  arrange(fdr) %>% 
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  .$overlap_genes %>% 
-  strsplit(., split = ",") %>% 
-  unlist %>% 
-  unique() %>% 
-  walk(., ~cat(.x, "\n"))
-
-# Prepare data for heatmap visualization for tissues vs papers
-heatmap_papers_tissues <- chi2_results_papers$chi2_value_matrix[!rownames(chi2_results_papers$p_value_matrix) %in% tissues_clusters, tissues_clusters[1:9]]
-
-pheatmap(
-  log2(heatmap_papers_tissues + 1),
-  cluster_rows = TRUE,
-  cluster_cols = TRUE,
-  display_numbers = TRUE,
-  labels_row = papers_mapping,
-  labels_col = tissues_mapping,
-  fontsize = 12,             
-  fontsize_row = 15,          
-  fontsize_col = 15
-)
+  
 
 
   

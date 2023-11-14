@@ -32,227 +32,57 @@ tissues_clusters <- c("pmid:NA_adrenal-cortex_NA", "pmid:NA_anterior-thigh_NA", 
 ############################################
 chi2_results_phenotypes <- perform_chi2_tests(c(papers_gene_list[tissues_clusters], phenotypes_biobank_genes_list), hgnc_symbols_vector_v110)
 
+###
 
-##########################################
-# 3. visualization for significant results
-##########################################
-# Extract significant results for clusters vs papers
-extract_data(
-  chi2_results_phenotypes,
-  !rownames(chi2_results_phenotypes$p_value_matrix) %in% tissues_clusters,
-  tissues_clusters[10:27]
-) %>% 
-  dplyr::rename(phenotypes = Var1, cluster = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>%
-  arrange(fdr) %>%
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  group_by(overlap_genes, cluster) %>% 
-  nest() %>% 
-  dplyr::mutate(data = map(data, ~ .x %>% 
-                      arrange(fdr) %>% 
-                      dplyr::slice(1))) %>% 
-  unnest() %>% 
-  ungroup %>% 
-  as.data.frame() %>% 
-  .$phenotypes %>% 
-  unique %>% 
-  as.character() -> significant_phenotypes
+###
+processing_overlap_results(data = chi2_results_phenotypes,
+                           rows_to_filter = !rownames(chi2_results_phenotypes$p_value_matrix) %in% tissues_clusters,
+                           cols_to_filter = tissues_clusters[10:27],
+                           genes_list = c(papers_gene_list[tissues_clusters], phenotypes_biobank_genes_list)) -> clusters_phenotypes_data
 
-# Extract the overlapping genes from the significant results
-extract_data(
-  chi2_results_phenotypes,
-  !rownames(chi2_results_phenotypes$p_value_matrix) %in% tissues_clusters,
-  tissues_clusters[10:27]
-) %>%
-  rename(phenotypes = Var1, cluster = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
-  arrange(fdr) %>% 
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>%
-  group_by(overlap_genes, cluster) %>% 
-  nest() %>% 
-  mutate(data = map(data, ~ .x %>% 
-                      arrange(fdr) %>% 
-                      slice(1))) %>% 
-  unnest() %>% 
-  ungroup %>% 
-  as.data.frame() %>% 
-  .$overlap_genes %>% 
-  strsplit(., split = ",") %>% 
-  unlist %>% 
-  unique() %>% 
-  walk(., ~cat(.x, "\n"))
 
-# prepare data to heatmap
-heatmap_phenotypes_clusters <-
-  chi2_results_phenotypes$chi2_value_matrix[significant_phenotypes,
-                                            tissues_clusters[10:27]]
-
-# create heatmap
-pheatmap(
-  log2(heatmap_phenotypes_clusters + 1),
-  cluster_rows = TRUE,
-  cluster_cols = TRUE,
-  display_numbers = TRUE,
-  fontsize = 12,             
-  fontsize_row = 15,          
-  fontsize_col = 15
+draw_custom_heatmap(
+  clusters_phenotypes_data,
+  data_type = "significant_uniq_data",
+  col_mapping_vector =  clusters_mapping,
+  # row_mapping_vector =  setNames(papers_data_preprocessing$label2, papers_data_preprocessing$label),
+  fdr_threshold = 0.1,
+  fdr_thresholds = c(0.05, 0.0001),
+  color_rects =  c("green", "#FF00FF"),
+  color_rect = "green",
+  lwd_rect = 3,
+  alpha_rect = 1,
+  apply_filling = F,
+  color_filling = "gray",
+  alpha_filling = 0.6,
+  size_filling = 1,
+  pch_filling = 16,
+  col_significant = T
 )
 
-###############################################################################
-# tissue
-extract_data(
-  chi2_results_phenotypes,
-  !rownames(chi2_results_phenotypes$p_value_matrix) %in% tissues_clusters,
-  tissues_clusters[1:9]
-) %>%
-  rename(phenotypes = Var1, cluster = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>%
-  arrange(fdr) %>%
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  group_by(overlap_genes, cluster) %>% 
-  nest() %>% 
-  mutate(data = map(data, ~ .x %>% 
-                      arrange(fdr) %>% 
-                      slice(1))) %>% 
-  unnest() %>% 
-  ungroup %>% 
-  as.data.frame() %>% 
-  .$phenotypes %>% 
-  unique %>% 
-  as.character() -> significant_phenotypes
 
-# prepare data to heatmap
-heatmap_phenotypes_tissues <-
-  chi2_results_phenotypes$chi2_value_matrix[significant_phenotypes,
-                                            tissues_clusters[1:9]]
+processing_overlap_results(data = chi2_results_phenotypes,
+                           rows_to_filter = !rownames(chi2_results_phenotypes$p_value_matrix) %in% tissues_clusters,
+                           cols_to_filter = tissues_clusters[1:9],
+                           genes_list = c(papers_gene_list[tissues_clusters], phenotypes_biobank_genes_list)) -> tissue_phenotypes_data
 
-# create heatmap
-pheatmap(
-  log2(heatmap_phenotypes_tissues + 1),
-  cluster_rows = TRUE,
-  cluster_cols = TRUE,
-  display_numbers = TRUE,
-  fontsize = 12,             
-  fontsize_row = 15,          
-  fontsize_col = 15
+
+draw_custom_heatmap(
+  tissue_phenotypes_data,
+  data_type = "significant_uniq_data",
+  col_mapping_vector =  tissues_mapping,
+  # row_mapping_vector =  setNames(papers_data_preprocessing$label2, papers_data_preprocessing$label),
+  fdr_threshold = 0.1,
+  fdr_thresholds = c(0.05, 0.0001),
+  color_rects =  c("green", "#FF00FF"),
+  color_rect = "green",
+  lwd_rect = 3,
+  alpha_rect = 1,
+  apply_filling = F,
+  color_filling = "gray",
+  alpha_filling = 0.6,
+  size_filling = 1,
+  pch_filling = 16,
+  col_significant = T
 )
 
-#################################################################
-# 4. visualization for significant results with additional filter 
-#################################################################
-phenotypes_biobank_genes_list %>%
-  # Keep only those vectors that have an intersection of at least two genes with master_genes
-  keep(~ length(intersect(.x, {genes_list %>% unlist() %>% unique})) > 1) -> phenotypes_filt_genes_list
-
-
-
-chi2_results_phenotypes_filt <-
-  perform_chi2_tests(c(papers_gene_list[tissues_clusters], phenotypes_filt_genes_list),
-                     hgnc_symbols_vector_v110)
-
-extract_data(
-  chi2_results_phenotypes_filt,
-  !rownames(chi2_results_phenotypes_filt$p_value_matrix) %in% tissues_clusters,
-  tissues_clusters[10:27]
-) %>%
-  rename(phenotypes = Var1, cluster = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>%
-  arrange(fdr) %>%
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  group_by(overlap_genes, cluster) %>% 
-  nest() %>% 
-  mutate(data = map(data, ~ .x %>% 
-                      arrange(fdr) %>% 
-                      slice(1))) %>% 
-  unnest() %>% 
-  ungroup %>% 
-  as.data.frame() %>% 
-  .$phenotypes %>% 
-  as.character %>%
-  unique -> significant_phenotypes
-
-# Extract the overlapping genes from the significant results
-extract_data(
-  chi2_results_phenotypes_filt,
-  !rownames(chi2_results_phenotypes_filt$p_value_matrix) %in% tissues_clusters,
-  tissues_clusters[10:27]
-) %>%
-  rename(phenotypes = Var1, cluster = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
-  arrange(fdr) %>% 
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  group_by(overlap_genes, cluster) %>% 
-  nest() %>% 
-  mutate(data = map(data, ~ .x %>% 
-                      arrange(fdr) %>% 
-                      slice(1))) %>% 
-  unnest() %>% 
-  ungroup %>% 
-  as.data.frame() %>% 
-  .$overlap_genes %>% 
-  strsplit(., split = ",") %>% 
-  unlist %>% 
-  unique() %>% 
-  walk(., ~cat(.x, "\n"))
-
-# prepare data to heatmap
-heatmap_phenotypes_clusters <-
-  chi2_results_phenotypes_filt$chi2_value_matrix[significant_phenotypes,
-                                                 tissues_clusters[10:27]]
-
-# create heatmap
-pheatmap(
-  log2(heatmap_phenotypes_clusters + 1),
-  cluster_rows = TRUE,
-  cluster_cols = TRUE,
-  display_numbers = TRUE,
-  fontsize = 12,             
-  fontsize_row = 15,          
-  fontsize_col = 15
-)
-
-################################################################################
-# tissue
-extract_data(
-  chi2_results_phenotypes_filt,
-  !rownames(chi2_results_phenotypes_filt$p_value_matrix) %in% tissues_clusters,
-  tissues_clusters[1:9]
-) %>%
-  rename(phenotypes = Var1, cluster = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>%
-  arrange(fdr) %>%
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  group_by(overlap_genes, cluster) %>% 
-  nest() %>% 
-  mutate(data = map(data, ~ .x %>% 
-                      arrange(fdr) %>% 
-                      slice(1))) %>% 
-  unnest() %>% 
-  ungroup %>% 
-  as.data.frame() %>% 
-  .$phenotypes %>% 
-  as.character %>%
-  unique -> significant_phenotypes
-
-
-# prepare data to heatmap
-heatmap_phenotypes_tissues <-
-  chi2_results_phenotypes_filt$chi2_value_matrix[significant_phenotypes,
-                                                 tissues_clusters[1:9]]
-
-# create heatmap
-pheatmap(
-  log2(heatmap_phenotypes_tissues + 1),
-  cluster_rows = TRUE,
-  cluster_cols = TRUE,
-  display_numbers = TRUE,
-  fontsize = 12,             
-  fontsize_row = 15,          
-  fontsize_col = 15
-)

@@ -72,214 +72,56 @@ tissues_clusters <- c("adrenal-cortex", "anterior-thigh", "hypothalamus",
                       "marpiech_tissues_dex_4", "marpiech_tissues_dex_5", "marpiech_tissues_dex_6",
                       "marpiech_tissues_dex_7", "marpiech_tissues_dex_8", "marpiech_tissues_dex_9")
 
+###
+processing_overlap_results(data = chi2_results_metabolism  ,
+                           rows_to_filter = !rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters,
+                           cols_to_filter = tissues_clusters[10:27],
+                           genes_list =  metabolism_gene_list) -> clusters_metabolism_data
 
-################################################################################
-###########################################
-# 1. clusters vs metabolism visualization #
-###########################################
-# Extract significant results for clusters vs metabolism
-# This block extracts data from chi-squared results related to metabolism, excluding rows that match tissue clusters.
-# It then renames the variables for clarity, adjusts p-values for multiple testing using the False Discovery Rate (FDR) method,
-# sorts the results by FDR, and filters for significant results (FDR < 0.05) with more than one overlapping element.
-extract_data(chi2_results_metabolism,  
-             !rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters,
-             tissues_clusters[10:27]
-) %>% 
-  rename(cluster = Var1, metabolism = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
-  arrange(fdr) %>% 
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1)
 
-# Prepare genes overlapping with metabolism
-# This block repeats the extraction process and focuses on overlapping genes.
-# It splits the genes by comma, flattens the list, ensures gene uniqueness, and prints each gene on a new line.
-extract_data(chi2_results_metabolism,  
-             !rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters,
-             tissues_clusters[10:27]) %>%
-  rename(metabolism = Var1, cluster = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
-  arrange(fdr) %>% 
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  .$overlap_genes %>% 
-  strsplit(., split = ",") %>% 
-  unlist %>% 
-  unique() %>% 
-  walk(., ~cat(.x, "\n"))
+# tmp$gene_list_sizes <- c(papers_gene_list, genes_list["master_gr_weak"]) %>% sapply(., length)
 
-# Create a named vector for cluster to metabolism mapping
-# This vector is used for labeling in the heatmap later.
-cluster_mapping_metabolism <- c("marpiech_tissues_dex_9" = "cluster 9", 
-                                "marpiech_tissues_dex_12" = "cluster 12", 
-                                "marpiech_tissues_dex_18" = "upregulated genes")
-
-# Visualization of unique significant gene list
-# This block prepares a filtered dataset to identify unique significant genes.
-# It groups by overlapping genes and clusters, selects the top entry after arranging by FDR,
-# and creates a mapping vector for metabolism to clusters.
-extract_data(chi2_results_metabolism,  
-             tissues_clusters[10:27],
-             !rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters) %>%
-  rename(cluster = Var1, metabolism = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
-  arrange(fdr) %>% 
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  filter(!(metabolism %in% c("X-11564", "X-11261", "X-21470", "X-21467"))) %>%
-  group_by(overlap_genes, cluster) %>% 
-  nest() %>% 
-  mutate(data = map(data, ~ .x %>% 
-                      arrange(fdr) %>% 
-                      slice(1))) %>% 
-  unnest() %>% 
-  ungroup %>% 
-  as.data.frame() %>% 
-  .$metabolism %>% 
-  as.character() %>%
-  unique() %>% 
-  create_mapping_vector() -> metabolism_clusters_mapping
-
-# Generate a heatmap for metabolism clusters
-# This heatmap visualizes the chi-squared values for significant metabolism-cluster associations.
-# It uses log transformation for better visualization and includes clustering on both rows and columns.
-heatmap_metabolism_clusters <-
-  chi2_results_metabolism$chi2_value_matrix[metabolism_clusters_mapping,
-                                            names(cluster_mapping_metabolism)]
-
-pheatmap(
-  log2(heatmap_metabolism_clusters + 1),
-  cluster_rows = TRUE,
-  cluster_cols = TRUE,
-  display_numbers = TRUE,
-  labels_col = cluster_mapping_metabolism,
-  fontsize = 12,             
-  fontsize_row = 12,          
-  fontsize_col = 12
-)
-
-################################################################################
-# Visualization of all significant results
-# This block is similar to the previous visualization block but is intended for all significant results.
-# It prepares the data and generates a heatmap for all significant metabolism-cluster associations.
-extract_data(chi2_results_metabolism,  
-             tissues_clusters[10:27],
-             !rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters) %>%
-  rename(cluster = Var1, metabolism = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
-  arrange(fdr) %>% 
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  .$metabolism %>% 
-  as.character() %>% 
-  unique() %>% 
-  create_mapping_vector() -> metabolism_clusters_mapping
-
-heatmap_metabolism_clusters <-
-  chi2_results_metabolism$chi2_value_matrix[metabolism_clusters_mapping,
-                                            names(cluster_mapping_metabolism)]
-
-pheatmap(
-  log2(heatmap_metabolism_clusters + 1),
-  cluster_rows = TRUE,
-  cluster_cols = TRUE,
-  display_numbers = TRUE,
-  labels_col = cluster_mapping_metabolism
+draw_custom_heatmap(
+  clusters_metabolism_data,
+  data_type = "significant_uniq_data",
+  col_mapping_vector =  cluster_vector,
+  # row_mapping_vector =  setNames(papers_data_preprocessing$label2, papers_data_preprocessing$label),
+  fdr_threshold = 0.1,
+  fdr_thresholds = c(0.05, 0.0001),
+  color_rects =  c("green", "#FF00FF"),
+  color_rect = "green",
+  lwd_rect = 3,
+  alpha_rect = 1,
+  apply_filling = F,
+  color_filling = "gray",
+  alpha_filling = 0.6,
+  size_filling = 1,
+  pch_filling = 16,
+  col_significant = T
 )
 
 
-################################################################################
-##########################################
-# 2. tissues vs metabolism visualization #
-##########################################
-# Extract significant results for tissues vs metabolism
-extract_data(
-  chi2_results_metabolism,!rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters,
-  tissues_clusters[1:9]
-) %>%
-  rename(cluster = Var1, metabolism = Var2) %>%
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>%
-  arrange(fdr) %>%
-  filter(fdr < 0.05) %>%
-  filter(number_overlap > 1)
+processing_overlap_results(data = chi2_results_metabolism ,
+                           rows_to_filter = !rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters,
+                           cols_to_filter = tissues_clusters[1:9],
+                           genes_list = metabolism_gene_list) -> tissue_metabolism_data
 
-# prepare genes overlapping with metabolism
-extract_data(
-  chi2_results_metabolism,!rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters,
-  tissues_clusters[1:9]
-) %>%
-  rename(cluster = Var1, metabolism = Var2) %>%
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>%
-  arrange(fdr) %>%
-  filter(fdr < 0.05) %>%
-  filter(number_overlap > 1) %>% # chose results where more than one gene was overlapping
-  .$overlap_genes %>%
-  strsplit(., split = ",") %>%
-  unlist %>%
-  unique() %>%
-  walk(., ~ cat(.x, "\n"))
-
-################################################################################
-# prepare row to filter unique gene list
-extract_data(chi2_results_metabolism,  
-             tissues_clusters[1:9],
-             !rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters) %>%
-  rename(tissue = Var1, metabolism = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
-  arrange(fdr) %>% 
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  filter(!(metabolism %in% c("X-17337", "X-11261", "X-11564", "X-21735", "X-11381"))) %>%
-  group_by(overlap_genes, tissue) %>% 
-  nest() %>% 
-  mutate(data = map(data, ~ .x %>% 
-                      arrange(fdr) %>% 
-                      slice(1))) %>% 
-  unnest() %>% 
-  ungroup %>% 
-  as.data.frame() %>% 
-  .$metabolism %>% 
-  as.character() %>% 
-  unique() %>% 
-  create_mapping_vector() -> metabolism_tissue_mapping
-
-heatmap_metabolism_tissue <-
-  chi2_results_metabolism$chi2_value_matrix[metabolism_tissue_mapping,
-                                            tissues_clusters[1:9]]
-
-pheatmap(
-  log2(heatmap_metabolism_tissue + 1),
-  cluster_rows = TRUE,
-  cluster_cols = TRUE,
-  display_numbers = TRUE,
-  fontsize = 12,             
-  fontsize_row = 12,          
-  fontsize_col = 12
-)
-
-
-# prepare row to filter unique gene list
-extract_data(chi2_results_metabolism,  
-             tissues_clusters[1:9],
-             !rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters) %>%
-  rename(cluster = Var1, metabolism = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
-  arrange(fdr) %>% 
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  .$metabolism %>% 
-  as.character() %>% 
-  unique() %>% 
-  create_mapping_vector() -> metabolism_tissue_mapping
-
-heatmap_metabolism_tissue <-
-  chi2_results_metabolism$chi2_value_matrix[metabolism_tissue_mapping,
-                                            tissues_clusters[1:9]]
-
-pheatmap(
-  log2(heatmap_metabolism_tissue + 1),
-  cluster_rows = TRUE,
-  cluster_cols = TRUE,
-  display_numbers = TRUE,
+draw_custom_heatmap(
+  tissue_metabolism_data,
+  data_type = "significant_uniq_data",
+  # col_mapping_vector = tissues_mapping,
+  # row_mapping_vector = phenotypes_mapping_vector,
+  fdr_threshold = 0.1,
+  fdr_thresholds = c(0.05, 0.0001),
+  color_rects =  c("green", "#FF00FF"),
+  color_rect = "green",
+  lwd_rect = 3,
+  alpha_rect = 1,
+  apply_filling = F,
+  color_filling = "green",
+  alpha_filling = 0.6,
+  size_filling = 1,
+  pch_filling = 16,
+  col_significant = T
 )
 

@@ -1,5 +1,6 @@
-processing_overlap_results <- function(data, rows_to_filter, cols_to_filter,
+processing_overlap_results <- function(data, genes_list, rows_to_filter, cols_to_filter,
                                        fdr_threshold = 0.05, overlap_threshold = 2){
+  
   # processing_overlap_results
   #
   # This function processes overlap results by filtering matrices based on provided row and column filters,
@@ -136,11 +137,14 @@ processing_overlap_results <- function(data, rows_to_filter, cols_to_filter,
                   rows_to_filter = significant_uniq_rows,
                   cols_to_filter = original_cols) -> significant_uniq_list
   
+  gene_list_sizes <- genes_list %>% sapply(., length)
+  
   # Prepare the output list containing all processed data
   output_list <- list(
     original_data = list(list = original_list, df = original_df, rows = original_rows, cols = original_rows, overlap_genes = original_overlap_genes),
     significant_data = list(list = significant_list, df = significant_df, rows = significant_rows, cols = significant_cols, overlap_genes = significant_overlap_genes),
-    significant_uniq_data = list(list = significant_uniq_list, df = significant_uniq_df, rows = significant_uniq_rows, cols = significant_uniq_cols, overlap_genes = significant_uniq_overlap_genes)
+    significant_uniq_data = list(list = significant_uniq_list, df = significant_uniq_df, rows = significant_uniq_rows, cols = significant_uniq_cols, overlap_genes = significant_uniq_overlap_genes),
+    gene_list_sizes = gene_list_sizes
   )
   
   # Return the structured list containing all processed data
