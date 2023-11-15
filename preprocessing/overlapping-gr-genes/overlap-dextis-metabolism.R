@@ -109,8 +109,6 @@ processing_overlap_results(data = chi2_results_metabolism ,
 draw_custom_heatmap(
   tissue_metabolism_data,
   data_type = "significant_uniq_data",
-  # col_mapping_vector = tissues_mapping,
-  # row_mapping_vector = phenotypes_mapping_vector,
   fdr_threshold = 0.1,
   fdr_thresholds = c(0.05, 0.0001),
   color_rects =  c("green", "#FF00FF"),

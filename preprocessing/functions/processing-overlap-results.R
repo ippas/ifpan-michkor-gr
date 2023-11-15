@@ -151,35 +151,36 @@ processing_overlap_results <- function(data, genes_list, rows_to_filter, cols_to
   return(output_list)
 }
 
-processing_overlap_results(data = chi2_results_phenotypes,
-                           rows_to_filter = !rownames(chi2_results_phenotypes$p_value_matrix) %in% tissues_clusters,
-                           cols_to_filter = tissues_clusters[10:27]) -> tmp
+
+
+# processing_overlap_results(data = chi2_results_phenotypes,
+#                            rows_to_filter = !rownames(chi2_results_phenotypes$p_value_matrix) %in% tissues_clusters,
+#                            cols_to_filter = tissues_clusters[10:27]) -> tmp
 # 
-# tmp$original_data$list$fdr_value_matrix %>% .["biobankuk-warfarin-both_sexes--na-EUR-1e-08", "marpiech_tissues_dex_8"]
-
-tmp$significant_uniq_data$overlap_genes
-
-
-
-# Extract significant results for clusters vs papers
-extract_data(
-  chi2_results_phenotypes,
-  !rownames(chi2_results_phenotypes$p_value_matrix) %in% tissues_clusters,
-  tissues_clusters[10:27]
-) %>% 
-  dplyr::rename(phenotypes = Var1, cluster = Var2) %>% 
-  mutate(fdr = p.adjust(p_value, method = "fdr")) %>%
-  arrange(fdr) %>%
-  filter(fdr < 0.05) %>% 
-  filter(number_overlap > 1) %>% 
-  group_by(overlap_genes, cluster) %>% 
-  nest() %>% 
-  dplyr::mutate(data = map(data, ~ .x %>% 
-                             arrange(fdr) %>% 
-                             dplyr::slice(1))) %>% 
-  unnest() %>% 
-  ungroup %>% 
-  as.data.frame() %>% 
-  .$phenotypes %>% 
-  unique %>% 
-  as.character() 
+# 
+# tmp$significant_uniq_data$overlap_genes
+# 
+# 
+# 
+# # Extract significant results for clusters vs papers
+# extract_data(
+#   chi2_results_phenotypes,
+#   !rownames(chi2_results_phenotypes$p_value_matrix) %in% tissues_clusters,
+#   tissues_clusters[10:27]
+# ) %>% 
+#   dplyr::rename(phenotypes = Var1, cluster = Var2) %>% 
+#   mutate(fdr = p.adjust(p_value, method = "fdr")) %>%
+#   arrange(fdr) %>%
+#   filter(fdr < 0.05) %>% 
+#   filter(number_overlap > 1) %>% 
+#   group_by(overlap_genes, cluster) %>% 
+#   nest() %>% 
+#   dplyr::mutate(data = map(data, ~ .x %>% 
+#                              arrange(fdr) %>% 
+#                              dplyr::slice(1))) %>% 
+#   unnest() %>% 
+#   ungroup %>% 
+#   as.data.frame() %>% 
+#   .$phenotypes %>% 
+#   unique %>% 
+#   as.character() 

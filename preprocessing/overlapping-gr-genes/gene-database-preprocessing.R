@@ -1,5 +1,5 @@
 # List of CRAN packages
-cran_packages <- c("tidyverse", "magrittr", "circlize", "pheatmap", "yaml", "reshape2")
+cran_packages <- c("tidyverse", "magrittr", "circlize", "pheatmap", "yaml", "reshape2", "ComplexHeatmap", "criclize", "RColorBrewer", "grid")
 
 # List of Bioconductor packages
 bioc_packages <- c("ComplexHeatmap")
@@ -39,14 +39,16 @@ if (!requireNamespace("biomaRt", quietly = TRUE)) {
 detach(package:biomaRt)
 
 # Load in custom functions related to preprocessing
-source("preprocessing/overlapping-gr-genes/gr-database-functions.R")
+source("preprocessing/functions/gr-database-functions.R")
+source("preprocessing/functions/draw-custom-heatmap.R")
+source("preprocessing/functions/processing-overlap-results.R")
 source("preprocessing/overlapping-gr-genes/prepare-biomart-data.R")
 
 # Read data
 gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/geneBase_060723.tsv", sep = "\t") 
 gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/publikacje_gr_100923.tsv", sep = "\t") 
 gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/publikacje_gr_v5_181023.tsv", sep = "\t")
-gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v8_251023.tsv", sep = "\t") # last version
+gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v8_251023.tsv", sep = "\t") 
 gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v9_091123.tsv", sep = "\t") # last version
 
 # Extract specific metadata from the "Info" column

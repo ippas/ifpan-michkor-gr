@@ -1,14 +1,3 @@
-library(ComplexHeatmap)
-library(circlize)
-
-if (!requireNamespace("RColorBrewer", quietly = TRUE)) {
-  install.packages("RColorBrewer")
-}
-library(RColorBrewer)
-library(ComplexHeatmap)
-library(circlize)
-library(grid)
-
 draw_custom_heatmap <- function(data_list, 
                                 data_type,
                                 fdr_threshold = 0.05,
@@ -404,117 +393,24 @@ draw_custom_heatmap <- function(data_list,
 #                 tissues_clusters[10:27]) -> chi2_phenotypes_filter
 
 
-draw_custom_heatmap(
-  tmp,
-  data_type = "original_data",
-  col_mapping_vector = cluster_vector,
-  # row_mapping_vector =  setNames(papers_data_preprocessing$label2, papers_data_preprocessing$label),
-  fdr_threshold = 0.1,
-  fdr_thresholds = c(0.05, 0.0001),
-  color_rects =  c("green", "#FF00FF"),
-  color_rect = "green",
-  lwd_rect = 3,
-  alpha_rect = 1,
-  apply_filling = F,
-  color_filling = "gray",
-  alpha_filling = 0.6,
-  size_filling = 1,
-  pch_filling = 16,
-  col_significant = F,
-  gene_list_sizes = T
-)
-# test function
-
-draw_custom_heatmap(
-  tmp,
-  data_type = "significant_uniq_data",
-  col_mapping_vector = cluster_vector,
-  row_mapping_vector = phenotypes_mapping_vector,
-  fdr_threshold = 0.1,
-  fdr_thresholds = c(0.05, 0.01),
-  color_rects =  c("green", "#FF00FF"),
-  color_rect = "green",
-  lwd_rect = 3,
-  alpha_rect = 1,
-  apply_filling = F,
-  color_filling = "gray",
-  alpha_filling = 0.6,
-  size_filling = 1,
-  pch_filling = 16,
-  col_significant = F
-)
-
-tmp$gene_list_sizes
-cluster_vector
+# draw_custom_heatmap(
+#   tmp,
+#   data_type = "original_data",
+#   col_mapping_vector = cluster_vector,
+#   # row_mapping_vector =  setNames(papers_data_preprocessing$label2, papers_data_preprocessing$label),
+#   fdr_threshold = 0.1,
+#   fdr_thresholds = c(0.05, 0.0001),
+#   color_rects =  c("green", "#FF00FF"),
+#   color_rect = "green",
+#   lwd_rect = 3,
+#   alpha_rect = 1,
+#   apply_filling = F,
+#   color_filling = "gray",
+#   alpha_filling = 0.6,
+#   size_filling = 1,
+#   pch_filling = 16,
+#   col_significant = F,
+#   gene_list_sizes = T
+# )
 
 
-intersect(names(cluster_vector), names(tmp$gene_list_sizes)) %>%
-  as.data.frame() %>%
-  set_colnames("original_name") %>% 
-  mutate(name = cluster_vector[original_name],
-         size = tmp$gene_list_sizes[original_name]) %>% 
-  mutate(new_name = paste0(name, " ", "(", size, ")")) %>% 
-  select(c(original_name, new_name))
-  
-
-tmp$gene_list_sizes
-
-replace_names_in_list <- function(list_of_matrices, col_mapping_vector=NULL, row_mapping_vector=NULL) {
-  # Function to replace column and row names using the mapping vectors
-  replace_names <- function(matrix, col_mapping_vector, row_mapping_vector) {
-    # Replace column names if col_mapping_vector is provided
-    if (!is.null(col_mapping_vector) && length(col_mapping_vector) > 0) {
-      cols_to_replace <- colnames(matrix) %in% names(col_mapping_vector)
-      new_colnames <- colnames(matrix)
-      new_colnames[cols_to_replace] <- col_mapping_vector[colnames(matrix)[cols_to_replace]]
-      colnames(matrix) <- new_colnames
-    }
-    
-    # Replace row names if row_mapping_vector is provided
-    if (!is.null(row_mapping_vector) && length(row_mapping_vector) > 0) {
-      rows_to_replace <- rownames(matrix) %in% names(row_mapping_vector)
-      new_rownames <- rownames(matrix)
-      new_rownames[rows_to_replace] <- row_mapping_vector[rownames(matrix)[rows_to_replace]]
-      rownames(matrix) <- new_rownames
-    }
-    
-    return(matrix)
-  }
-  
-  # Apply the function to each matrix in the list
-  updated_list <- lapply(list_of_matrices, replace_names, col_mapping_vector=col_mapping_vector, row_mapping_vector=row_mapping_vector)
-  
-  return(updated_list)
-}
-
-
-replace_column_names_in_list(chi2_phenotypes_filter, cluster_vector) -> tmp
-
-replace_names_in_data(chi2_phenotypes_filter, col_mapping_vector = cluster_vector) -> tmp
-
-tmp$number_overlap_matrix %>% colnames
-
-# Create a character vector with the identifiers
-phenotypes_mapping_vector <- c(
-  "biobankuk-101270-both_sexes--other_bread_intake-EUR-1e-08" = "other bread intake",
-  "biobankuk-103030-both_sexes--pork_intake-EUR-1e-08" = "pork intake",
-  "biobankuk-104100-both_sexes--avocado_intake-EUR-1e-08" = "avocado intake",
-  "biobankuk-atorvastatin-both_sexes--na-EUR-1e-08" = "used of atorvastatin",
-  "biobankuk-20004-both_sexes-1479-operation_code-EUR-1e-08" = "varicose vein surgery",
-  "biobankuk-22127-both_sexes-22127-doctor_diagnosed_asthma-EUR-1e-08" = "doctor diagnosed asthma",
-  "biobankuk-e78-both_sexes--e78_disorders_of_lipoprotein_metabolism_and_other_lipidaemias-EUR-1e-08" = "disorders of lipoprotein metabolism, lipidaemias",
-  "biobankuk-30280-both_sexes--immature_reticulocyte_fraction-EUR-1e-08" = "immature reticulocyte fraction",
-  "biobankuk-30290-both_sexes--high_light_scatter_reticulocyte_percentage-EUR-1e-08" = "reticulocyte percentage",
-  "biobankuk-30300-both_sexes--high_light_scatter_reticulocyte_count-EUR-1e-08" = "reticulocyte count",
-  "biobankuk-30620-both_sexes--alanine_aminotransferase-EUR-1e-08" = "alanine aminotransferase",
-  "biobankuk-3064-both_sexes--peak_expiratory_flow_pef_-EUR-1e-08" = "peak expiratory flow (PEF)",
-  "biobankuk-30870-both_sexes--triglycerides-EUR-1e-08" = "triglycerides",
-  "biobankuk-4080-both_sexes--systolic_blood_pressure_automated_reading-EUR-1e-08" = "systolic blood pressure (automated reading)",
-  "biobankuk-454_1-both_sexes--varicose_veins_of_lower_extremity-EUR-1e-08" = "varicose veins of lower extremity",
-  "biobankuk-454-both_sexes--varicose_veins-EUR-1e-08" = "varicose veins",
-  "biobankuk-471-both_sexes--nasal_polyps-EUR-1e-08" = "nasal polyps",
-  "biobankuk-5098-both_sexes--6mm_weak_meridian_right_-EUR-1e-08" = "6mm weak meridain right",
-  "biobankuk-5256-both_sexes--corneal_hysteresis_right_-EUR-1e-08" = "corneal hysteresis right",
-  "biobankuk-i83-both_sexes--i83_varicose_veins_of_lower_extremities-EUR-1e-08" = "i83 varicose veins of lower extremities",
-  "biobankuk-sbp-both_sexes--systolic_blood_pressure_automated_reading_adjusted_by_medication-EUR-1e-08" = "systolic blood pressures (automated reading adjusted by medication)"
-)
