@@ -42,7 +42,6 @@ detach(package:biomaRt)
 source("preprocessing/functions/gr-database-functions.R")
 source("preprocessing/functions/draw-custom-heatmap.R")
 source("preprocessing/functions/processing-overlap-results.R")
-source("preprocessing/overlapping-gr-genes/prepare-biomart-data.R")
 
 # Read data
 gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/geneBase_060723.tsv", sep = "\t") 
