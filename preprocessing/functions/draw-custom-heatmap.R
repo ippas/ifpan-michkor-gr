@@ -2,15 +2,18 @@ draw_custom_heatmap <- function(data_list,
                                 data_type,
                                 fdr_threshold = 0.05,
                                 color_rect = "green",
-                                fdr_thresholds = c(0.05, 0.01), # Now a vector of thresholds
+                                fdr_thresholds = c(0.01, 0.01), # Now a vector of thresholds
                                 color_rects = c("green", "red"), # Corresponding colors for each threshold
                                 lwd_rect = 2,
                                 alpha_rect = 1,
                                 apply_filling = TRUE,
                                 color_filling = "green",
                                 size_filling = 1,
+                                row_label_size = 12,  # Default font size for row labels
+                                col_label_size = 12,
                                 alpha_filling = 1,
                                 pch_filling = 16,
+                                scale_range = c(0, 8),
                                 palette = c(
                                   "pastel_blue"       = "#69A6D1",
                                   "pastel_light_blue" = "#94DFFF",
@@ -21,8 +24,9 @@ draw_custom_heatmap <- function(data_list,
                                 gene_list_sizes = T,
                                 col_mapping_vector=NULL, 
                                 row_mapping_vector=NULL,
-                                col_significant=F
-                                ) {
+                                col_significant=F,
+                                overlap_threshold = 3
+) {
   
   if(gene_list_sizes){
     if(is.null(col_mapping_vector)) {
@@ -37,7 +41,7 @@ draw_custom_heatmap <- function(data_list,
                size = data_list$gene_list_sizes[original_name]) %>%
         mutate(new_name = paste0(name, " ", "(", size, ")")) %>%
         select(c(original_name, new_name)) -> col_mapping_df
-
+      
       col_mapping_vector <- col_mapping_df$new_name
       names(col_mapping_vector) <- col_mapping_df$original_name
       
@@ -57,12 +61,12 @@ draw_custom_heatmap <- function(data_list,
     }
     
     if(is.null(row_mapping_vector)) {
-      print("echo")
+      
       
       data_list[[data_type]]$list$p_value_matrix %>% rownames() -> row_mapping_vector
       names(row_mapping_vector) <- row_mapping_vector
       
-      print(row_mapping_vector)
+      
       
       intersect(names(row_mapping_vector), names(data_list$gene_list_sizes)) %>%
         as.data.frame() %>%
@@ -89,11 +93,11 @@ draw_custom_heatmap <- function(data_list,
     }
     
   }
-
   
   
   
-    # Validate that the length of fdr_thresholds and color_rects are the same
+  
+  # Validate that the length of fdr_thresholds and color_rects are the same
   if (length(fdr_thresholds) != length(color_rects)) {
     stop("The number of thresholds and colors must be the same.")
   }
@@ -137,8 +141,8 @@ draw_custom_heatmap <- function(data_list,
   chi2_matrix <- log2(chi2_matrix + 1)
   
   number_overlap_matrix <- data$number_overlap_matrix
-  
   fdr_matrix <- data$fdr_value_matrix
+  
   
   # Helper function to estimate space for the longest name, defined inside the main function
   estimate_space_for_text <- function(text_vector, rotation = 0, fontsize = 10) {
@@ -157,13 +161,18 @@ draw_custom_heatmap <- function(data_list,
   
   # Create color ramp
   pastel_colors <- colorRampPalette(c(palette))(100)
+  # pastel_colors <- colorRamp2(c(0, 2, 4, 6, 8), palette)
+  # pastel_colors <- colorRamp2(c(0, 1.75, 3.5, 5.25, 7), palette)
   
   # Define the heatmap with cell_fun to add text inside each cell
   ht <- Heatmap(chi2_matrix, name = "example", 
                 col = pastel_colors,
+                # breaks = breaks,
                 cluster_rows = T, cluster_columns = T,
                 row_names_max_width = row_names_margin,
                 column_names_max_height = column_names_margin,
+                row_names_gp = gpar(fontsize = row_label_size),  # Set font size for row labels
+                column_names_gp = gpar(fontsize = col_label_size), 
                 # heatmap_legend_param = list(direction = "horizontal"),
                 heatmap_legend_param = list(
                   title = "log2(chi2 + 1)", # Add a title if needed
@@ -188,7 +197,7 @@ draw_custom_heatmap <- function(data_list,
                   # Draw the combined text in the cell
                   grid.text(combined_text, x, y, gp = gpar(fontsize = 10))
                 }
-                )
+  )
   
   # Define custom legends for each threshold
   significance_legends <- lapply(seq_along(fdr_thresholds), function(t) {
@@ -243,53 +252,7 @@ draw_custom_heatmap <- function(data_list,
   
   # Use the order to reorder the original matrix
   fdr_matrix <- fdr_matrix[row_order, col_order]
-  
-  # # Specific paired row and column names to highlight
-  # highlight_pairs <- 
-  #   fdr_matrix %>% 
-  #   as.data.frame() %>% 
-  #   mutate(row_names = rownames(.)) %>% 
-  #   gather(key = "col_names", value = "value", -row_names) %>% 
-  #   filter(value < fdr_threshold) %>% 
-  #   select(c(row_names, col_names))
-  # 
-  # 
-  # # Check if the number of rows and columns to be paired is the same
-  # if (nrow(highlight_pairs) != length(highlight_pairs$col_names)) {
-  #   stop("The number of row names and column names to highlight must be the same.")
-  # }
-  # 
-  # # Convert row and column names to indices
-  # row_indices <- match(highlight_pairs$row_names, rownames(fdr_matrix))
-  # col_indices <- match(highlight_pairs$col_names, colnames(fdr_matrix))
-  # 
-  # # Filter out any NAs from unmatched names
-  # valid_pairs <- highlight_pairs[!is.na(row_indices) & !is.na(col_indices), ]
-  # valid_row_indices <- row_indices[!is.na(row_indices)]
-  # valid_col_indices <- col_indices[!is.na(col_indices)]
-  # 
-  # ### code to indicate signifficant results
-  # # Loop over the pairs to draw the rectangles
-  # for (i in seq_along(valid_row_indices)) {
-  #   row_index <- valid_row_indices[i]
-  #   col_index <- valid_col_indices[i]
-  # 
-  #   # Calculate normalized positions
-  #   x_center <- (col_index - 0.5) / ncol(fdr_matrix)
-  #   y_center <- (nrow(fdr_matrix) - row_index + 0.5) / nrow(fdr_matrix)
-  # 
-  #   # Draw the rectangle
-  #   decorate_heatmap_body("example", {
-  #     grid.rect(
-  #       x = x_center,
-  #       y = y_center,
-  #       width = 1 / ncol(fdr_matrix),
-  #       height = 1 / nrow(fdr_matrix),
-  #       just = "center",
-  #       gp = gpar(col = color_rect, lwd = lwd_rect, alpha = alpha_rect, fill = NA)
-  #     )
-  #   })
-  # }
+  number_overlap_matrix <- number_overlap_matrix[row_order, col_order]
   
   # Loop over each threshold and its corresponding color
   for (t in seq_along(fdr_thresholds)) {
@@ -297,13 +260,25 @@ draw_custom_heatmap <- function(data_list,
     color_rect <- color_rects[t]
     
     # Extract pairs that are significant at the current threshold
-    highlight_pairs <- 
+    highlight_pairs_fdr <- 
       fdr_matrix %>% 
       as.data.frame() %>% 
       mutate(row_names = rownames(.)) %>% 
       gather(key = "col_names", value = "value", -row_names) %>% 
       filter(value < fdr_threshold) %>% 
       select(c(row_names, col_names))
+    
+    highlight_pairs_number <- 
+      number_overlap_matrix %>% 
+      as.data.frame() %>% 
+      mutate(row_names = rownames(.)) %>% 
+      gather(key = "col_names", value = "value", -row_names) %>% 
+      filter(value >= overlap_threshold) %>% 
+      select(c(row_names, col_names))
+    
+    hihlight_pairs_inner <- inner_join(highlight_pairs_number, highlight_pairs_fdr)
+    highlight_pairs <- hihlight_pairs_inner
+    
     
     # Convert row and column names to indices
     row_indices <- match(highlight_pairs$row_names, rownames(fdr_matrix))
@@ -313,6 +288,7 @@ draw_custom_heatmap <- function(data_list,
     valid_pairs <- highlight_pairs[!is.na(row_indices) & !is.na(col_indices), ]
     valid_row_indices <- row_indices[!is.na(row_indices)]
     valid_col_indices <- col_indices[!is.na(col_indices)]
+    
     
     # Loop over the pairs to draw the rectangles with the current color
     for (i in seq_along(valid_row_indices)) {
@@ -347,13 +323,13 @@ draw_custom_heatmap <- function(data_list,
     for (i in seq_along(valid_row_indices)) {
       row_index <- valid_row_indices[i]
       col_index <- valid_col_indices[i]
-
+      
       # Calculate the coordinates
       x_left <- (col_index - 1) / ncol(fdr_matrix)
       y_bottom <- (nrow(fdr_matrix) - row_index) / nrow(fdr_matrix)
       width <- 1 / ncol(fdr_matrix)
       height <- 1 / nrow(fdr_matrix)
-
+      
       # Draw the rectangle with the pattern fill
       decorate_heatmap_body("example", {
         # First draw a blank rectangle
@@ -365,7 +341,7 @@ draw_custom_heatmap <- function(data_list,
           just = "center",
           gp = gpar(col = NA, fill = NA)
         )
-
+        
         # Now draw small dots to create a dotted pattern
         dot_spacing <- width / 10 # Adjust the spacing of the dots here
         seq_x <- seq(x_left + dot_spacing/2, x_left + width, by = dot_spacing)

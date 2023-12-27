@@ -59,6 +59,8 @@ split(
   metabolism_data_preprocessing$label
 ) -> metabolism_gene_list
 
+lapply(metabolism_gene_list, unique) -> metabolism_gene_list
+
 # calculate chi2 tests
 chi2_results_metabolism <- perform_chi2_tests(metabolism_gene_list, hgnc_symbols_vector_v110)
 
@@ -72,22 +74,43 @@ tissues_clusters <- c("adrenal-cortex", "anterior-thigh", "hypothalamus",
                       "marpiech_tissues_dex_4", "marpiech_tissues_dex_5", "marpiech_tissues_dex_6",
                       "marpiech_tissues_dex_7", "marpiech_tissues_dex_8", "marpiech_tissues_dex_9")
 
+metabolism_mapping_vector <- c("1-oleoyl-3-linoleoyl-glycerol(18" = "1-oleoyl-3-linoleoyl-glycerol", 
+                                "3-methylglutarylcarnitine(2)" = "3-methylglutarylcarnitine", 
+                                "4-androsten-3beta17beta-diolmonosulfate(2)" = "4-androsten-3beta 17beta-diol monosulfate", 
+                                "TriglyceridesinHDL" = "HDL triglycerides", 
+                                "AveragediameterforHDLparticles" = "HDL diameter", 
+                                "AveragediameterforLDLparticles" = "LDL diameter", 
+                                "betaine" = "betaine", 
+                                "HDLcholesterol" = "HDL cholesterol", 
+                                "CholesterolinmediumHDL" = "cholesterol medium HDL", 
+                                "CholesterolinsmallHDL" = "Small HDL cholesterol", 
+                                "TotallipidsinsmallHDL" = "total lipids in small HDL", 
+                                "Degreeofunsaturation" = "degree of unsaturation", 
+                                "Glutamine" = "glutamine", 
+                                "TriglyceridesinverylargeHDL" = "Very large HDL triglycerides ", 
+                                "stearoylsphingomyelin(d18" = "stearoyl Sphingomyelin", 
+                                "TriglyceridesinLDL" = "LDL triglycerides", 
+                                "TriglyceridesinmediumHDL" = "Medium HDL triglycerides", 
+                                "Tyrosine" = "tyrosine")
+
 ###
 processing_overlap_results(data = chi2_results_metabolism  ,
-                           rows_to_filter = !rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters,
+                           rows_to_filter = !rownames(chi2_results_metabolism$p_value_matrix) %in% c(tissues_clusters, c("X-11564", "X-11261", "X-21470", "X-21467")),
                            cols_to_filter = tissues_clusters[10:27],
-                           genes_list =  metabolism_gene_list) -> clusters_metabolism_data
+                           genes_list =  metabolism_gene_list,
+                           fdr_threshold = 0.01,
+                          overlap_threshold = 3) -> clusters_metabolism_data
 
 
 # tmp$gene_list_sizes <- c(papers_gene_list, genes_list["master_gr_weak"]) %>% sapply(., length)
 
 draw_custom_heatmap(
   clusters_metabolism_data,
-  data_type = "significant_uniq_data",
-  col_mapping_vector =  cluster_vector,
-  # row_mapping_vector =  setNames(papers_data_preprocessing$label2, papers_data_preprocessing$label),
+  data_type = "significant_data",
+  col_mapping_vector =  clusters_mapping,
+  row_mapping_vector = metabolism_mapping_vector,
   fdr_threshold = 0.1,
-  fdr_thresholds = c(0.05, 0.0001),
+  fdr_thresholds = c(0.01, 0.0001),
   color_rects =  c("green", "#FF00FF"),
   color_rect = "green",
   lwd_rect = 3,
@@ -97,7 +120,7 @@ draw_custom_heatmap(
   alpha_filling = 0.6,
   size_filling = 1,
   pch_filling = 16,
-  col_significant = T
+  col_significant = T,
 )
 
 
@@ -108,7 +131,7 @@ processing_overlap_results(data = chi2_results_metabolism ,
 
 draw_custom_heatmap(
   tissue_metabolism_data,
-  data_type = "significant_uniq_data",
+  data_type = "significant_data",
   fdr_threshold = 0.1,
   fdr_thresholds = c(0.05, 0.0001),
   color_rects =  c("green", "#FF00FF"),
@@ -121,5 +144,5 @@ draw_custom_heatmap(
   size_filling = 1,
   pch_filling = 16,
   col_significant = T
-)
+) -> p1
 
