@@ -95,7 +95,7 @@ In order to have just one unique column for each GWAS phenotype data, we used **
 
 - First, the categories with more than one column mergerd into array, using ***8_0_MakeMergeIntoArray.py*** for each category like waist circumference, vitamin and mineral supplement, etc.
 - Next, ***one-hot encoded*** was done for each category separately by ***8_1_MakeOneHotEncoded.py***.
-- Finally, the average data for the categories with more than one column calculated by the ***8_2_******GettingAverageForOneHotEncoded.py.***
+- Finally, the average data for the categories with more than one column calculated by the ***8_2_GettingAverageForOneHotEncoded.py.***
 
 > All the data have been merged and normalized into **AllGWASphenotypesNormalized.csv** and prepared to be added to our main **matrix**: **output_file4_withoutEID.csv**.
 
