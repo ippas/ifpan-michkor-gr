@@ -99,9 +99,9 @@ In order to have just one unique column for each GWAS phenotype data, we used **
 
 > All the data have been merged and normalized into **AllGWASphenotypesNormalized.csv** and prepared to be added to our main **matrix**: **output_file4_withoutEID.csv**.
 
-Before merging the main data, the selected samples from **AllGWASphenotypesNormalized.csv** must have been found and extracted from **output_file4.csv** as well. These samples were not considered for further studies as most of their GWAS phenotypes (from our list) had no available data! This way, all the related samples in our **matrix** would be matched with the data from GWAS phenotypes data. The utilized scripts could be found in **9_ExtractionOfRowNumbersFromICD10NormalizedMatchWithGWASsamples.py** and **10_ExtractInterestedRowsFromNormalizedICD.py**.
+Before merging the main data, the selected samples from **AllGWASphenotypesNormalized.csv** must have been found and extracted from **output_file4.csv** as well. These samples were not considered for further studies as most of their GWAS phenotypes (from our list) had no available data! This way, all the related samples in our **matrix** would be matched with the data from GWAS phenotypes data. The utilized scripts could be found in **9_ExtractionOfRowNumbersFromICD10NormalizedMatchWithGWASsamples.py** and ***10_ExtractInterestedRowsFromNormalizedICD.py***.
 
-At the end of stage1, **AllGWASphenotypesNormalized.csv** and the output file from ***10_ExtractInterestedRowsFromNormalizedICD.py*** named as **FINALofFINALsICD10Normalized77_2.csv**.
+At the end of stage1, **AllGWASphenotypesNormalized.csv** and the output file from ***10_ExtractInterestedRowsFromNormalizedICD.py*** named as **FINALofFINALsICD10Normalized77_2.csv** would be merged by ***11_MakingReadyForPCA.sh.***
 
 > The output file (**ReadyForPCA.csv**) was ready to run PCA (principle component analysis).
 
