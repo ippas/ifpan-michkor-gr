@@ -1,0 +1,175 @@
+# Load necessary packages and functions
+source("preprocessing/preprocessing-genes-papers/install-load-packages.R")
+
+
+# Read sheet names and load each sheet into a list of data frames
+path <- "data/ld-hub/41467_2019_12576_MOESM4_ESM.csv"
+
+read.csv(path) %>% 
+  .$Category %>% unique
+
+
+
+read.csv(path) %>% 
+  filter(Category %in% c("psychiatric", "personality", "sleeping", "aging", "education", "smoking_behaviour", "cognitive", "neurological", "brain_volume")) %>% 
+  select(c(Trait2, PMID, Category)) %>% 
+  filter(PMID == "25607358")
+
+c("schizophrenia", "neuroticism", "depressive", "depression", "depressive", "smoked", "death", "sleep", "alzheimer", "intelligence",
+  "bipolar") %>% paste(., collapse = "|") -> pattern
+
+
+c("schizophrenia", "depressive", "depression", "depressive",  "sleep", "alzheimer", "intelligence", "bipolar") %>% paste(., collapse = "|") -> pattern
+
+  # List all files in the directory with full names
+list.files("data/prs-models-pan-biobank-uk2/", full.names = TRUE) -> model_files_vector
+
+model_files_vector %>% 
+  keep(~ grepl(pattern, .x)) %>% 
+  set_names(map(., ~ basename(.x) %>% tools::file_path_sans_ext())) %>%
+  # Read YAML content from each file
+  map(read_yaml) %>%
+  # Extract genes information and name the list elements after the files
+  map(~ .x$description$genes) %>% 
+  lapply(., unique) -> psychiatric_biobank_genes_list
+
+
+
+phenotypes_biobank_genes_list <-  psychiatric_biobank_genes_list
+
+
+papers_gene_list %>% names
+
+ 
+c(papers_gene_list, phenotypes_biobank_genes_list) %>% 
+  lapply(., unique) -> phenotypes_clusters_list 
+
+
+# c( phenotypes_biobank_genes_list) %>% 
+#   lapply(., unique) -> phenotypes_clusters_list 
+
+
+chi2_results_phenotypes <- perform_chi2_tests(phenotypes_clusters_list, hgnc_symbols_vector_v110)
+
+processing_overlap_results(data = chi2_results_phenotypes,
+                           rows_to_filter = !rownames(chi2_results_phenotypes$p_value_matrix) %in% names(papers_gene_list),
+                           # rows_to_filter = tissues_clusters[10:27],
+                           cols_to_filter = names(papers_gene_list),
+                           overlap_threshold = 3,
+                           fdr_threshold = 0.1,
+                           genes_list = phenotypes_clusters_list) -> clusters_phenotypes_data
+
+# processing_overlap_results(data = chi2_results_phenotypes,
+#                            rows_to_filter = names(phenotypes_clusters_list ),
+#                            # rows_to_filter = tissues_clusters[10:27],
+#                            cols_to_filter = names(phenotypes_clusters_list ),
+#                            overlap_threshold = 3,
+#                            fdr_threshold = 0.1,
+#                            genes_list = phenotypes_clusters_list) -> clusters_phenotypes_data
+
+
+
+
+clusters_phenotypes_data$significant_uniq_data$df
+
+
+
+
+draw_custom_heatmap(
+  clusters_phenotypes_data,
+  data_type = "significant_uniq_data",
+  palette = c(
+    "pastel_blue"       = "white",
+    "pastel_light_blue" = "#f8dedd",
+    "white"        = "#f1bcbb",
+    "pastel_orange"= "#edacab",
+    "pastel_red"   = "#e68a89"
+  ),
+  # col_mapping_vector =  clusters_mapping,
+  # row_mapping_vector =  phenotyepes_mapping,
+  fdr_threshold = 0.01,
+  fdr_thresholds = c(0.1, 0.0001),
+  color_rects =  c("#4C8D05", "#66023C"),
+  color_rect = "green",
+  lwd_rect = 2,
+  alpha_rect = 1,
+  apply_filling = F,
+  color_filling = "gray",
+  alpha_filling = 0.6,
+  size_filling = 1,
+  pch_filling = 16,
+  col_significant = T,
+  row_dend_width = unit(4, "cm"),  # Adjust row dendrogram width
+  column_dend_height = unit(3, "cm"),  # Adjust column dendrogram height
+  row_names_gp = gpar(fontsize = 12),
+  column_names_gp = gpar(fontsize = 12),
+  column_names_rot = 45,
+  column_names_side = "top",
+  overlap_threshold = 3
+)
+
+
+################################################################################
+c(papers_gene_list[tissues_clusters[10:27]], phenotypes_biobank_genes_list) %>% 
+  lapply(., unique) -> phenotypes_clusters_list 
+
+
+chi2_results_phenotypes <- perform_chi2_tests(phenotypes_clusters_list, hgnc_symbols_vector_v110)
+
+###
+
+###
+processing_overlap_results(data = chi2_results_phenotypes,
+                           rows_to_filter = !rownames(chi2_results_phenotypes$p_value_matrix) %in% tissues_clusters,
+                           # rows_to_filter = tissues_clusters[10:27],
+                           cols_to_filter = tissues_clusters[10:27],
+                           overlap_threshold = 3,
+                           fdr_threshold = 0.02,
+                           genes_list = phenotypes_clusters_list) -> clusters_phenotypes_data
+
+
+
+clusters_phenotypes_data$significant_uniq_data$df %>% 
+  filter(fdr > 0.01) %>% .$Var1 %>% unique() -> phenotypes_to_remove
+
+
+manual_filter_overlap_results(clusters_phenotypes_data, rows_to_remove = phenotypes_to_remove) -> clusters_papers_data
+
+clusters_phenotypes_data$significant_uniq_data$rows %>% gsub("biobankuk.*both_sexes-", "", .) -> phenotyepes_mapping
+
+names(phenotyepes_mapping) <- clusters_phenotypes_data$significant_uniq_data$rows 
+# Printing the modified vector
+print(phenotyepes_mapping)
+
+draw_custom_heatmap(
+  clusters_phenotypes_data,
+  data_type = "significant_uniq_data",
+  palette = c(
+    "pastel_blue"       = "white",
+    "pastel_light_blue" = "#f8dedd",
+    "white"        = "#f1bcbb",
+    "pastel_orange"= "#edacab",
+    "pastel_red"   = "#e68a89"
+  ),
+  # col_mapping_vector =  clusters_mapping,
+  row_mapping_vector =  phenotyepes_mapping,
+  fdr_threshold = 0.01,
+  fdr_thresholds = c(0.05, 0.0001),
+  color_rects =  c("#4C8D05", "#66023C"),
+  color_rect = "green",
+  lwd_rect = 2,
+  alpha_rect = 1,
+  apply_filling = F,
+  color_filling = "gray",
+  alpha_filling = 0.6,
+  size_filling = 1,
+  pch_filling = 16,
+  col_significant = T,
+  row_dend_width = unit(4, "cm"),  # Adjust row dendrogram width
+  column_dend_height = unit(3, "cm"),  # Adjust column dendrogram height
+  row_names_gp = gpar(fontsize = 12),
+  column_names_gp = gpar(fontsize = 12),
+  column_names_rot = 45,
+  column_names_side = "top",
+  overlap_threshold = 3
+)

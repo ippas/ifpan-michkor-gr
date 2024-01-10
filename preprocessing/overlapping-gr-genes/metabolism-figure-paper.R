@@ -106,13 +106,20 @@ processing_overlap_results(data = chi2_results_metabolism  ,
 draw_custom_heatmap(
   clusters_metabolism_data,
   data_type = "significant_uniq_data",
+  palette = c(
+    "pastel_blue"       = "white",
+    "pastel_light_blue" = "#f8dedd",
+    "white"        = "#f1bcbb",
+    "pastel_orange"= "#edacab",
+    "pastel_red"   = "#e68a89"
+  ),
   col_mapping_vector =  clusters_mapping,
   row_mapping_vector = metabolism_mapping_vector,
-  fdr_threshold = 0.1,
+  fdr_threshold = 0.01,
   fdr_thresholds = c(0.01, 0.0001),
-  color_rects =  c("green", "#FF00FF"),
+  color_rects =  c("#4C8D05", "#66023C"),
   color_rect = "green",
-  lwd_rect = 3,
+  lwd_rect = 2,
   alpha_rect = 1,
   apply_filling = F,
   color_filling = "gray",
@@ -120,27 +127,49 @@ draw_custom_heatmap(
   size_filling = 1,
   pch_filling = 16,
   col_significant = T,
+  row_dend_width = unit(4, "cm"),  # Adjust row dendrogram width
+  column_dend_height = unit(3, "cm"),  # Adjust column dendrogram height
+  row_names_gp = gpar(fontsize = 16),
+  column_names_gp = gpar(fontsize = 16),
+  column_names_rot = 45,
+  column_names_side = "top",
 )
 
 
-processing_overlap_results(data = chi2_results_metabolism ,
-                           rows_to_filter = !rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters,
-                           cols_to_filter = tissues_clusters[1:9],
-                           genes_list = metabolism_gene_list) -> tissue_metabolism_data
+
+svg("results/figures/figure-phenotype-metabolome/metabolism-clusters.svg", width = 8.3, height = 6.4)
+
 
 draw_custom_heatmap(
-  tissue_metabolism_data,
-  data_type = "significant_data",
-  fdr_threshold = 0.1,
-  fdr_thresholds = c(0.05, 0.0001),
-  color_rects =  c("green", "#FF00FF"),
+  clusters_metabolism_data,
+  data_type = "significant_uniq_data",
+  palette = c(
+    "pastel_blue"       = "white",
+    "pastel_light_blue" = "#f8dedd",
+    "white"        = "#f1bcbb",
+    "pastel_orange"= "#edacab",
+    "pastel_red"   = "#e68a89"
+  ),
+  col_mapping_vector =  clusters_mapping,
+  row_mapping_vector = metabolism_mapping_vector,
+  fdr_threshold = 0.01,
+  fdr_thresholds = c(0.01, 0.0001),
+  color_rects =  c("#4C8D05", "#66023C"),
   color_rect = "green",
-  lwd_rect = 3,
+  lwd_rect = 2,
   alpha_rect = 1,
   apply_filling = F,
-  color_filling = "green",
+  color_filling = "gray",
   alpha_filling = 0.6,
   size_filling = 1,
   pch_filling = 16,
-  col_significant = T
-) -> p1
+  col_significant = T,
+  row_dend_width = unit(2.5, "cm"),  # Adjust row dendrogram width
+  column_dend_height = unit(3, "cm"),  # Adjust column dendrogram height
+  row_names_gp = gpar(fontsize = 16),
+  column_names_gp = gpar(fontsize = 16),
+  column_names_rot = 45,
+  column_names_side = "top",
+)
+
+dev.off()
