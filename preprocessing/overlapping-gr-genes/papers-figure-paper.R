@@ -225,7 +225,7 @@ papers_mapping %>%
   setNames(names(papers_mapping)) %>%   sapply(function(x) str_replace(x, ",(?=[^,]*$)", "    ")) %>%
   setNames(names(papers_mapping)) -> papers_mapping 
   
-  purrr::map_chr(~ paste("    ", ., sep = "")) -> papers_mapping
+  # purrr::map_chr(~ paste("    ", ., sep = "")) -> papers_mapping
 
 # papers_mapping <- paste("   ", papers_mapping, sep = "")
 

@@ -77,6 +77,8 @@ processing_overlap_results <- function(data, genes_list, rows_to_filter, cols_to
         map(~sort(.) %>% paste(collapse = ',')) %>% unlist
     ) -> original_df
   
+  print(class(original_df)) 
+  
   # Extract overlap genes
   original_df$overlap_genes %>% 
     strsplit(., split = ",") %>% 
@@ -97,7 +99,7 @@ processing_overlap_results <- function(data, genes_list, rows_to_filter, cols_to
   # This section filters the original data frame for significant results based on FDR and overlap criteria.
   original_df %>% 
     filter(fdr < fdr_threshold) %>% 
-    filter(number_overlap >= overlap_threshold) -> significant_df
+    filter(gene_overlap_count >= overlap_threshold) -> significant_df
   
   # Extract overlap genes
   significant_df$overlap_genes %>% 
@@ -125,7 +127,7 @@ processing_overlap_results <- function(data, genes_list, rows_to_filter, cols_to
     unnest() %>% 
     ungroup %>% 
     as.data.frame() %>% 
-    select(c(Var1, Var2, p_value, chi2, number_overlap, overlap_genes, fdr))-> significant_uniq_df
+    select(c(Var1, Var2, p_value, chi2, gene_overlap_count, overlap_genes, fdr))-> significant_uniq_df
   
   # Extract overlap genes
   significant_uniq_df$overlap_genes %>% 
@@ -177,7 +179,7 @@ processing_overlap_results <- function(data, genes_list, rows_to_filter, cols_to
 #   mutate(fdr = p.adjust(p_value, method = "fdr")) %>%
 #   arrange(fdr) %>%
 #   filter(fdr < 0.05) %>% 
-#   filter(number_overlap > 1) %>% 
+#   filter(gene_overlap_count > 1) %>% 
 #   group_by(overlap_genes, cluster) %>% 
 #   nest() %>% 
 #   dplyr::mutate(data = map(data, ~ .x %>% 

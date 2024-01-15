@@ -224,7 +224,7 @@ extract_data <- function(results, rows_to_filter, cols_to_filter) {
   chi2_df <- melt_matrix(results$chi2_value_matrix, "chi2")
   
   # Extract number of overlaps and store in a dataframe
-  overlap_df <- melt_matrix(results$number_overlap_matrix, "number_overlap")
+  overlap_df <- melt_matrix(results$number_overlap_matrix, "gene_overlap_count")
   
   # Extract overlapping gene names and store in a dataframe
   overlap_genes_df <- melt_matrix(results$overlap_genes_matrix, "overlap_genes")
