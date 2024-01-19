@@ -1,46 +1,26 @@
-# Load necessary packages and functions
-source("preprocessing/preprocessing-genes-papers/install-load-packages.R")
+read.csv("data/phenotypes/panukbiobank-phenotype-category.csv") %>% 
+  filter(category_name == "Mental health") %>% 
+  .$model_name %>% unique %>%  paste(., collapse = "|") -> depression_models_pattern
 
 
-# Read sheet names and load each sheet into a list of data frames
-path <- "data/ld-hub/41467_2019_12576_MOESM4_ESM.csv"
-
-read.csv(path) %>% 
-  .$Category %>% unique
-
-
-
-read.csv(path) %>% 
-  filter(Category %in% c("psychiatric", "personality", "sleeping", "aging", "education", "smoking_behaviour", "cognitive", "neurological", "brain_volume")) %>% 
-  select(c(Trait2, PMID, Category)) %>% 
-  filter(PMID == "25607358")
-
-c("schizophrenia", "neuroticism", "depressive", "depression", "depressive", "smoked", "death", "sleep", "alzheimer", "intelligence",
-  "bipolar") %>% paste(., collapse = "|") -> pattern
-
-
-c("schizophrenia", "depressive", "depression", "depressive",  "sleep", "alzheimer", "intelligence", "bipolar") %>% paste(., collapse = "|") -> pattern
-
-  # List all files in the directory with full names
+# List all files in the directory with full names
 list.files("data/prs-models-pan-biobank-uk2/", full.names = TRUE) -> model_files_vector
 
 model_files_vector %>% 
-  keep(~ grepl(pattern, .x)) %>% 
+  keep(~ grepl(depression_models_pattern, .x)) %>% 
   set_names(map(., ~ basename(.x) %>% tools::file_path_sans_ext())) %>%
   # Read YAML content from each file
   map(read_yaml) %>%
   # Extract genes information and name the list elements after the files
   map(~ .x$description$genes) %>% 
-  lapply(., unique) -> psychiatric_biobank_genes_list
+  lapply(., unique) -> depression_category_genes_list
 
-
-
-phenotypes_biobank_genes_list <-  psychiatric_biobank_genes_list
-
+################################################################################
+# analysis
+phenotypes_biobank_genes_list <- depression_category_genes_list
 
 papers_gene_list %>% names
 
- 
 c(papers_gene_list, phenotypes_biobank_genes_list) %>% 
   lapply(., unique) -> phenotypes_clusters_list 
 
@@ -101,20 +81,7 @@ draw_custom_heatmap(
 )
 
 
+clusters_phenotypes_data$significant_uniq_data$df %>% arrange(fdr) 
 
-
-
-
-classify_phenotype <- function(name) {
-  patterns <- c("schizophrenia", "depressive", "depression", "sleep", "alzheimer", "intelligence", "bipolar")
-  for (pattern in patterns) {
-    if (grepl(pattern, name, ignore.case = TRUE)) {
-      return(pattern)
-    }
-  }
-  return("Other")  # Default category if no pattern matches
-}
-
-psychiatric_biobank_genes_list %>% names %>% as.data.frame() %>% set_colnames("phenotype_name") %>%
-  mutate(category = sapply(phenotype_name, classify_phenotype)) %>% 
-  .$category %>% table
+clusters_phenotypes_data$significant_uniq_data$df %>% arrange(fdr) %>% 
+  write.table(., "results/tables/psychiatric-overlap/mental-health-overlap.tsv", row.names = F, col.names = T, quote = F, sep = "\t")
