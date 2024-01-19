@@ -47,12 +47,12 @@ source("preprocessing/functions/R/gene-paper-preprocessing-functions.R")
 
 
 # Read data
-gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/geneBase_060723.tsv", sep = "\t") 
-gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/publikacje_gr_100923.tsv", sep = "\t") 
-gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/publikacje_gr_v5_181023.tsv", sep = "\t")
-gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v8_251023.tsv", sep = "\t") 
-gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v9_091123.tsv", sep = "\t") # last version
-gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v11_141223.tsv", sep = "\t") 
+# gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/geneBase_060723.tsv", sep = "\t") 
+# gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/publikacje_gr_100923.tsv", sep = "\t") 
+# gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/publikacje_gr_v5_181023.tsv", sep = "\t")
+# gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v8_251023.tsv", sep = "\t") 
+# gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v9_091123.tsv", sep = "\t") # last version
+# gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v11_141223.tsv", sep = "\t") 
 gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v12_191223.tsv", sep = "\t") 
 
 
@@ -97,8 +97,7 @@ gr_gene_database %>%
 # Specify the URL for Ensembl version 110 from the archive
 # in the future it'd change to archive url
 ensembl_url_v109 = "http://feb2023.archive.ensembl.org/"
-ensembl_url_v110 = "http://www.ensembl.org"
-ensembl_url_v110 = "https://www.ensembl.org"
+ensembl_url_v110 = "https://jul2023.archive.ensembl.org/"
 
 # Use the biomaRt package to connect to the Ensembl dataset from the specified version (110)
 # Set the biomart to "ensembl", dataset to human genes ("hsapiens_gene_ensembl"), and use the archive URL as the host

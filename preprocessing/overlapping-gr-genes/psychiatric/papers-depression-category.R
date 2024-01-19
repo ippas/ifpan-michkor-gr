@@ -4,7 +4,7 @@ read.csv("data/phenotypes/panukbiobank-phenotype-category.csv") %>%
 
 
 # List all files in the directory with full names
-list.files("data/prs-models-pan-biobank-uk2/", full.names = TRUE) -> model_files_vector
+list.files("data/prs-models-pan-biobank-uk/", full.names = TRUE) -> model_files_vector
 
 model_files_vector %>% 
   keep(~ grepl(depression_models_pattern, .x)) %>% 

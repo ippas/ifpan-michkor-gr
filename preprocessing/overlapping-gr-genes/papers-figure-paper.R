@@ -73,9 +73,8 @@ papers_data_preprocessing %>%
   rbind(., tmp_kidney) -> papers_data_preprocessing
  
 
+split(papers_data_preprocessing$hgnc_symbol, papers_data_preprocessing$label) %>% lapply(., unique) -> papers_gene_list
 
-
-split(papers_data_preprocessing$hgnc_symbol, papers_data_preprocessing$label) -> papers_gene_list
 
 # calculate chi2 tests
 lapply(papers_gene_list, unique) -> papers_gene_list
