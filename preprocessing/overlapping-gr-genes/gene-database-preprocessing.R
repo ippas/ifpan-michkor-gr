@@ -32,7 +32,7 @@ lapply(bioc_packages, load_package, is_bioc = TRUE)
 
 # Check if biomaRt is installed, if not install it
 if (!requireNamespace("biomaRt", quietly = TRUE)) {
-  install.packages("biomaRt")
+  BiocManager::install("biomaRt")
 }
 
 # Detach the biomaRt package
