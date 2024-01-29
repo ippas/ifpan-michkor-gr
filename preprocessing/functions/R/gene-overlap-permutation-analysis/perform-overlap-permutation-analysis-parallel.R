@@ -24,11 +24,14 @@ perform_overlap_permutation_analysis_parallel <- function(permutations,
   #   A list of results from each permutation, each representing the outcome of the gene set analysis.
   
   # Initialize a future plan for parallel processing
+  # Initialize a future plan for parallel processing
   plan(future::multisession, workers = num_cores)
+  # plan(future::multiprocess, workers = num_cores)
+  # plan(workers = num_cores)
   
   # Create a function that performs a single permutation
   perform_single_permutation <- function(i) {
-    # Set initial seed and generate seeds for each permutation
+    # Existing code for setting seed and generating permutation seeds
     if (!is.null(seed)) {
       set.seed(seed)
       permutation_seeds <- sample(1000000, size = permutations)
@@ -36,17 +39,30 @@ perform_overlap_permutation_analysis_parallel <- function(permutations,
       permutation_seeds <- rep(NULL, permutations)
     }
     
-    # Perform random gene set analysis
-    analyze_random_gene_sets(
-      seed = permutation_seeds[i],
-      reference_hgnc_vector = reference_hgnc_vector,
-      size_reference_list = size_reference_list,
-      comparison_gene_list = comparison_gene_list,
-      overlap_threshold = overlap_threshold,
-      fdr_threshold = fdr_threshold
-    ) -> results
-    
-    nrow(results$significant_uniq_data$df)
+    # Use tryCatch to handle errors
+    tryCatch({
+      # Perform random gene set analysis
+      analyze_random_gene_sets(
+        seed = permutation_seeds[i],
+        reference_hgnc_vector = reference_hgnc_vector,
+        size_reference_list = size_reference_list,
+        comparison_gene_list = comparison_gene_list,
+        overlap_threshold = overlap_threshold,
+        fdr_threshold = fdr_threshold
+      ) -> results
+      
+      # print(i)
+      
+      # Return the number of rows
+      number_significant_results <- nrow(results$significant_uniq_data$df)
+      rm(results)
+      return(number_significant_results)
+    }, error = function(e) {
+      # In case of an error, return or print 0
+      # Uncomment the line below to print the error message, if needed
+      # print(e)
+      return(0)
+    })
   }
   
   # Execute permutations in parallel using future.apply's future_lapply

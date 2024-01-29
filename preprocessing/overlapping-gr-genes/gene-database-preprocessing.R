@@ -44,6 +44,7 @@ source("preprocessing/functions/R/draw-custom-heatmap.R")
 source("preprocessing/functions/R/processing-overlap-results.R")
 source("preprocessing/functions/R/manual-filter-overlap-results.R")
 source("preprocessing/functions/R/gene-paper-preprocessing-functions.R")
+source("preprocessing/functions/R/perform-chi2-tests.R")
 
 
 # Read data

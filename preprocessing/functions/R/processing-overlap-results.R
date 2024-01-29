@@ -77,8 +77,6 @@ processing_overlap_results <- function(data, genes_list, rows_to_filter, cols_to
         map(~sort(.) %>% paste(collapse = ',')) %>% unlist
     ) -> original_df
   
-  print(class(original_df)) 
-  
   # Extract overlap genes
   original_df$overlap_genes %>% 
     strsplit(., split = ",") %>% 

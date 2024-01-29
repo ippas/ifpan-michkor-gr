@@ -1,5 +1,5 @@
 read.csv("data/phenotypes/panukbiobank-phenotype-category.csv") %>% 
-  filter(category_name == "Mental health") %>% 
+  filter(category_name == "Depression") %>% 
   .$model_name %>% unique %>%  paste(., collapse = "|") -> depression_models_pattern
 
 
@@ -15,7 +15,22 @@ model_files_vector %>%
   map(~ .x$description$genes) %>% 
   lapply(., unique) -> depression_category_genes_list
 
-################################################################################
+######################################################################Sys.time() -> start_time
+permutation_mental_health_results2 <- perform_overlap_permutation_analysis_parallel(
+  permutations = 100,  # Number of permutations
+  seed = 123,          # Initial seed for reproducibility
+  num_cores = 35,       # Number of cores to use
+  # Additional arguments for analyze_random_gene_sets
+  reference_hgnc_vector = hgnc_symbols_vector_v110,
+  size_reference_list = papers_gene_list[!grepl("marpiech", names(papers_gene_list))],
+  comparison_gene_list = depression_category_genes_list,
+  overlap_threshold = 3,
+  fdr_threshold = 0.01
+)
+
+Sys.time() -> end_time
+
+start_time - end_time##########
 # analysis
 phenotypes_biobank_genes_list <- depression_category_genes_list
 
