@@ -32,9 +32,11 @@ Sys.time() -> end_time
 
 start_time - end_time##########
 # analysis
-phenotypes_biobank_genes_list <- depression_category_genes_list
+phenotypes_biobank_genes_list <- icd10f_genes_list
 
 papers_gene_list %>% names
+
+# papers_gene_list[!grepl("marpiech", names(papers_gene_list))]
 
 c(papers_gene_list, phenotypes_biobank_genes_list) %>% 
   lapply(., unique) -> phenotypes_clusters_list 
@@ -46,7 +48,7 @@ processing_overlap_results(data = chi2_results_phenotypes,
                            # rows_to_filter = tissues_clusters[10:27],
                            cols_to_filter = names(papers_gene_list),
                            overlap_threshold = 3,
-                           fdr_threshold = 0.01,
+                           fdr_threshold = 0.05,
                            genes_list = phenotypes_clusters_list) -> clusters_phenotypes_data
 
 
@@ -75,7 +77,7 @@ draw_custom_heatmap(
   # col_mapping_vector =  clusters_mapping,
   row_mapping_vector =  phenotyepes_mapping,
   fdr_threshold = 0.01,
-  fdr_thresholds = c(0.01, 0.0001),
+  fdr_thresholds = c(0.05, 0.0001),
   color_rects =  c("#4C8D05", "#66023C"),
   color_rect = "green",
   lwd_rect = 2,
@@ -96,7 +98,10 @@ draw_custom_heatmap(
 )
 
 
-clusters_phenotypes_data$significant_uniq_data$df %>% arrange(fdr) 
+clusters_phenotypes_data$significant_uniq_data$df %>% arrange(fdr) %>% head(8) %>% 
+  .$overlap_genes %>% as.list() %>% 
+  lapply(., function(x){unlist(strsplit(x, ","))}) %>% 
+  unlist()
 
 clusters_phenotypes_data$significant_uniq_data$df %>% arrange(fdr) %>% 
   write.table(., "results/tables/psychiatric-overlap/mental-health-overlap.tsv", row.names = F, col.names = T, quote = F, sep = "\t")
