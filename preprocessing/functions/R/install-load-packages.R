@@ -6,7 +6,7 @@ install_and_load_packages <- function(packages) {
 }
 
 # List of packages to be installed and loaded
-required_packages <- c("readxl", "writexl", "magrittr", "tidyverse", "parallel", "future.apply", "future", "yaml")
+required_packages <- c("readxl", "writexl", "magrittr", "tidyverse", "parallel", "future.apply", "future", "yaml", "furrr", "purrr")
 
 # Install and load the packages
 install_and_load_packages(required_packages)
@@ -27,3 +27,13 @@ source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permut
 # overlapping gene analysis
 source("preprocessing/functions/R/overlapping-genes-analysis/read_genes_from_phenotype_models.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/filter_phenotypes_by_category.R")
+
+
+# Load in custom functions related to preprocessing
+source("preprocessing/functions/R/gr-database-functions.R")
+source("preprocessing/functions/R/draw-custom-heatmap.R")
+source("preprocessing/functions/R/processing-overlap-results.R")
+source("preprocessing/functions/R/manual-filter-overlap-results.R")
+source("preprocessing/functions/R/gene-paper-preprocessing-functions.R")
+source("preprocessing/functions/R/perform-chi2-tests.R")
+
