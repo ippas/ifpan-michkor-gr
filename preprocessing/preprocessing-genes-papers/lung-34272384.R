@@ -1,10 +1,5 @@
 source("preprocessing/functions/R/install-load-packages.R")
 
-source("preprocessing/functions/R/preprocessing-gene-papers/download-and-read-geo-file.R")
-source("preprocessing/functions/R/preprocessing-gene-papers/select_columns_by_pattern.R")
-source("preprocessing/functions/R/preprocessing-gene-papers/perform_DESeq2_analysis.R")
-
-
 file_url <- "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE159nnn/GSE159546/suppl/GSE159546%5Fraw%2Dcounts%2Ddexamethasone.csv.gz"
 output_dir <- "data/supplement-genes-papers/lung-34272384/"
 
