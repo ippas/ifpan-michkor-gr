@@ -26,6 +26,7 @@ perform_overlap_permutation_analysis_parallel <- function(permutations,
   # Initialize a future plan for parallel processing
   # Initialize a future plan for parallel processing
   plan(future::multisession, workers = num_cores)
+  # plan(future::multicore, workers = num_cores)
   # plan(future::multiprocess, workers = num_cores)
   # plan(workers = num_cores)
   

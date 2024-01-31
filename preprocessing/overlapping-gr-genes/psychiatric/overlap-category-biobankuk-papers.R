@@ -24,6 +24,7 @@ start_time <- Sys.time()
 for (category in categories_biobankuk) {
   
   print(category)
+  loop_start <- Sys.time()
   
   category_genes_list <- filter_phenotypes_by_category(
     genes_list = genes_phenotypes_PanUkBiobank,
@@ -52,7 +53,7 @@ for (category in categories_biobankuk) {
   }
   
   # Continue with further processing if no error occurred
-  permutation_category_results <- perform_overlap_permutation_analysis_parallel(
+  permutation_category_results <- perform_overlap_permutation_analysis_multicore(
     permutations = 1000,
     seed = 123,
     num_cores = 30,
@@ -67,7 +68,11 @@ for (category in categories_biobankuk) {
   
   category_overlap_results$permutation_results <- permutation_category_results
   
-  overlap_results[[category]] <- category_overlap_results 
+  overlap_results[[category]] <- category_overlap_results
+  
+  loop_end <- Sys.time()
+  loop_duration <- loop_end - loop_start
+  print(loop_duration)
 }
 
 # End time measurement
@@ -89,6 +94,8 @@ start_time <- Sys.time()
 
 # Parallel processing using future_lapply with error handling
 overlap_results <- future_lapply(categories_biobankuk, function(category) {
+  
+
   tryCatch({
     tmp <- filter_phenotypes_by_category(
       genes_list = genes_phenotypes_PanUkBiobank,
@@ -110,6 +117,7 @@ overlap_results <- future_lapply(categories_biobankuk, function(category) {
     warning(sprintf("Error in processing category '%s': %s", category, e$message))
     return(NULL)
   })
+
 }, future.seed = TRUE)
 
 names(overlap_results) <- categories_biobankuk

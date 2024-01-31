@@ -12,13 +12,13 @@ filter_phenotypes_by_category(
 
 Sys.time() -> start_time
 permutation_mental_health_results2 <- perform_overlap_permutation_analysis_parallel(
-  permutations = 10,  # Number of permutations
-  seed = 223,          # Initial seed for reproducibility
+  permutations = 100,  # Number of permutations
+  seed = 123,          # Initial seed for reproducibility
   num_cores = 35,       # Number of cores to use
   # Additional arguments for analyze_random_gene_sets
   reference_hgnc_vector = hgnc_symbols_vector_v110,
   size_reference_list = papers_gene_list[!grepl("marpiech", names(papers_gene_list))],
-  comparison_gene_list = mental_health_genes_lis,
+  comparison_gene_list = mental_health_genes_list,
   overlap_threshold = 3,
   fdr_threshold = 0.01
 )

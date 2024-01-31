@@ -39,5 +39,10 @@ analyze_random_gene_sets <- function(reference_hgnc_vector, size_reference_list,
     genes_list = combined_genes_list
   )
   
+  rm(chi2_results, random_genes_list)
+  
+  gc()
+  
   return(analysis_results)
 }
+
