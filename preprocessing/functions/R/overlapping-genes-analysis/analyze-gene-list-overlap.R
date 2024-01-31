@@ -16,17 +16,9 @@ analyze_gene_list_overlap <-
     processed_data <- processing_overlap_results(
       data = analysis_results,
       rows_to_filter = !rownames(analysis_results$p_value_matrix) %in% names(row_lists),
-      cols_to_filter = names(col_lists),
-      overlap_threshold = {
-        {
-          overlap_threshold
-        }
-      },
-      fdr_threshold = {
-        {
-          fdr_threshold
-        }
-      },
+      cols_to_filter = names(row_lists),
+      overlap_threshold = {{overlap_threshold}},
+      fdr_threshold = {{fdr_threshold}},
       genes_list = combined_list
     )
     

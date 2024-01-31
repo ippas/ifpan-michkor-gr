@@ -27,6 +27,7 @@ source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permut
 # overlapping gene analysis
 source("preprocessing/functions/R/overlapping-genes-analysis/read_genes_from_phenotype_models.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/filter_phenotypes_by_category.R")
+source("preprocessing/functions/R/overlapping-genes-analysis/analyze-gene-list-overlap.R")
 
 
 # Load in custom functions related to preprocessing
