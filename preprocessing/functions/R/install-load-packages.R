@@ -17,6 +17,7 @@ install_and_load_packages(required_packages)
 source("preprocessing/functions/R/preprocessing-gene-papers/download-and-read-geo-file.R")
 source("preprocessing/functions/R/preprocessing-gene-papers/select_columns_by_pattern.R")
 source("preprocessing/functions/R/preprocessing-gene-papers/perform_DESeq2_analysis.R")
+source("preprocessing/functions/R/preprocessing-gene-papers/read_excel_sheets.R")
 
 # permutation functions
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/analyze-random-gene-sets.R")
