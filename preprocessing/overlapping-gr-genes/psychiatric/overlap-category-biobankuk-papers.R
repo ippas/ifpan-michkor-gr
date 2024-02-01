@@ -40,7 +40,7 @@ for (category in categories_biobankuk) {
       reference_hgnc_vector = hgnc_symbols_vector_v110,
       fdr_threshold = 0.01,
       overlap_threshold = 3,
-      keep_original_data = FALSE
+      keep_original_data = TRUE
     )
   }, error = function(e) {
     warning(sprintf("Error in analyze_gene_list_overlap for category '%s': %s", category, e$message))
@@ -85,59 +85,79 @@ duration <- end_time - start_time
 print(duration)
 
 
-################################################################################
-# Set up future plan
-plan(multisession, workers = 35)
 
-# Start time measurement
-start_time <- Sys.time()
-
-# Parallel processing using future_lapply with error handling
-overlap_results <- future_lapply(categories_biobankuk, function(category) {
+gene_overlap_summary <- function(data) {
+  # Calculate the number of significant results
+  number_of_significant_results <- nrow(data$significant_uniq_data$df)
+  # print(number_of_significant_results)
   
+  # Calculate permutation FDR
+  permutation_FDR <- sum(data$permutation_results >= number_of_significant_results) / 1000
+  # print(permutation_FDR)
+  
+  max_permutation <- max(data$permutation_results)
 
-  tryCatch({
-    tmp <- filter_phenotypes_by_category(
-      genes_list = genes_phenotypes_PanUkBiobank,
-      path_metafile = "data/phenotypes/panukbiobank-phenotype-category.csv",
-      category_name = category
-    )
-    # print(tmp)
-    
-    analyze_gene_list_overlap(
-      row_lists = papers_gene_list[!grepl("marpiech", names(papers_gene_list))],
-      col_lists = tmp,
-      reference_hgnc_vector = hgnc_symbols_vector_v110,
-      fdr_threshold = 0.01,
-      overlap_threshold = 3,
-      keep_original_data = TRUE
-    )
-  }, error = function(e) {
-    # In case of error, return 0 or any other appropriate value
-    warning(sprintf("Error in processing category '%s': %s", category, e$message))
-    return(NULL)
-  })
+  df_genes_freq <-
+    data$significant_uniq_data$df$overlap_genes %>% lapply(., function(x) {
+      strsplit(x, split = ",") %>% unlist
+    }) %>% unlist %>% table %>% as.data.frame() %>% set_colnames(c("gene_name", "freq")) %>%  arrange(desc(freq)) %>% 
+    filter(freq > 1)
+  
+  # Create a summary object
+  summary <- list(
+    number_of_significant_results = number_of_significant_results,
+    permutation_FDR = permutation_FDR,
+    mx_permutation = max_permutation
+    # df_gene_frq = df_genes_freq
+  )
 
-}, future.seed = TRUE)
+  # Return the summary object
+  return(summary)
+}
 
-names(overlap_results) <- categories_biobankuk
-
-# End time measurement
-end_time <- Sys.time()
-
-# Calculate the duration
-duration <- end_time - start_time
-
-# Print the duration
-print(duration)
-
-Filter(Negate(is.null), overlap_results) -> overlap_results
-overlap_results$`Mental distress`$original_data$df %>% 
-  filter(gene_overlap_count > 1) %>% 
-  filter(fdr < 0.9)
-  mutate(log10_fdr = log10(fdr))
+lapply(overlap_results, function(x){gene_overlap_summary(data = x)}) %>%  do.call(rbind, .) %>% 
+  as.data.frame() %>% 
+  filter(permutation_FDR < 0.01)
 
 
-lapply(overlap_results, function(x) {x$significant_uniq_data$df %>% nrow})
+filter_phenotypes_by_category(
+  genes_list = genes_phenotypes_PanUkBiobank,
+  path_metafile = "data/phenotypes/panukbiobank-phenotype-category.csv",
+  category_name = "Blood assays"
+) %>% length()
 
-overlap_results$Anxiety$significant_uniq_data$df
+
+draw_custom_heatmap(
+  overlap_results$`Lifestyle and environment`,
+  data_type = "significant_uniq_data",
+  palette = c(
+    "pastel_blue"       = "white",
+    "pastel_light_blue" = "#f8dedd",
+    "white"        = "#f1bcbb",
+    "pastel_orange"= "#edacab",
+    "pastel_red"   = "#e68a89"
+  ),
+  # col_mapping_vector =  clusters_mapping,
+  # row_mapping_vector =  phenotyepes_mapping,
+  fdr_threshold = 0.01,
+  fdr_thresholds = c(0.01, 0.0001),
+  color_rects =  c("#4C8D05", "#66023C"),
+  color_rect = "green",
+  lwd_rect = 2,
+  alpha_rect = 1,
+  apply_filling = F,
+  color_filling = "gray",
+  alpha_filling = 0.6,
+  size_filling = 1,
+  pch_filling = 16,
+  col_significant = T,
+  row_dend_width = unit(4, "cm"),  # Adjust row dendrogram width
+  column_dend_height = unit(3, "cm"),  # Adjust column dendrogram height
+  row_names_gp = gpar(fontsize = 12),
+  column_names_gp = gpar(fontsize = 12),
+  column_names_rot = 45,
+  column_names_side = "top",
+  overlap_threshold = 3
+)
+
+
