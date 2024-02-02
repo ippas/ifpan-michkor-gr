@@ -41,7 +41,7 @@ for (category in icd10_categories_biobankuk) {
   )
   
   # Use tryCatch to handle errors
- overlap_icd10_category_results<- tryCatch({
+  category_overlap_results <- tryCatch({
     analyze_gene_list_overlap(
       row_lists = papers_gene_list[!grepl("marpiech", names(papers_gene_list))],
       col_lists = category_genes_list,
@@ -76,7 +76,7 @@ for (category in icd10_categories_biobankuk) {
   
   category_overlap_results$permutation_results <- permutation_category_results
   
-  overlap_results[[category]] <- category_overlap_results
+  overlap_icd10_category_results[[category]] <- category_overlap_results
   
   loop_end <- Sys.time()
   loop_duration <- loop_end - loop_start
@@ -92,10 +92,22 @@ duration <- end_time - start_time
 # Print the duration
 print(duration)
 
+lapply(overlap_icd10_category_results, function(x){gene_overlap_summary(data = x)}) %>%  do.call(rbind, .) %>% 
+  as.data.frame() %>% 
+  filter(permutation_FDR < 0.1) %>% 
+  mutate(
+    # Convert to numeric; NA if conversion fails
+    number_of_significant_results = as.numeric(as.character(number_of_significant_results)),
+    number_phenotype_category = as.numeric(as.character(number_phenotype_category)),
+    # Replace NA with 0 after conversion
+    number_of_significant_results = ifelse(is.na(number_of_significant_results), 0, number_of_significant_results),
+    number_phenotype_category = ifelse(is.na(number_phenotype_category), 0, number_phenotype_category),
+    # Calculate ratio; handle division by zero by replacing Inf with NA or another value
+    ratio_signif_all = number_of_significant_results / number_phenotype_category
+  ) 
 
 
-
-
+overlap_icd10_category_results$c$original_data$cols %>% length()
 
 
 

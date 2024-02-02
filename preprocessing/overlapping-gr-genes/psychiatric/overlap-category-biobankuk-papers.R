@@ -11,7 +11,7 @@ categories_biobankuk <- read.csv("data/phenotypes/panukbiobank-phenotype-categor
   group_by(category_name) %>%
   nest() %>%
   mutate(n = map_int(data, nrow)) %>%
-  filter(n >= 10, n <= 300) %>%
+  # filter(n >= 10, n <= 300) %>% 
   pull(category_name) 
 
 # Initialize an empty list to store results
@@ -84,41 +84,42 @@ duration <- end_time - start_time
 # Print the duration
 print(duration)
 
-
-
-gene_overlap_summary <- function(data) {
-  # Calculate the number of significant results
-  number_of_significant_results <- nrow(data$significant_uniq_data$df)
-  # print(number_of_significant_results)
-  
-  # Calculate permutation FDR
-  permutation_FDR <- sum(data$permutation_results >= number_of_significant_results) / 1000
-  # print(permutation_FDR)
-  
-  max_permutation <- max(data$permutation_results)
-
-  df_genes_freq <-
-    data$significant_uniq_data$df$overlap_genes %>% lapply(., function(x) {
-      strsplit(x, split = ",") %>% unlist
-    }) %>% unlist %>% table %>% as.data.frame() %>% set_colnames(c("gene_name", "freq")) %>%  arrange(desc(freq)) %>% 
-    filter(freq > 1)
-  
-  # Create a summary object
-  summary <- list(
-    number_of_significant_results = number_of_significant_results,
-    permutation_FDR = permutation_FDR,
-    mx_permutation = max_permutation
-    # df_gene_frq = df_genes_freq
-  )
-
-  # Return the summary object
-  return(summary)
-}
-
 lapply(overlap_results, function(x){gene_overlap_summary(data = x)}) %>%  do.call(rbind, .) %>% 
   as.data.frame() %>% 
-  filter(permutation_FDR < 0.01)
+  # filter(permutation_FDR < 0.01) %>% 
+  mutate(
+    # Convert to numeric; NA if conversion fails
+    number_of_significant_results = as.numeric(as.character(number_of_significant_results)),
+    number_phenotype_category = as.numeric(as.character(number_phenotype_category)),
+    # Replace NA with 0 after conversion
+    number_of_significant_results = ifelse(is.na(number_of_significant_results), 0, number_of_significant_results),
+    number_phenotype_category = ifelse(is.na(number_phenotype_category), 0, number_phenotype_category),
+    # Calculate ratio; handle division by zero by replacing Inf with NA or another value
+    ratio_signif_all = number_of_significant_results / number_phenotype_category
+  ) %>% arrange(as.numeric(permutation_FDR)) %>% 
+  filter(permutation_FDR > 0.05) %>% rownames() -> no_siginif_GR_category
 
+
+lapply(categories_biobankuk, function(x){
+  overlap_results[[x]]$original_data$cols
+}) %>% unlist %>% unique %>% length()
+
+lapply(categories_biobankuk, function(x){
+  overlap_results[[x]]$original_data$cols
+}) %>% unlist %>% unique %>% length()
+
+
+read.csv("data/phenotypes/panukbiobank-phenotype-category.csv") %>%
+  filter(category_type == "320_Origin_Categories") %>% .$model_name %>% unique() %>% length()
+
+lapply(overlap_results, function(x) {
+  x$significant_data$rows
+}) %>% unname() %>% 
+    unlist %>% length()
+
+
+
+overlap_results$`Mental distress`$significant_data$rows
 
 filter_phenotypes_by_category(
   genes_list = genes_phenotypes_PanUkBiobank,
@@ -160,4 +161,38 @@ draw_custom_heatmap(
   overlap_threshold = 3
 )
 
+
+overlap_results$`Mental health`$significant_uniq_data$overlap_genes -> overlap_genes_mental_health
+
+overlap_results$Depression$significant_uniq_data$overlap_genes -> overlap_genes_depression
+
+overlap_results$`Psychosocial factors`$significant_uniq_data$overlap_genes -> overlap_genes_psychosocial_factors
+
+overlap_genes_psychosocial_factors %>% length()
+
+intersect(overlap_genes_depression, overlap_genes_psychosocial_factors) %>% length()
+
+intersect(overlap_genes_mental_health, overlap_genes_psychosocial_factors) %>% length()
+
+lapply(overlap_results, function(x){intersect(x$significant_uniq_data$overlap_gene, overlap_genes_psychosocial_factors) %>% length()/length(overlap_genes_psychosocial_factors)})
+
+lapply(overlap_results, function(x){intersect(x$significant_uniq_data$overlap_gene, overlap_genes_depression) %>% length()/length(overlap_genes_depression)})
+
+lapply(overlap_results, function(x){intersect(x$significant_uniq_data$overlap_gene, overlap_genes_mental_health) %>% length()/length(overlap_genes_mental_health)})
+
+
+data.frame(
+  psychosocial = sapply(overlap_results, function(x) {
+    length(intersect(x$significant_uniq_data$overlap_gene, overlap_genes_psychosocial_factors)) / length(overlap_genes_psychosocial_factors)
+  }),
+  depression = sapply(overlap_results, function(x) {
+    length(intersect(x$significant_uniq_data$overlap_gene, overlap_genes_depression)) / length(overlap_genes_depression)
+  }),
+  mental_health = sapply(overlap_results, function(x) {
+    length(intersect(x$significant_uniq_data$overlap_gene, overlap_genes_mental_health)) / length(overlap_genes_mental_health)
+  })
+) -> results_df
+
+results_df %>%
+  arrange(desc(psychosocial), depression, mental_health)
 
