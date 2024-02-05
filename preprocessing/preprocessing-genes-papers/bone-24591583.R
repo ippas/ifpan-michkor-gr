@@ -2,7 +2,7 @@ source("preprocessing/functions/R/install-load-packages.R")
 
 
 ################################################################################
-data_path <- "/home/mateusz/Downloads/1400522111_sd01.xlsx"
+data_path <- "data/supplement-genes-papers/bone-24591583/1400522111_sd01.xlsx"
 
 read_excel_sheets(file_path = data_path, skip_rows = 1) -> data
 
