@@ -1,3 +1,5 @@
+source("preprocessing/functions/R/install-load-packages.R")
+
 # List of CRAN packages
 cran_packages <- c("tidyverse", "magrittr", "circlize", "pheatmap", "yaml", "reshape2", "ComplexHeatmap", "criclize", "RColorBrewer", "grid")
 
@@ -38,13 +40,13 @@ if (!requireNamespace("biomaRt", quietly = TRUE)) {
 # Detach the biomaRt package
 detach(package:biomaRt)
 
-# Load in custom functions related to preprocessing
-source("preprocessing/functions/R/gr-database-functions.R")
-source("preprocessing/functions/R/draw-custom-heatmap.R")
-source("preprocessing/functions/R/processing-overlap-results.R")
-source("preprocessing/functions/R/manual-filter-overlap-results.R")
-source("preprocessing/functions/R/gene-paper-preprocessing-functions.R")
-source("preprocessing/functions/R/perform-chi2-tests.R")
+# # Load in custom functions related to preprocessing
+# source("preprocessing/functions/R/gr-database-functions.R")
+# source("preprocessing/functions/R/draw-custom-heatmap.R")
+# source("preprocessing/functions/R/processing-overlap-results.R")
+# source("preprocessing/functions/R/manual-filter-overlap-results.R")
+# source("preprocessing/functions/R/gene-paper-preprocessing-functions.R")
+# source("preprocessing/functions/R/perform-chi2-tests.R")
 
 
 # Read data
@@ -130,4 +132,77 @@ gr_gene_database %>%
   filter(!(hgnc_symbol %in% hgnc_to_remove)) %>% 
   mutate(gene_list_index = gsub("marpiech_.*", "marpiech_tissues_dex", gene_list_index)) %>% 
   mutate(source = ifelse(gene_list_index == "marpiech_tissues_dex", "marpiech_tissues_dex", source)) -> gr_gene_database_preproccesing
-# mutate(source = str_replace_all(source, "pmid:", ""))
+
+# gr_gene_database_preproccesing %>% 
+#   filter(source == "pmid:33203447") %>% 
+#   mutate(tmp = fdr) %>% 
+#   mutate(fdr = regulation) %>% 
+#   mutate(regulation = tmp) %>% 
+#   select(c("index", "gene_name", "gene_list_index", "gene_list_number", "source", 
+#            "ensembl_gene_id", "ensembl_transcript_id", "refseq_mrna_id", "hgnc_symbol", 
+#            "alias", "info", "tissue", "cell", "species", "environment", "treatment", 
+#            "dose", "time", "log2ratio", "fdr", "statistical_method", "treatment_type", 
+#            "regulation")) -> tmp_chondrocytes
+
+# gr_gene_database_preproccesing %>% 
+#   filter(source != "pmid:33203447") %>% 
+#   rbind(., tmp_chondrocytes) -> gr_gene_database_preproccesing 
+
+# gr_gene_database_preproccesing %>% 
+#   filter(!grepl("omicspred_metabolon", source)) %>%
+#   filter(!grepl("omicspred_nithingale_", source)) %>%
+#   .$treatment %>% unique()
+#   mutate(label = paste(source, tissue, cell, regulation, treatment, sep = "_")) %>%
+#   .$label %>% unique
+
+# tmp code to repair data for PMID:24777604
+gr_gene_database_preproccesing %>% 
+  filter(source == "pmid:24777604") %>%
+  mutate(comparison = ifelse(comparison == "Cav1-KO-DEX_vs_C57-Ethanol", "Cav1-KO-Dex_vs_Cav1-KO-Ethanol",
+                             ifelse(comparison == "C57-DEX_vs_C57-Ethanol", "C57-Dex_vs_C57-Ethanol", "Cav1-KO-Ethanol_vs_C57BL6-Dex"))) %>% 
+  mutate(cell = ifelse(comparison == "C57-Dex_vs_C57-Ethanol", "NPSCs", 
+                       ifelse(comparison == "Cav1-KO-Dex_vs_Cav1-KO-Ethanol", "NPSCs-KO-Cav1", "NPSCs|NPSCs-KO-Cav1")),
+         treatment = ifelse(comparison == "C57-Dex_vs_C57-Ethanol", "dexamethasone", 
+                            ifelse(comparison == "Cav1-KO-Dex_vs_Cav1-KO-Ethanol", "dexamethasone", "vehicle-ethanol"))) -> tmp_npscs_kocav1
+
+
+gr_gene_database_preproccesing %>%
+  filter(source != "pmid:24777604") %>%
+  rbind(., tmp_npscs_kocav1) -> gr_gene_database_preproccesing
+
+gr_gene_database_preproccesing %>%
+  filter(!grepl("omicspred_metabolon", source)) %>%
+  filter(!grepl("omicspred_nithingale_", source)) %>%
+  mutate(label = ifelse(
+    source == "marpiech_tissues_dex",
+    paste0(source, "_", gene_list_number),
+    paste0(source, "_", tissue, "_", cell)
+  )) %>%
+  filter(!(treatment %in% c("vitamin-d3", "vehicle-DMSO"))) %>% 
+  # mutate(label = paste0(source, "_", tissue, "_", cell)) %>%
+  mutate(label = paste(source, tissue,cell, regulation,sep = "_")) %>% 
+  mutate(label = ifelse(
+    source == "marpiech_tissues_dex",
+    paste0(source, "_", gene_list_number),
+    label
+  )) %>% 
+  group_by(label) %>%
+  mutate(gene_count = n()) %>%
+  ungroup() %>% 
+  filter(gene_count > 5) %>% 
+  # mutate(label2 = paste0(label, "_", gene_count)) %>% 
+  select(-gene_count) -> papers_data_preprocessing
+
+papers_data_preprocessing %>% 
+  mutate(fdr = as.numeric(fdr),
+         log2ratio = as.numeric(log2ratio)) %>% 
+  mutate(abs_log2ratio = abs(log2ratio)) %>% 
+  # filter(tissue != "kidney" | (tissue == "kidney" & fdr < 0.001)) %>%
+  filter(source == "pmid:23593176", fdr < 0.0001, abs_log2ratio > 1) %>% 
+  select(-abs_log2ratio) -> tmp_kidney
+
+papers_data_preprocessing %>% 
+  mutate(fdr = as.numeric(fdr),
+         log2ratio = as.numeric(log2ratio)) %>% 
+  filter(source != "pmid:23593176") %>% 
+  rbind(., tmp_kidney) -> papers_data_preprocessing

@@ -23,6 +23,7 @@ source("preprocessing/functions/R/preprocessing-gene-papers/read_excel_sheets.R"
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/analyze-random-gene-sets.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/generate-random-gene-sets.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/perform-overlap-permutation-analysis-parallel.R")
+source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/perform_overlap_permutation_analysis_multicore.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/perform-overlap-permutation-analysis.R")
 
 # overlapping gene analysis
