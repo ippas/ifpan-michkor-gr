@@ -55,5 +55,4 @@ data.frame(
     row.names = FALSE,
     col.names = TRUE
   )
-z
 
