@@ -2,8 +2,6 @@ source("preprocessing/functions/R/install-load-packages.R")
 
 read_genes_from_phenotype_models(directory_path = "data/prs-models-pan-biobank-uk/") -> genes_phenotypes_PanUkBiobank
 
-
-
 ################################################################################
 # Read and preprocess the data
 categories_biobankuk <- read.csv("data/phenotypes/panukbiobank-phenotype-category.csv") %>%
@@ -11,7 +9,7 @@ categories_biobankuk <- read.csv("data/phenotypes/panukbiobank-phenotype-categor
   group_by(category_name) %>%
   nest() %>%
   mutate(n = map_int(data, nrow)) %>%
-  # filter(n >= 10, n <= 300) %>% 
+  filter(n >= 10, n <= 300) %>%
   pull(category_name) 
 
 # Initialize an empty list to store results

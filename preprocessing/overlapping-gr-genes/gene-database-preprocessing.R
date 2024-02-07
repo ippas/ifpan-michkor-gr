@@ -206,3 +206,6 @@ papers_data_preprocessing %>%
          log2ratio = as.numeric(log2ratio)) %>% 
   filter(source != "pmid:23593176") %>% 
   rbind(., tmp_kidney) -> papers_data_preprocessing
+
+split(papers_data_preprocessing$hgnc_symbol, papers_data_preprocessing$label) %>% lapply(., unique) -> papers_gene_list
+
