@@ -1,4 +1,4 @@
-analyze_random_gene_sets <- function(reference_hgnc_vector, size_reference_list, comparison_gene_list, overlap_threshold, fdr_threshold, seed = NULL) {
+analyze_random_gene_sets <- function(reference_hgnc_vector, size_reference_list, comparison_gene_list, overlap_threshold, fdr_threshold, seed = NULL, random_genes_type = "dependent") {
   # Function: analyze_random_gene_sets
   # Description: 
   #   Performs an analysis on gene sets by generating random gene sets based on HGNC symbols,
@@ -12,15 +12,27 @@ analyze_random_gene_sets <- function(reference_hgnc_vector, size_reference_list,
   #   overlap_threshold - Threshold for determining significant overlap.
   #   fdr_threshold - False discovery rate threshold for statistical significance.
   #   seed - Optional; integer for setting the random number generator's seed for reproducibility.
+  #   random_genes_type - "dependent" or "independent" to specify the type of random gene list generation.
   # Returns:
   #   A data structure containing the results of the chi-square tests and overlap analysis.
   
-  # Generate random gene sets with the specified seed
-  random_genes_list <- generate_random_gene_sets(
-    genes_vector = reference_hgnc_vector,
-    size_vector = sapply(size_reference_list, length),
-    seed = seed
-  )
+  if (random_genes_type == "independent") {
+    random_genes_list <- generate_random_gene_list_independent(
+      genes_vector = reference_hgnc_vector,
+      size_vector = sapply(size_reference_list, length),
+      seed = seed
+    )
+  } else if (random_genes_type == "dependent") {
+    random_genes_list <- generate_random_gene_list_dependent(
+      genes_vector = reference_hgnc_vector,
+      genes_list = size_reference_list,
+      seed = seed
+    )
+  } else {
+    stop("Invalid random_genes_type. Choose either 'dependent' or 'independent'.")
+  }
+  
+  print(random_genes_list)
   
   # Combine with comparison gene list and get unique values
   combined_genes_list <- c(random_genes_list, comparison_gene_list) %>% 
@@ -40,9 +52,7 @@ analyze_random_gene_sets <- function(reference_hgnc_vector, size_reference_list,
   )
   
   rm(chi2_results, random_genes_list)
-  
   gc()
   
   return(analysis_results)
 }
-

@@ -5,7 +5,8 @@ perform_overlap_permutation_analysis_multicore <- function(permutations,
                                                            size_reference_list,
                                                            comparison_gene_list,
                                                            overlap_threshold,
-                                                           fdr_threshold) {
+                                                           fdr_threshold,
+                                                           random_genes_type = "dependent") {  # Added random_genes_type parameter
   # Function: perform_overlap_permutation_analysis_multicore
   # Description: 
   #   Performs a parallel permutation analysis on gene sets using multicore processing.
@@ -22,8 +23,8 @@ perform_overlap_permutation_analysis_multicore <- function(permutations,
   
   # Define the function for a single permutation
   perform_single_permutation <- function(i, seed, reference_hgnc_vector, size_reference_list, 
-                                         comparison_gene_list, overlap_threshold, fdr_threshold) {
-
+                                         comparison_gene_list, overlap_threshold, fdr_threshold, random_genes_type) {  # Added random_genes_type parameter
+    
     # Use tryCatch to handle errors
     tryCatch({
       # Perform random gene set analysis
@@ -33,9 +34,10 @@ perform_overlap_permutation_analysis_multicore <- function(permutations,
         size_reference_list = size_reference_list,
         comparison_gene_list = comparison_gene_list,
         overlap_threshold = overlap_threshold,
-        fdr_threshold = fdr_threshold
+        fdr_threshold = fdr_threshold,
+        random_genes_type = random_genes_type  # Pass the random_genes_type parameter
       )
-
+      
       # Return the number of rows
       nrow(results$significant_uniq_data$df)
     }, error = function(e) {
@@ -52,8 +54,8 @@ perform_overlap_permutation_analysis_multicore <- function(permutations,
                                             comparison_gene_list = comparison_gene_list, 
                                             overlap_threshold = overlap_threshold, 
                                             fdr_threshold = fdr_threshold, 
+                                            random_genes_type = random_genes_type,  # Pass the random_genes_type parameter
                                             mc.cores = num_cores)
   
   return(permutation_results)
 }
-

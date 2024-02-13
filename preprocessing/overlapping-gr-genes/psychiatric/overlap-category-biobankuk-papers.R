@@ -12,75 +12,23 @@ categories_biobankuk <- read.csv("data/phenotypes/panukbiobank-phenotype-categor
   filter(n >= 10, n <= 300) %>%
   pull(category_name) 
 
-# Initialize an empty list to store results
-overlap_results <- list()
 
-# Start time measurement
-start_time <- Sys.time()
+results <- analyze_uk_biobank_categories_gene_overlap(
+  categories = categories_biobankuk[1:3],
+  genes_phenotypes = genes_phenotypes_PanUkBiobank,
+  papers_gene_list = papers_gene_list[!grepl("marpiech", names(papers_gene_list))],
+  hgnc_symbols_vector = hgnc_symbols_vector_v110,
+  path_metafile = "data/phenotypes/panukbiobank-phenotype-category.csv",
+  fdr_threshold = 0.01, # Default value, adjust as needed
+  overlap_threshold = 3, # Default value, adjust as needed
+  permutations = 1000, # Default value, adjust as needed
+  seed = 123, # Default value, adjust as needed
+  num_cores = 30 # Adjust based on your system's capabilities
+)
 
-# Sequential processing using a for loop
-for (category in categories_biobankuk) {
-  
-  print(category)
-  loop_start <- Sys.time()
-  
-  category_genes_list <- filter_phenotypes_by_category(
-    genes_list = genes_phenotypes_PanUkBiobank,
-    path_metafile = "data/phenotypes/panukbiobank-phenotype-category.csv",
-    category_name = category
-  )
-  
-  # Use tryCatch to handle errors
-  category_overlap_results <- tryCatch({
-    analyze_gene_list_overlap(
-      row_lists = papers_gene_list[!grepl("marpiech", names(papers_gene_list))],
-      col_lists = category_genes_list,
-      reference_hgnc_vector = hgnc_symbols_vector_v110,
-      fdr_threshold = 0.01,
-      overlap_threshold = 3,
-      keep_original_data = TRUE
-    )
-  }, error = function(e) {
-    warning(sprintf("Error in analyze_gene_list_overlap for category '%s': %s", category, e$message))
-    return(NULL)  # Return NULL in case of error
-  })
-  
-  # Skip further processing if category_overlap_results is NULL
-  if (is.null(category_overlap_results)) {
-    next  # Go to the next iteration of the loop
-  }
-  
-  # Continue with further processing if no error occurred
-  permutation_category_results <- perform_overlap_permutation_analysis_multicore(
-    permutations = 1000,
-    seed = 123,
-    num_cores = 30,
-    reference_hgnc_vector = hgnc_symbols_vector_v110,
-    size_reference_list = papers_gene_list[!grepl("marpiech", names(papers_gene_list))],
-    comparison_gene_list = category_genes_list,
-    overlap_threshold = 3,
-    fdr_threshold = 0.01
-  )
-  
-  permutation_category_results <- permutation_category_results %>% unlist %>% sort
-  
-  category_overlap_results$permutation_results <- permutation_category_results
-  
-  overlap_results[[category]] <- category_overlap_results
-  
-  loop_end <- Sys.time()
-  loop_duration <- loop_end - loop_start
-  print(loop_duration)
-}
 
-# End time measurement
-end_time <- Sys.time()
+# overlap_results  -> overlap_results_random_independent
 
-# Calculate the duration
-duration <- end_time - start_time
-
-# Print the duration
-print(duration)
 
 lapply(overlap_results, function(x){gene_overlap_summary(data = x)}) %>%  do.call(rbind, .) %>% 
   as.data.frame() %>% 

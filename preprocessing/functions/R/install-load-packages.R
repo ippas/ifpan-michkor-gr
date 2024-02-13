@@ -21,15 +21,17 @@ source("preprocessing/functions/R/preprocessing-gene-papers/read_excel_sheets.R"
 
 # permutation functions
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/analyze-random-gene-sets.R")
-source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/generate-random-gene-sets.R")
+source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/generate-random-gene-list-independent.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/perform-overlap-permutation-analysis-parallel.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/perform_overlap_permutation_analysis_multicore.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/perform-overlap-permutation-analysis.R")
+source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/generate-random-gene-list-dependent.R")
 
 # overlapping gene analysis
 source("preprocessing/functions/R/overlapping-genes-analysis/read_genes_from_phenotype_models.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/filter_phenotypes_by_category.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/analyze-gene-list-overlap.R")
+source("preprocessing/functions/R/overlapping-genes-analysis/analyze-uk-biobank-categories-gene-overlap.R")
 
 
 # Load in custom functions related to preprocessing

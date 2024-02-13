@@ -1,4 +1,4 @@
-generate_random_gene_sets <- function(genes_vector, size_vector, seed = NULL) {
+generate_random_gene_list_independent <- function(genes_vector, size_vector, seed = NULL) {
   # Function: generate_random_gene_sets
   # Description: 
   #   Generates a list of random gene sets. Each set is a vector of gene names randomly 
