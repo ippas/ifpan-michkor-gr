@@ -13,7 +13,7 @@ categories_biobankuk <- read.csv("data/phenotypes/panukbiobank-phenotype-categor
   pull(category_name) 
 
 
-overlap_resutls_random_independent <- analyze_uk_biobank_categories_gene_overlap(
+overlap_resutls_random_dependent_fdr0.01 <- analyze_uk_biobank_categories_gene_overlap(
   categories = categories_biobankuk,
   genes_phenotypes = genes_phenotypes_PanUkBiobank,
   papers_gene_list = papers_gene_list[!grepl("marpiech", names(papers_gene_list))],
@@ -24,7 +24,21 @@ overlap_resutls_random_independent <- analyze_uk_biobank_categories_gene_overlap
   overlap_threshold = 3, # Default value, adjust as needed
   permutations = 1000, # Default value, adjust as needed
   seed = 123, # Default value, adjust as needed
-  num_cores = 40 # Adjust based on your system's capabilities
+  num_cores = 30 # Adjust based on your system's capabilities
+)
+
+overlap_resutls_random_independent_fdr0.05 <- analyze_uk_biobank_categories_gene_overlap(
+  categories = categories_biobankuk,
+  genes_phenotypes = genes_phenotypes_PanUkBiobank,
+  papers_gene_list = papers_gene_list[!grepl("marpiech", names(papers_gene_list))],
+  hgnc_symbols_vector = hgnc_symbols_vector_v110,
+  path_metafile = "data/phenotypes/panukbiobank-phenotype-category.csv",
+  random_genes_type = "dependent",
+  fdr_threshold = 0.05, # Default value, adjust as needed
+  overlap_threshold = 3, # Default value, adjust as needed
+  permutations = 1000, # Default value, adjust as needed
+  seed = 123, # Default value, adjust as needed
+  num_cores = 30 # Adjust based on your system's capabilities
 )
 
 pie_chart_palette <-c("1" = "#E41A1C", "2" = "#377EB8", "3" = "#4DAF4A", "4" = "#984EA3", 
@@ -54,87 +68,8 @@ create_gene_pie_chart(gene_list = random_genes_independent, threshold_percent = 
 p1 + p3 + p2 + plot_layout(guides = "collect") & 
   plot_annotation(theme = theme(legend.position = "bottom"))
 
-# overlap_results  -> overlap_results_random_independent
 
-
-lapply(overlap_resutls_random_independent, function(x){gene_overlap_summary(data = x)}) %>%  do.call(rbind, .) %>% 
-  as.data.frame() %>% arrange(as.numeric(permutation_FDR))
-  # filter(permutation_FDR < 0.01) %>% 
-  mutate(
-    # Convert to numeric; NA if conversion fails
-    number_of_significant_results = as.numeric(as.character(number_of_significant_results)),
-    number_phenotype_category = as.numeric(as.character(number_phenotype_category)),
-    # Replace NA with 0 after conversion
-    number_of_significant_results = ifelse(is.na(number_of_significant_results), 0, number_of_significant_results),
-    number_phenotype_category = ifelse(is.na(number_phenotype_category), 0, number_phenotype_category),
-    # Calculate ratio; handle division by zero by replacing Inf with NA or another value
-    ratio_signif_all = number_of_significant_results / number_phenotype_category
-  ) %>% arrange(as.numeric(permutation_FDR)) %>% 
-  filter(permutation_FDR > 0.05) %>% rownames() -> no_siginif_GR_category
-
-
-lapply(categories_biobankuk, function(x){
-  overlap_results[[x]]$original_data$cols
-}) %>% unlist %>% unique %>% length()
-
-lapply(categories_biobankuk, function(x){
-  overlap_results[[x]]$original_data$cols
-}) %>% unlist %>% unique %>% length()
-
-
-read.csv("data/phenotypes/panukbiobank-phenotype-category.csv") %>%
-  filter(category_type == "320_Origin_Categories") %>% .$model_name %>% unique() %>% length()
-
-lapply(overlap_results, function(x) {
-  x$significant_data$rows
-}) %>% unname() %>% 
-    unlist %>% length()
-
-
-
-overlap_results$`Mental distress`$significant_data$rows
-
-filter_phenotypes_by_category(
-  genes_list = genes_phenotypes_PanUkBiobank,
-  path_metafile = "data/phenotypes/panukbiobank-phenotype-category.csv",
-  category_name = "Blood assays"
-) %>% length()
-
-
-draw_custom_heatmap(
-  overlap_results$`Lifestyle and environment`,
-  data_type = "significant_uniq_data",
-  palette = c(
-    "pastel_blue"       = "white",
-    "pastel_light_blue" = "#f8dedd",
-    "white"        = "#f1bcbb",
-    "pastel_orange"= "#edacab",
-    "pastel_red"   = "#e68a89"
-  ),
-  # col_mapping_vector =  clusters_mapping,
-  # row_mapping_vector =  phenotyepes_mapping,
-  fdr_threshold = 0.01,
-  fdr_thresholds = c(0.01, 0.0001),
-  color_rects =  c("#4C8D05", "#66023C"),
-  color_rect = "green",
-  lwd_rect = 2,
-  alpha_rect = 1,
-  apply_filling = F,
-  color_filling = "gray",
-  alpha_filling = 0.6,
-  size_filling = 1,
-  pch_filling = 16,
-  col_significant = T,
-  row_dend_width = unit(4, "cm"),  # Adjust row dendrogram width
-  column_dend_height = unit(3, "cm"),  # Adjust column dendrogram height
-  row_names_gp = gpar(fontsize = 12),
-  column_names_gp = gpar(fontsize = 12),
-  column_names_rot = 45,
-  column_names_side = "top",
-  overlap_threshold = 3
-)
-
-
+# example code testing
 overlap_results$`Mental health`$significant_uniq_data$overlap_genes -> overlap_genes_mental_health
 
 overlap_results$Depression$significant_uniq_data$overlap_genes -> overlap_genes_depression

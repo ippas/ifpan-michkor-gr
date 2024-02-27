@@ -38,13 +38,13 @@ source("preprocessing/functions/R/preprocessing-gene-papers/read_excel_sheets.R"
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/analyze-random-gene-sets.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/generate-random-gene-list-independent.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/perform-overlap-permutation-analysis-parallel.R")
-source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/perform_overlap_permutation_analysis_multicore.R")
+source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/perform-overlap-permutation-analysis-multicore.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/perform-overlap-permutation-analysis.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/generate-random-gene-list-dependent.R")
 
 # overlapping gene analysis
-source("preprocessing/functions/R/overlapping-genes-analysis/read_genes_from_phenotype_models.R")
-source("preprocessing/functions/R/overlapping-genes-analysis/filter_phenotypes_by_category.R")
+source("preprocessing/functions/R/overlapping-genes-analysis/read-genes-from-phenotype-models.R")
+source("preprocessing/functions/R/overlapping-genes-analysis/filter-phenotypes-by-category.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/analyze-gene-list-overlap.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/analyze-uk-biobank-categories-gene-overlap.R")
 
@@ -56,5 +56,8 @@ source("preprocessing/functions/R/processing-overlap-results.R")
 source("preprocessing/functions/R/manual-filter-overlap-results.R")
 source("preprocessing/functions/R/gene-paper-preprocessing-functions.R")
 source("preprocessing/functions/R/perform-chi2-tests.R")
-source("preprocessing/functions/R/overlapping-genes-analysis/gene_overlap_summary.R")
+source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-summary.R")
 
+source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-barplot-summary.R")
+source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-manhattan-plot.R")
+source("preprocessing/functions/R/overlapping-genes-analysis/create-gene-pie-chart.R")
