@@ -101,7 +101,7 @@ In order to have just one unique column for each GWAS phenotype data, we used **
 
 Before merging the main data, the selected samples from **AllGWASphenotypesNormalized.csv** must have been found and extracted from **output_file4.csv** as well. These samples were not considered for further studies as most of their GWAS phenotypes (from our list) had no available data! This way, all the related samples in our **matrix** would be matched with the data from GWAS phenotypes data. The utilized scripts could be found in **9_ExtractionOfRowNumbersFromICD10NormalizedMatchWithGWASsamples.py** and ***10_ExtractInterestedRowsFromNormalizedICD.py***.
 
-At the end of stage1, **AllGWASphenotypesNormalized.csv** and the output file from ***10_ExtractInterestedRowsFromNormalizedICD.py*** named as **FINALofFINALsICD10Normalized77_2.csv** would be merged by ***11_MakingReadyForPCA.sh.***
+At the end of stage1, **AllGWASphenotypesNormalized.csv** and the output file from ***10_ExtractInterestedRowsFromNormalizedICD.py*** named as **FINALofFINALsICD10Normalized77_2.csv** would be merged by ***11_MakingReadyForPCA.sh.***. However, before we get the final file for running PCA, we modified the assessment centers by removing the related column and replace it by the name of cities (22 extra columns). Also, we added pre-calculated genetic PCs (20 columns) and Townsend data to our big matrix. All of new data also standardized and placed at the end of the main matrix. Next, we filtered the participants toward the ***Eauropean ancestors*** to only have the selected samples for running the PCA.
 
 > The output file (**ReadyForPCA.csv**) was ready to run PCA (principle component analysis).
 
