@@ -5,8 +5,23 @@ install_and_load_packages <- function(packages) {
   sapply(packages, require, character.only = TRUE)
 }
 
+
 # List of packages to be installed and loaded
-required_packages <- c("readxl", "writexl", "magrittr", "tidyverse", "parallel", "future.apply", "future", "yaml", "furrr", "purrr")
+required_packages <-
+  c(
+    "readxl",
+    "writexl",
+    "magrittr",
+    "tidyverse",
+    "parallel",
+    "future.apply",
+    "future",
+    "yaml",
+    "furrr",
+    "purrr",
+    "RColorBrewer",
+    "patchwork"
+  )
 
 # Install and load the packages
 install_and_load_packages(required_packages)
