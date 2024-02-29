@@ -33,6 +33,7 @@ source("preprocessing/functions/R/preprocessing-gene-papers/download-and-read-ge
 source("preprocessing/functions/R/preprocessing-gene-papers/select_columns_by_pattern.R")
 source("preprocessing/functions/R/preprocessing-gene-papers/perform_DESeq2_analysis.R")
 source("preprocessing/functions/R/preprocessing-gene-papers/read_excel_sheets.R")
+source("preprocessing/functions/R/preprocessing-gene-papers/affymetrix-to-genomic-annotations.R")
 
 # permutation functions
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-permutation-analysis/analyze-random-gene-sets.R")
@@ -61,3 +62,5 @@ source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-summar
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-barplot-summary.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-manhattan-plot.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/create-gene-pie-chart.R")
+
+
