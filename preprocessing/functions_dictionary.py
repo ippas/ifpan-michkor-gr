@@ -3,16 +3,14 @@ import csv
 from biomart import BiomartServer
 import pandas as pd
 import numpy as np
-from gprofiler import GProfiler
-import requests
-
+from pybiomart import Dataset
 
 
 # GENERAL FUNCTIONS 
 def gene_dictionary(index,
                     gene_name,
-                    gene_list_number,
                     gene_list_id,
+                    gene_list_number,
                     source,
                     ensembl_gene_id,
                     ensembl_transcript_id,
@@ -24,8 +22,8 @@ def gene_dictionary(index,
         dictionary = '\t'.join([
             str(index) if index else 'NA',
             str(gene_name) if gene_name else 'NA',
-            str(gene_list_number) if gene_list_number else 'NA',
             str(gene_list_id) if gene_list_id else 'NA',
+            str(gene_list_number) if gene_list_number else 'NA',
             str(source) if source else 'NA',
             str(ensembl_gene_id) if ensembl_gene_id else 'NA',
             str(ensembl_transcript_id) if ensembl_transcript_id else 'NA',
@@ -35,60 +33,87 @@ def gene_dictionary(index,
             str(info) if info else 'NA'
         ])
 
-
         return dictionary
 
-    
-def alias_and_official(ls_notResponse,ls_row_10,ls_row_2,ls_row_1, ls_notResponse_after):
 
-    ls_response = []
-    ls_response_2 = []
-    ls_response_3 = []
-    
-    for notResponse in ls_notResponse:
-        word = str(notResponse).lower()
-        for i in range(len(ls_row_10)):
-            if ls_row_10[i]:
-                temp = str(ls_row_10[i]).lower()
-                t_strings = temp.split("|")
-                if word in t_strings:
-                    ls_response.append([word, i, ls_row_1[i]])
+def alias_and_official(ls_notResponse, ls_row_10, ls_row_1):
 
-    for notResponse_2 in ls_notResponse:
-        word = str(notResponse_2).lower()
-        for i in range(len(ls_row_2)):
-            if ls_row_2[i]:
-                temp = str(ls_row_2[i]).lower()
-                if word == temp:
-                    ls_response_2.append([word, i, ls_row_1[i]])
-                    
-    
-    ls_response.insert(0, ['gene_name','official/alias_index','mgi_id'])
+    ls_row_1_processed = [(str(item).casefold(), item, i) for i, item in enumerate(ls_row_1) if item]
+    ls_row_10_processed = [(str(item).casefold(), item, i) for i, item in enumerate(ls_row_10) if item]
 
-    ls_response_3 = [ls_response[0]]  # Initialize with the header from ls_response
-
+    ls_response_combined = [['gene_name', 'official/alias_index', 'gene_synonim']]
     gene_names_seen = set()
 
-    for el in ls_response_2[0:]:
-        gene_name = el[0]
-        if gene_name not in gene_names_seen:
-            gene_names_seen.add(gene_name)
-            ls_response_3.append(el)
+    for notResponse in ls_notResponse:
+        word = str(notResponse).casefold()
+        matched = False
 
-    for el in ls_response[1:]:
-        gene_name = el[0]
-        if gene_name not in gene_names_seen:
-            gene_names_seen.add(gene_name)
-            ls_response_3.append(el)
+        for processed_list in (ls_row_1_processed, ls_row_10_processed):
+            for temp, original, i in processed_list:
+                if word in temp.split(", ") or word == temp:
+
+                    entry = [notResponse, i, original]
+
+                    if entry[0] not in gene_names_seen:
+                        gene_names_seen.add(entry[0])
+                        ls_response_combined.append(entry)
+                        matched = True
+                        break 
+            if matched:
+                break 
+
+    return ls_response_combined
+
+
+def read_gtf_and_extract_genes_synonyms(mgi_file_path):
+    # Read and process the GTF file
+    mgi_df = pd.read_csv(mgi_file_path, sep='\t', header=None, comment='#', 
+                         names=['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attributes'])
+    mgi_df['GeneName'] = mgi_df['attributes'].str.extract('gene_id "([^"]+)"')
+    mgi_df['GeneSynonym'] = mgi_df['attributes'].str.findall('gene_synonym "([^"]+)"').apply(lambda x: ', '.join(x) if x else '')
+
     
-    return ls_response_3
+    gene_synonyms_aggregated = {}
+    for _, row in mgi_df.iterrows():
+        gene_name = row['GeneName'].strip().casefold()
+        synonyms = set(row['GeneSynonym'].split('|')) if row['GeneSynonym'] else set()
+        
+        if gene_name in gene_synonyms_aggregated:
+            gene_synonyms_aggregated[gene_name].update(synonyms)
+        else:
+            gene_synonyms_aggregated[gene_name] = synonyms
+
+    
+    for gene_name, synonyms in gene_synonyms_aggregated.items():
+        gene_synonyms_aggregated[gene_name] = '|'.join(synonyms)
+
+    return gene_synonyms_aggregated
+
+def updateCellswithAlias(mgi_file_path, dictionary_file_path, alias_file_path):
+    gene_synonyms_aggregated = read_gtf_and_extract_genes_synonyms(mgi_file_path)
+
+    wb_dictionary = pd.read_csv(dictionary_file_path, keep_default_na=False, sep='\t', header=0)
+
+    def update_alias(gene_name):
+        gene_name_cf = gene_name.casefold()
+        for gene, synonyms in gene_synonyms_aggregated.items():
+            if gene_name_cf == gene or gene_name_cf in synonyms.split('|'):
+                return synonyms or 'NA'
+        return 'NA'
+
+    wb_dictionary['alias'] = wb_dictionary['gene_name'].apply(update_alias)
+
+    wb_dictionary.to_csv(alias_file_path, sep='\t', index=False)
 
 
+
+
+'''
 def updateCellswithAlias(mgi_file_path, dictionary_file_path, alias_file_path):
     
     wb_mgi = pd.read_csv(mgi_file_path, sep='\t', header=None, keep_default_na=False, usecols=[1, 9], skiprows=2, names=['g_name','alias'])
-    mgi_dict = dict(zip(wb_mgi['g_name'], wb_mgi['alias']))
-    wb_dictionary = pd.read_csv(dictionary_file_path, keep_default_na=False, sep='\t', header=0)  # Assuming the first row is the header
+    mgi_dict = dict(zip(wb_mgi['gene_name'], wb_mgi['geme']))
+    wb_dictionary = pd.read_csv(dictionary_file_path, keep_default_na=False, sep='\t', header=0)
 
     def debug_lambda(x):
         result = mgi_dict.get(x, 'NA')
@@ -101,7 +126,7 @@ def updateCellswithAlias(mgi_file_path, dictionary_file_path, alias_file_path):
 
     wb_dictionary['alias'] = wb_dictionary['gene_name'].apply(debug_lambda)
     wb_dictionary.to_csv(alias_file_path, sep='\t', index=False)
-    
+'''    
     
 def updateCellswithINFO(source_file_path, alias_file_path, info_file_path):
     
@@ -116,10 +141,9 @@ def updateCellswithINFO(source_file_path, alias_file_path, info_file_path):
         alias_data = [row for row in csv_reader]
 
     
-    # rows source and alias are in the same order
     for id, alias_row in enumerate(alias_data):
         try:
-            info_row = info_data[id]                  # Corresponding row from source_data
+            info_row = info_data[id]                
             new_data = '|'.join([f"{headers[i]}:" + str(info_row[i]) for i in range(4, len(headers))])
             
             if len(alias_row) > 10:  
@@ -135,11 +159,29 @@ def updateCellswithINFO(source_file_path, alias_file_path, info_file_path):
         csv_writer.writerow(alias_headers)
         for row in alias_data:
             csv_writer.writerow(row)
+            
     
-    
-    
-## FUNCTIONS SETS - ONE CLASS FOR SPECIE
+## FUNCTIONS SETS - ONE CLASS FOR SPECIES
 class musMusculus:
+    
+    def __init__(self):
+        self.mgi_file_path = r'..\alias_genomes\mouse.gtf'
+        self.mgi_df = None
+
+    def read_gtf_file(self):
+        self.mgi_df = pd.read_csv(self.mgi_file_path, sep='\t', header=None, comment='#', 
+                                names=['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attributes'])
+        self.mgi_df['GeneName'] = self.mgi_df['attributes'].str.extract('gene_id "([^"]+)"')
+        self.mgi_df['GeneSynonym'] = self.mgi_df['attributes'].str.findall('gene_synonym "([^"]+)"').apply(lambda x: ', '.join(x) if x else '')
+
+    def get_gene_lists(self):
+        if self.mgi_df is None:
+            self.read_gtf_file()
+
+        ls_row_1 = self.mgi_df['GeneName'].tolist()
+        ls_row_10 = self.mgi_df['GeneSynonym'].tolist()
+        
+        return ls_row_1, ls_row_10
     
     # METODY
     def biomartParameters(self, mgi_symbol, dataset):
@@ -149,9 +191,7 @@ class musMusculus:
         filters = {'mgi_symbol':[mgi_symbol]}            # gene_name = mgi_symbol
         response = dataset.search({'attributes':attributes,'filters':filters})
         
-        # response convertion
         values = [line.split("\t") for line in response.text.split("\n") if line.strip()]
-            
         return values 
 
 
@@ -160,36 +200,42 @@ class musMusculus:
         filters = {'mgi_symbol':[mgi_symbol]}
         response = dataset.search({'attributes':attributes,'filters':filters})
         
-        # response_convertion
         values = [line.split("\t") for line in response.text.split("\n") if line.strip()]
-            
         return values 
 
 
-    def biomartParameters_mgi(self, mgi_id, dataset):
+    def biomartParameters_synonim(self, external_synonym, dataset):
 
         attributes = ['ensembl_gene_id',
                     'ensembl_transcript_id',
                     'refseq_mrna']
-        filters = {'mgi_id':[mgi_id]}                     # gene_name = mgi_id
+        filters = {'external_synonym':[external_synonym]}                     # gene_synonim
         response = dataset.search({'attributes':attributes,'filters':filters})
 
         # response_convertion
         values = [line.split("\t") for line in response.text.split("\n") if line.strip()]
-            
         return values 
 
-
-    def biomartHumanOrthologs_mgi(self, mgi_id, dataset):
+    def biomartHumanOrthologs_synonim(self, external_synonym, dataset):
         attributes = ['hsapiens_homolog_associated_gene_name']
         
-        filters = {'mgi_id':[mgi_id]}
+        filters = {'external_synonym':[external_synonym]}
         response = dataset.search({'attributes':attributes,'filters':filters})
         
         # response_convertion
         values = [line.split("\t") for line in response.text.split("\n") if line.strip()]
-            
-        return values 
+        return values
+    
+    def biomartParametersbyEnsembl(self, ensembl_gene_id, dataset):
+
+        attributes = ['external_gene_name',
+                    'ensembl_transcript_id',
+                    'refseq_mrna']
+        filters = {'ensembl_gene_id':[ensembl_gene_id]}               # gene_name = mgi_symbol
+        response = dataset.search({'attributes':attributes,'filters':filters})
+        
+        values = [line.split("\t") for line in response.text.split("\n") if line.strip()] 
+        return values  
 
     '''
     def get_regulation_for_gene(gene_name, source_file):
@@ -206,92 +252,87 @@ class musMusculus:
     '''
 
                 
-class RattusNorvegicus:
+class rattusNorvegicus:
+    
     def __init__(self):
-        self.gp = GProfiler(return_dataframe=True)
-        self.orth_url = 'https://biit.cs.ut.ee/gprofiler/api/orth/orth/'
+        self.mgi_file_path = r'..\alias_genomes\rat.gtf'
+        self.mgi_df = None
+        
+
+    def read_gtf_file(self):
+
+        self.mgi_df = pd.read_csv(self.mgi_file_path, sep='\t', header=None, comment='#', 
+                                names=['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attributes'])
+        self.mgi_df['GeneName'] = self.mgi_df['attributes'].str.extract('gene_id "([^"]+)"')
+        self.mgi_df['GeneSynonym'] = self.mgi_df['attributes'].str.findall('gene_synonym "([^"]+)"').apply(lambda x: ', '.join(x) if x else '')
+
+    def get_gene_lists(self):
+        if self.mgi_df is None:
+            self.read_gtf_file() 
+
+        ls_row_1 = self.mgi_df['GeneName'].tolist()
+        ls_row_10 = self.mgi_df['GeneSynonym'].tolist()
+        
+        return ls_row_1, ls_row_10
+    
+    def biomartParameters(self, mgi_symbol, dataset):
+        attributes = ['ensembl_gene_id',
+                    'ensembl_transcript_id',
+                    'refseq_mrna']
+        filters = {'external_gene_name':[mgi_symbol]}            # gene_name = mgi_symbol
+        response = dataset.search({'attributes':attributes,'filters':filters})
+        
+        values = [line.split("\t") for line in response.text.split("\n") if line.strip()]
+        return values 
 
 
-    def gprofilerGeneAndTranscriptIds(self, mgi_symbol):
-        # Query g:Profiler for the given MGI symbol targeting Ensembl Gene IDs,Ensembl Transcript IDs,RefSeq mRNA IDs
-        ensg_results = self.gp.convert(organism='rnorvegicus', query=[mgi_symbol], target_namespace='ENSG')
-        enst_results = self.gp.convert(organism='rnorvegicus', query=[mgi_symbol], target_namespace='ENST')
-        refseq_mrna_results = self.gp.convert(organism='rnorvegicus', query=[mgi_symbol], target_namespace='REFSEQ_MRNA')
+    def biomartHumanOrthologs(self, mgi_symbol, dataset):
+        attributes = ['hsapiens_homolog_associated_gene_name']
+        filters = {'external_gene_name':[mgi_symbol]}
+        response = dataset.search({'attributes':attributes,'filters':filters})
+        
+        values = [line.split("\t") for line in response.text.split("\n") if line.strip()]
+        return values 
 
-        # Extract the 'converted' columns which contain the IDs
-        ensembl_gene_ids = ensg_results['converted'].dropna().unique().tolist()
-        ensembl_transcript_ids = enst_results['converted'].dropna().unique().tolist()
-        refseq_mrna_ids = refseq_mrna_results['converted'].dropna().unique().tolist()
-
-        return {
-            'ensembl_gene_id': ensembl_gene_ids,
-            'ensembl_transcript_id': ensembl_transcript_ids,
-            'refseq_mrna': refseq_mrna_ids
-        }
-
-    def gprofilerHumanOrthologs(self, rat_gene_symbol):
-        # Define the POST request's parameters for g:Orth
-        payload = {
-            'organism': 'rnorvegicus',
-            'target': 'hsapiens',
-            'query': [rat_gene_symbol],
-        }
-
-        # Send the POST request to g:Orth
-        response = requests.post(self.orth_url, json=payload)
-
-        # Check if the request was successful
-        if response.status_code == 200:
-            results = response.json()['result']
-            # Extract the HGNC symbols from the results
-            hgnc_symbols = set([result['name'] for result in results if 'name' in result])
-            return hgnc_symbols
-        else:
-            print(f"Error in g:Orth: {response.status_code} - {response.text}")
-            return 'NA'
-
-    '''
-    def biomartParametersbyEnsembl(self, ensembl_gene_id):
+    
+    def biomartParametersbyEnsembl(self, ensembl_gene_id, dataset):
 
         attributes = ['external_gene_name',
-                      'ensembl_transcript_id',
-                      'refseq_mrna']
+                    'ensembl_transcript_id',
+                    'refseq_mrna']
         filters = {'ensembl_gene_id':[ensembl_gene_id]}               # gene_name = mgi_symbol
         response = dataset.search({'attributes':attributes,'filters':filters})
         
         values = [line.split("\t") for line in response.text.split("\n") if line.strip()] 
-        return values  
+        return values
 
 
-    def biomartHumanOrthologsbyEnsembl(self, ensembl_gene_id):
+    def biomartHumanOrthologsbyEnsembl(self, dataset, ensembl_gene_id):
 
         attributes = ['hsapiens_homolog_associated_gene_name']
         filters = {'ensembl_gene_id':[ensembl_gene_id]}               # gene_name = mgi_symbol
         response = dataset.search({'attributes':attributes,'filters':filters})
-    '''
+        
+        values = [line.split("\t") for line in response.text.split("\n") if line.strip()] 
+        return values 
 
-
-    def biomartParameters_mgi(self, mgi_id, dataset):
+    def biomartParameters_synonim(self, external_synonym, dataset):
 
         attributes = ['ensembl_gene_id',
                     'ensembl_transcript_id',
                     'refseq_mrna']
-        filters = {'mgi_id':[mgi_id]}                     # gene_name = mgi_id
+        filters = {'external_synonym':[external_synonym]}                     # gene_synonim
         response = dataset.search({'attributes':attributes,'filters':filters})
 
-        # response_convertion
         values = [line.split("\t") for line in response.text.split("\n") if line.strip()]
-            
         return values 
 
-
-    def biomartHumanOrthologs_mgi(self, mgi_id, dataset):
+    def biomartHumanOrthologs_synonim(self, external_synonym, dataset):
         attributes = ['hsapiens_homolog_associated_gene_name']
         
-        filters = {'mgi_id':[mgi_id]}
+        filters = {'external_synonym':[external_synonym]}
         response = dataset.search({'attributes':attributes,'filters':filters})
         
-        # response_convertion
         values = [line.split("\t") for line in response.text.split("\n") if line.strip()]
         return values 
 
@@ -312,6 +353,28 @@ class RattusNorvegicus:
     
 class homoSapiens:
     
+    def __init__(self):
+        # Initialize the file path upon creating an instance of the class
+        self.mgi_file_path = r'..\alias_genomes\human.gtf'
+        self.mgi_df = None
+
+    def read_gtf_file(self):
+        # Read the file and process it
+        self.mgi_df = pd.read_csv(self.mgi_file_path, sep='\t', header=None, comment='#', 
+                                  names=['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attributes'])
+        self.mgi_df['GeneName'] = self.mgi_df['attributes'].str.extract('gene_id "([^"]+)"')
+        self.mgi_df['GeneSynonym'] = self.mgi_df['attributes'].str.findall('gene_synonym "([^"]+)"').apply(lambda x: ', '.join(x) if x else '')
+
+    def get_gene_lists(self):
+        if self.mgi_df is None:
+            self.read_gtf_file()  # Ensure the file is read and processed before attempting to access the data
+        
+        # Convert to list as required
+        ls_row_1 = self.mgi_df['GeneName'].tolist()
+        ls_row_10 = self.mgi_df['GeneSynonym'].tolist()
+        
+        return ls_row_1, ls_row_10
+    
     def biomartParameters(self, mgi_symbol, dataset):
 
         attributes = ['ensembl_gene_id',
@@ -325,8 +388,7 @@ class homoSapiens:
         values = [line.split("\t") for line in response.text.split("\n") if line.strip()]
         return values   
 
-
-    def biomartParameters_mgi(self, gene_name, dataset):
+    def biomartParameters_synonim(self, gene_name, dataset):
 
         attributes = ['ensembl_gene_id',
                     'ensembl_transcript_id',
@@ -336,6 +398,27 @@ class homoSapiens:
         
         # response_convertion
         values = [line.split("\t") for line in response.text.split("\n") if line.strip()]
-        return values 
+        return values
     
+    def biomartParametersbyEnsembl(self, ensembl_gene_id, dataset):
+
+        attributes = ['external_gene_name',
+                    'ensembl_transcript_id',
+                    'refseq_mrna']
+        filters = {'ensembl_gene_id':[ensembl_gene_id]}               # gene_name = mgi_symbol
+        response = dataset.search({'attributes':attributes,'filters':filters})
+        
+        values = [line.split("\t") for line in response.text.split("\n") if line.strip()] 
+        return values  
+'''
+
+    def biomartHumanOrthologsbyEnsembl(self, ensembl_gene_id, dataset):
+
+        attributes = ['hsapiens_homolog_associated_gene_name']
+        filters = {'ensembl_gene_id':[ensembl_gene_id]}               # gene_name = mgi_symbol
+        response = dataset.search({'attributes':attributes,'filters':filters})
+        
+        values = [line.split("\t") for line in response.text.split("\n") if line.strip()] 
+        return values 
+'''
     
