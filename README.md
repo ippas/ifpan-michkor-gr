@@ -25,8 +25,8 @@ Biomart server data set for connection
     Mouse: 'mmusculus_gene_ensembl'
     Rat: 'rnorvegicus_gene_ensembl'
 
-FUNCTIONS - gene_dictionary - creates data dictionaries - biomartParameters - query using gene_name value (mgi_symbol) - biomartHumanOrthologs - separate query for HGNC because you cannot get data from two different attribute cards in one query - biomartParametersbyEnsembl - query using ensembl_id value when gene_name is "NA" - biomartHumanOrthologsbyEnsembl - separate query for HGNC by Ensembl - alias_and_official - function which is loooking for alias and mgi_id for our gene_name value in  
- MGI_Entrez database if response from Biomart was empty - biomartParameters_mgi - query using mgi_id value - biomartHumanOrthologs_mgi - separate query for HGNC using mgi_id value - updateCellswithAlias - function which updates alias column using MGI_Entrez database in created dictionaries - updateCellswithINFO - function which updates info column using publication source file.
+FUNCTIONS - gene_dictionary - creates data dictionaries - biomartParameters - query using gene_name value (mgi_symbol) - biomartHumanOrthologs - separate query for HGNC because you cannot get data from two different attribute cards in one query - biomartParametersbyEnsembl - query using ensembl_id value when gene_name is "NA" - biomartHumanOrthologsbyEnsembl - separate query for HGNC by Ensembl - alias_and_official - function which is loooking for alias and mgi_id for our gene_name value in
+ MGI_Entrez database if response from Biomart was empty - biomartParameters_synonim - query using gene_synonim value - biomartHumanOrthologs_synonim - separate query for HGNC using gene_synonim value - updateCellswithAlias - function which updates alias column using gtf file for each organism in created dictionaries - updateCellswithINFO - function which updates info column using publication source file.
 It compares created dictionaries and publication source file by gene name and add information form different source file columns
 
 LOAD FILES
@@ -92,9 +92,19 @@ Directories:
 ## Raw
 
 Dataframe:
+
+GTF Files:
+https://www.ncbi.nlm.nih.gov/datasets/genome/
+
+Rat:
+[mRatBN7.2](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_015227675.2/)
+Mouse:
+[GRCm39](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000001635.27/)
+Human:
+[GRCh38.p14](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000001405.40/)
+
 - https://www.omicspred.org/Scores/Metabolon/INTERVAL
 - https://www.omicspred.org/Scores/Nightingale/INTERVAL
-- MGI_EntrezGene.rpt - https://www.informatics.jax.org/downloads/reports/MGI_EntrezGene.rpt
 - ifpan-GR-database-papers.xlsx (matzieb)
 - 12868_2017_352_MOESM1_ESM_02.xlsx (michkor publication)
 - Clusters\_-_Symbols (marpiech publication)
