@@ -25,8 +25,7 @@ Biomart server data set for connection
     Mouse: 'mmusculus_gene_ensembl'
     Rat: 'rnorvegicus_gene_ensembl'
 
-FUNCTIONS - gene_dictionary - creates data dictionaries - biomartParameters - query using gene_name value (mgi_symbol) - biomartHumanOrthologs - separate query for HGNC because you cannot get data from two different attribute cards in one query - biomartParametersbyEnsembl - query using ensembl_id value when gene_name is "NA" - biomartHumanOrthologsbyEnsembl - separate query for HGNC by Ensembl - alias_and_official - function which is loooking for alias and mgi_id for our gene_name value in
- MGI_Entrez database if response from Biomart was empty - biomartParameters_synonim - query using gene_synonim value - biomartHumanOrthologs_synonim - separate query for HGNC using gene_synonim value - updateCellswithAlias - function which updates alias column using gtf file for each organism in created dictionaries - updateCellswithINFO - function which updates info column using publication source file.
+FUNCTIONS - gene_dictionary - creates data dictionaries - biomartParameters - query using gene_name value (mgi_symbol) - biomartHumanOrthologs - separate query for HGNC because you cannot get data from two different attribute cards in one query - biomartParametersbyEnsembl - query using ensembl_id value when gene_name is "NA" - biomartHumanOrthologsbyEnsembl - separate query for HGNC by Ensembl - alias_and_official - function which is loooking for alias and synonim_id for our gene_name value in gtf genome files if response from Biomart was empty - biomartParameters_synonim - query using gene_synonim value - biomartHumanOrthologs_synonim - separate query for HGNC using gene_synonim value - updateCellswithAlias - function which updates alias column using gtf file for each organism in created dictionaries - updateCellswithINFO - function which updates info column using publication source file.
 It compares created dictionaries and publication source file by gene name and add information form different source file columns
 
 LOAD FILES
@@ -39,7 +38,7 @@ SCORES
 saving partial scores
 
 SECOND DICTIONARY
-completing dictionaries with values from MGI_Entrez database found by functiom alias_and_official
+completing dictionaries with values from gtf genom files database found by functiom alias_and_official
 
 Add ALIAS
 use of updateCellswithAlias function
