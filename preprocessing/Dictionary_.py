@@ -267,7 +267,7 @@ with open(temp_lsnotResponseafter, 'w') as file:
     for line in df4:
         file.write(str(line) + '\n')
 
-## Add ALIAS###################NOT FIXED
+## Add ALIAS
 dictionary_file_path = temp_secDictionary
 alias_file_path = r'.\withAlias_' + src + '.tsv'
 updateCellswithAlias(mgi_file_path, dictionary_file_path, alias_file_path)
