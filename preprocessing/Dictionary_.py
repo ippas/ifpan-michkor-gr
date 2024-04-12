@@ -1,10 +1,9 @@
 from functions_dictionary import *
 
 ## LOAD START FILES
-source_file = r'macrophages-26663721.tsv'
-src = 'macrophages-26663721-NOWAKOWSKA'
-
-
+source_file = r'bronchial-28116096.tsv'
+src = 'bronchial-28116096'
+gene_list_number = 922
 #SOURCE FILE
 publication_df = pd.read_csv(source_file, sep='\t', keep_default_na=False, usecols=[1,2,3,6], skiprows=1, names=['pmid','gene_name','ensembl_id','species'])
 publication_geneName = publication_df['gene_name'].tolist()
@@ -37,7 +36,6 @@ else:
 
 
 # CHANGE_VAR
-gene_list_number = 836
 source = 'pmid:' + source_number        # => cluster   
 gene_list_id = 'all_significant_genes_' + source_number
 
@@ -150,14 +148,14 @@ for i in range(len(publication_geneName)):
 
 # from DICTIONARY to file
 data = ls_geneDictionaries
-dictionary = r'.\Dictionary_' + src + '.tsv'
+dictionary = r'.\Dictionary\Dictionary_' + src + '.tsv'
 with open(dictionary, 'w') as file:
     for line in data:
         file.write(str(line) + '\n')
 
 # from ls_notResponse to file
 data1 = ls_notResponse
-temp_notResponse = r'.\notResponse_' + src + '.tsv'
+temp_notResponse = r'.\ls_notResponse\notResponse_' + src + '.tsv'
 
 with open(temp_notResponse, 'w') as file:
     for symbol in data1:
@@ -175,7 +173,7 @@ else:
     df2 = pd.DataFrame()
 
 # from alias_and_official to file
-temp_responseSynonim = r'.\responsewithSynonim_' + src + '.tsv'
+temp_responseSynonim = r'.\response_withSynonim\responsewithSynonim_' + src + '.tsv'
 df2.to_csv(temp_responseSynonim, sep="\t", index=False, header=None)
 
 # LOAD responsewithSynonim
@@ -243,7 +241,7 @@ for i in range(len(synonim_id)):
             else:
                 ls_notResponse_after.append(gene_name)
 
-# Join the modified columns back line
+
             ls_geneDictionaries[i] = '\t'.join(columns)
 
 ls_notResponse_after = list(set(ls_notResponse_after))
@@ -254,7 +252,7 @@ ls_notResponse_after = list(set(ls_notResponse_after))
 # from SECOND DICTIONARY to file
 df3 = ls_geneDictionaries
 headers_line = ['index','gene_name','gene_list_index','gene_list_number','source','ensembl_gene_id','ensembl_transcript_id','refseq_mrna_id','hgnc_symbol','alias','info']
-temp_secDictionary = r'.\secondDictionary_' + src + '.tsv'
+temp_secDictionary = r'.\secondDictionary\secondDictionary_' + src + '.tsv'
 with open(temp_secDictionary, 'w') as file:
     file.write('\t'.join(headers_line) + '\n')
     for line in df3:
@@ -262,18 +260,27 @@ with open(temp_secDictionary, 'w') as file:
 
 # from ls_notResponse_after to file
 df4 = ls_notResponse_after
-temp_lsnotResponseafter = r'.\ls_notResponse_after_' + src + '.tsv'
+temp_lsnotResponseafter = r'.\notResponse_after\ls_notResponse_after_' + src + '.tsv'
 with open(temp_lsnotResponseafter, 'w') as file:
     for line in df4:
         file.write(str(line) + '\n')
 
 ## Add ALIAS
 dictionary_file_path = temp_secDictionary
-alias_file_path = r'.\withAlias_' + src + '.tsv'
+alias_file_path = r'.\withAlias\withAlias_' + src + '.tsv'
 updateCellswithAlias(mgi_file_path, dictionary_file_path, alias_file_path)
 
 # Add INFO
-info_file_path = r'.\withINFO_' + src + '.tsv'
+info_file_path = r'.\withINFO\withINFO_' + src + '.tsv'
 updateCellswithINFO(source_file, alias_file_path, info_file_path)
+
+# Fix empty
+
+with open(info_file_path, 'r', newline='') as file:
+    rows = [[col if col else 'NA' for col in row] for row in csv.reader(file, delimiter='\t')]
+
+with open(info_file_path, 'w', newline='') as file:
+    csv.writer(file, delimiter='\t').writerows(rows)
+
 
 print('finish')

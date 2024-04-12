@@ -50,7 +50,7 @@ def alias_and_official(ls_notResponse, ls_row_10, ls_row_1):
 
         for processed_list in (ls_row_1_processed, ls_row_10_processed):
             for temp, original, i in processed_list:
-                if word in temp.split(", ") or word == temp:
+                if word in temp.split("|") or word == temp:
 
                     entry = [notResponse, i, original]
 
@@ -70,13 +70,13 @@ def read_gtf_and_extract_genes_synonyms(mgi_file_path):
     mgi_df = pd.read_csv(mgi_file_path, sep='\t', header=None, comment='#', 
                          names=['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attributes'])
     mgi_df['GeneName'] = mgi_df['attributes'].str.extract('gene_id "([^"]+)"')
-    mgi_df['GeneSynonym'] = mgi_df['attributes'].str.findall('gene_synonym "([^"]+)"').apply(lambda x: ', '.join(x) if x else '')
+    mgi_df['GeneSynonym'] = mgi_df['attributes'].str.findall('gene_synonym "([^"]+)"').apply(lambda x: '|'.join(x) if x else '')
 
     
     gene_synonyms_aggregated = {}
     for _, row in mgi_df.iterrows():
         gene_name = row['GeneName'].strip().casefold()
-        synonyms = set(row['GeneSynonym'].split('|')) if row['GeneSynonym'] else set()
+        synonyms = set(row['GeneSynonym'].split(', ')) if row['GeneSynonym'] else set()
         
         if gene_name in gene_synonyms_aggregated:
             gene_synonyms_aggregated[gene_name].update(synonyms)
@@ -91,7 +91,6 @@ def read_gtf_and_extract_genes_synonyms(mgi_file_path):
 
 def updateCellswithAlias(mgi_file_path, dictionary_file_path, alias_file_path):
     gene_synonyms_aggregated = read_gtf_and_extract_genes_synonyms(mgi_file_path)
-
     wb_dictionary = pd.read_csv(dictionary_file_path, keep_default_na=False, sep='\t', header=0)
 
     def update_alias(gene_name):
@@ -172,7 +171,7 @@ class musMusculus:
         self.mgi_df = pd.read_csv(self.mgi_file_path, sep='\t', header=None, comment='#', 
                                 names=['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attributes'])
         self.mgi_df['GeneName'] = self.mgi_df['attributes'].str.extract('gene_id "([^"]+)"')
-        self.mgi_df['GeneSynonym'] = self.mgi_df['attributes'].str.findall('gene_synonym "([^"]+)"').apply(lambda x: ', '.join(x) if x else '')
+        self.mgi_df['GeneSynonym'] = self.mgi_df['attributes'].str.findall('gene_synonym "([^"]+)"').apply(lambda x: '|'.join(x) if x else '')
 
     def get_gene_lists(self):
         if self.mgi_df is None:
@@ -264,7 +263,7 @@ class rattusNorvegicus:
         self.mgi_df = pd.read_csv(self.mgi_file_path, sep='\t', header=None, comment='#', 
                                 names=['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attributes'])
         self.mgi_df['GeneName'] = self.mgi_df['attributes'].str.extract('gene_id "([^"]+)"')
-        self.mgi_df['GeneSynonym'] = self.mgi_df['attributes'].str.findall('gene_synonym "([^"]+)"').apply(lambda x: ', '.join(x) if x else '')
+        self.mgi_df['GeneSynonym'] = self.mgi_df['attributes'].str.findall('gene_synonym "([^"]+)"').apply(lambda x: '|'.join(x) if x else '')
 
     def get_gene_lists(self):
         if self.mgi_df is None:
@@ -363,7 +362,7 @@ class homoSapiens:
         self.mgi_df = pd.read_csv(self.mgi_file_path, sep='\t', header=None, comment='#', 
                                   names=['seqname', 'source', 'feature', 'start', 'end', 'score', 'strand', 'frame', 'attributes'])
         self.mgi_df['GeneName'] = self.mgi_df['attributes'].str.extract('gene_id "([^"]+)"')
-        self.mgi_df['GeneSynonym'] = self.mgi_df['attributes'].str.findall('gene_synonym "([^"]+)"').apply(lambda x: ', '.join(x) if x else '')
+        self.mgi_df['GeneSynonym'] = self.mgi_df['attributes'].str.findall('gene_synonym "([^"]+)"').apply(lambda x: '|'.join(x) if x else '')
 
     def get_gene_lists(self):
         if self.mgi_df is None:
@@ -421,4 +420,3 @@ class homoSapiens:
         values = [line.split("\t") for line in response.text.split("\n") if line.strip()] 
         return values 
 '''
-    
