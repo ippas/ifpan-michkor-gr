@@ -112,10 +112,32 @@ plot(tsne_result$Y[,1], tsne_result$Y[,2], xlab = "t-SNE 1", ylab = "t-SNE 2", m
 
 ################################################################################
 # Compute the distance matrix
-dist_matrix <- dist(genes_phenotypes_PanUkBiobank_matrix, method = "euclidean")
+genes_phenotypes_PanUkBiobank_matrix -> genes_phenotypes_PanUkBiobank_matrix2
+
+rownames(genes_phenotypes_PanUkBiobank_matrix2) <- gsub("biobankuk-", "", rownames(genes_phenotypes_PanUkBiobank_matrix2))
+
+
+
+dist_matrix <- dist(genes_phenotypes_PanUkBiobank_matrix2, method = "euclidean")
 
 # Perform hierarchical clustering
-hc <- hclust(dist_matrix, method = "ward.D2")
+hc <- hclust(dist_matrix, method = "complete")
 
 # Plot the dendrogram
 plot(hc, hang = -1)
+
+
+
+# Open PDF device
+pdf("results/figures-phenotypes/phenotypes-hclust.pdf", width = 1000, height = 50)
+
+# Plotting (replace with your actual plot code)
+plot(hc, hang = -1) # Make sure 'hc' is defined and contains your hierarchical clustering
+rect.hclust(hc, k = 10, border = 2:10)
+# Close PDF device
+dev.off()
+
+
+sub_grp <- cutree(hc, k = 10)
+
+table(sub_grp)

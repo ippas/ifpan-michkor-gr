@@ -13,10 +13,11 @@ categories_biobankuk <- read.csv("data/phenotypes/panukbiobank-phenotype-categor
   pull(category_name) 
 
 
-overlap_resutls_random_dependent_fdr0.01 <- analyze_uk_biobank_categories_gene_overlap(
+overlap_resutls_random_dependent_fdr0.01_new <- analyze_uk_biobank_categories_gene_overlap(
   categories = categories_biobankuk,
   genes_phenotypes = genes_phenotypes_PanUkBiobank,
-  papers_gene_list = papers_gene_list[!grepl("marpiech", names(papers_gene_list))],
+  # papers_gene_list = papers_gene_list[!grepl("marpiech", names(papers_gene_list))],
+  papers_gene_list = papers_gene_list,
   hgnc_symbols_vector = hgnc_symbols_vector_v110,
   path_metafile = "data/phenotypes/panukbiobank-phenotype-category.csv",
   random_genes_type = "dependent",

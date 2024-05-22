@@ -172,7 +172,7 @@ draw_custom_heatmap <- function(data_list,
   
   # Create color ramp
   pastel_colors <- colorRampPalette(c(palette))(100)
-  pastel_colors <- colorRamp2(c(0, 2, 4, 6, 8), palette)
+  # pastel_colors <- colorRamp2(c(0, 2, 4, 6, 8), palette)
   
   
   # Define the heatmap with cell_fun to add text inside each cell

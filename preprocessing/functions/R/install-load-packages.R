@@ -20,7 +20,9 @@ required_packages <-
     "furrr",
     "purrr",
     "RColorBrewer",
-    "patchwork"
+    "patchwork",
+    "igraph",
+    "infotheo"
   )
 
 # Install and load the packages
@@ -49,6 +51,14 @@ source("preprocessing/functions/R/overlapping-genes-analysis/filter-phenotypes-b
 source("preprocessing/functions/R/overlapping-genes-analysis/analyze-gene-list-overlap.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/analyze-uk-biobank-categories-gene-overlap.R")
 
+################################################################################
+# load function for prepare data to overlap analysis
+source("preprocessing/functions/R/functions-gr-list-preprocessing.R")
+source("preprocessing/functions/R/functions-conditional-probability.R")
+source("preprocessing/functions/R/refine-and-label-gene-lists.R")
+source("preprocessing/functions/R/summarize-genes-distribution.R")
+
+
 
 # Load in custom functions related to preprocessing
 source("preprocessing/functions/R/gr-database-functions.R")
@@ -63,4 +73,7 @@ source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-barplo
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-manhattan-plot.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/create-gene-pie-chart.R")
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a021f33 (identify gr-dependent gene lists)

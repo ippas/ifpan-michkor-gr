@@ -40,15 +40,7 @@ if (!requireNamespace("biomaRt", quietly = TRUE)) {
 # Detach the biomaRt package
 detach(package:biomaRt)
 
-# # Load in custom functions related to preprocessing
-# source("preprocessing/functions/R/gr-database-functions.R")
-# source("preprocessing/functions/R/draw-custom-heatmap.R")
-# source("preprocessing/functions/R/processing-overlap-results.R")
-# source("preprocessing/functions/R/manual-filter-overlap-results.R")
-# source("preprocessing/functions/R/gene-paper-preprocessing-functions.R")
-# source("preprocessing/functions/R/perform-chi2-tests.R")
-
-
+################################################################################
 # Read data
 # gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/geneBase_060723.tsv", sep = "\t") 
 # gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/publikacje_gr_100923.tsv", sep = "\t") 
@@ -57,11 +49,12 @@ detach(package:biomaRt)
 # gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v9_091123.tsv", sep = "\t") # last version
 # gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v11_141223.tsv", sep = "\t") 
 gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v12_191223.tsv", sep = "\t") 
+gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v15_280224.tsv", sep = "\t")
+gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/gr_geneBase_v16_120424.tsv", sep = "\t")
 
-
-
+################################################################################
 # Extract specific metadata from the "Info" column
-gr_gene_database <- gr_gene_database_raw %>% 
+gr_gene_database <- gr_gene_database_raw %>%  
   extract_keys_values("info", c("tissue", "cell", "species", "environment", "treatment", "dose", "time", "log2ratio", "fdr", "statistical_method", "treatment_type", "regulation", "comparison"))
 
 # Filter data based on specific conditions for "source", "statistical_method", and "fdr"
@@ -77,25 +70,9 @@ gr_gene_database <- gr_gene_database %>%
   filter(source != "michkor-cells") %>% 
   bind_rows(tmp_michkor)
 
-# filter hgnc symbols to remove
-gr_gene_database %>% 
-  filter(grepl("marpiech", gene_list_index)) %>% 
-  filter(gene_list_number != 800) %>% 
-  filter(source != "marpiech_tissues_dex") %>% 
-  select(-index) %>%  
-  unique() %>% 
-  select(c(gene_list_number, gene_name, hgnc_symbol)) %>% 
-  filter(!is.na(hgnc_symbol)) %>% 
-  filter(!(gene_list_number %in% c(17,18))) %>% 
-  select(-gene_name) %>% unique() %>% 
-  .$hgnc_symbol %>% 
-  table %>% 
-  as.data.frame() %>% 
-  arrange(Freq) %>%
-  set_colnames(c("hgnc_symbol", "freq")) %>% 
-  filter(freq > 1) %>% 
-  as.data.frame() %>% .$hgnc_symbol %>% as.character() -> hgnc_to_remove
 
+################################################################################
+# prepare hgnc_symbols from biomart v110
 
 # Specify the URL for Ensembl version 110 from the archive
 # in the future it'd change to archive url
@@ -129,35 +106,15 @@ available_attributes %>%
 gr_gene_database %>% 
   filter(!is.na(hgnc_symbol)) %>% # remove NA hgnc_symbol
   filter(hgnc_symbol %in% hgnc_symbols_df_v110$hgnc_symbol) %>% # filter protein_coding hgnc_sybol
-  filter(!(hgnc_symbol %in% hgnc_to_remove)) %>% 
+  # filter((hgnc_symbol %in% hgnc_to_remove)) %>% 
   mutate(gene_list_index = gsub("marpiech_.*", "marpiech_tissues_dex", gene_list_index)) %>% 
   mutate(source = ifelse(gene_list_index == "marpiech_tissues_dex", "marpiech_tissues_dex", source)) -> gr_gene_database_preproccesing
 
-# gr_gene_database_preproccesing %>% 
-#   filter(source == "pmid:33203447") %>% 
-#   mutate(tmp = fdr) %>% 
-#   mutate(fdr = regulation) %>% 
-#   mutate(regulation = tmp) %>% 
-#   select(c("index", "gene_name", "gene_list_index", "gene_list_number", "source", 
-#            "ensembl_gene_id", "ensembl_transcript_id", "refseq_mrna_id", "hgnc_symbol", 
-#            "alias", "info", "tissue", "cell", "species", "environment", "treatment", 
-#            "dose", "time", "log2ratio", "fdr", "statistical_method", "treatment_type", 
-#            "regulation")) -> tmp_chondrocytes
 
-# gr_gene_database_preproccesing %>% 
-#   filter(source != "pmid:33203447") %>% 
-#   rbind(., tmp_chondrocytes) -> gr_gene_database_preproccesing 
-
-# gr_gene_database_preproccesing %>% 
-#   filter(!grepl("omicspred_metabolon", source)) %>%
-#   filter(!grepl("omicspred_nithingale_", source)) %>%
-#   .$treatment %>% unique()
-#   mutate(label = paste(source, tissue, cell, regulation, treatment, sep = "_")) %>%
-#   .$label %>% unique
 
 # tmp code to repair data for PMID:24777604
 gr_gene_database_preproccesing %>% 
-  filter(source == "pmid:24777604") %>%
+  filter(source == "pmid:24777604") %>% 
   mutate(comparison = ifelse(comparison == "Cav1-KO-DEX_vs_C57-Ethanol", "Cav1-KO-Dex_vs_Cav1-KO-Ethanol",
                              ifelse(comparison == "C57-DEX_vs_C57-Ethanol", "C57-Dex_vs_C57-Ethanol", "Cav1-KO-Ethanol_vs_C57BL6-Dex"))) %>% 
   mutate(cell = ifelse(comparison == "C57-Dex_vs_C57-Ethanol", "NPSCs", 
@@ -177,35 +134,68 @@ gr_gene_database_preproccesing %>%
     source == "marpiech_tissues_dex",
     paste0(source, "_", gene_list_number),
     paste0(source, "_", tissue, "_", cell)
-  )) %>%
-  filter(!(treatment %in% c("vitamin-d3", "vehicle-DMSO"))) %>% 
-  # mutate(label = paste0(source, "_", tissue, "_", cell)) %>%
-  mutate(label = paste(source, tissue,cell, regulation,sep = "_")) %>% 
-  mutate(label = ifelse(
-    source == "marpiech_tissues_dex",
-    paste0(source, "_", gene_list_number),
-    label
-  )) %>% 
-  group_by(label) %>%
-  mutate(gene_count = n()) %>%
-  ungroup() %>% 
-  filter(gene_count > 5) %>% 
-  # mutate(label2 = paste0(label, "_", gene_count)) %>% 
-  select(-gene_count) -> papers_data_preprocessing
+  )) -> papers_data_preprocessing
+
 
 papers_data_preprocessing %>% 
-  mutate(fdr = as.numeric(fdr),
-         log2ratio = as.numeric(log2ratio)) %>% 
-  mutate(abs_log2ratio = abs(log2ratio)) %>% 
-  # filter(tissue != "kidney" | (tissue == "kidney" & fdr < 0.001)) %>%
-  filter(source == "pmid:23593176", fdr < 0.0001, abs_log2ratio > 1) %>% 
-  select(-abs_log2ratio) -> tmp_kidney
+  categorize_tissue(tissue_column = "tissue") %>% 
+  mutate(source = ifelse(source == "pmid:22673229e", "pmid:22673229", source)) %>% 
+  mutate(source = ifelse(source == "pmid:NA", "marpiech_tissues", source)) %>%  
+  mutate(dose = str_remove(dose, " x")) %>% 
+  mutate(dose = str_remove(dose, " 18h| 6h| 4h| 12h| 24h| 2h| 1h")) -> papers_data_preprocessing
+
+
+################################################################################
+# filter hgnc symbols to remove
+gr_gene_database %>% 
+  filter(grepl("marpiech", gene_list_index)) %>% 
+  filter(gene_list_number != 884) %>% 
+  # filter(source != "aall_significant_genes_marpiech") %>% 
+  select(-index) %>%  
+  unique() %>% 
+  select(c(gene_list_number, gene_name, hgnc_symbol)) %>% 
+  filter(!is.na(hgnc_symbol)) %>% 
+  filter(!(gene_list_number %in% c(17,18))) %>% 
+  select(-gene_name) %>% unique() %>% 
+  .$hgnc_symbol %>% 
+  table %>% 
+  as.data.frame() %>% 
+  arrange(Freq) %>%
+  set_colnames(c("hgnc_symbol", "freq")) %>% 
+  filter(freq > 1) %>% 
+  as.data.frame() %>% .$hgnc_symbol %>% as.character() -> hgnc_to_remove
 
 papers_data_preprocessing %>% 
-  mutate(fdr = as.numeric(fdr),
-         log2ratio = as.numeric(log2ratio)) %>% 
-  filter(source != "pmid:23593176") %>% 
-  rbind(., tmp_kidney) -> papers_data_preprocessing
+  filter((source %in% c("marpiech_tissues_dex",  "marpiech_tissues"))) %>% 
+  filter(!(hgnc_symbol %in% hgnc_to_remove)) %>% 
+  mutate(source = ifelse(source == "marpiech_tissues_dex", "marpiech_clusters_dex", "marpiech_tissues_dex")) -> marpiech_data_preprocessing
 
-split(papers_data_preprocessing$hgnc_symbol, papers_data_preprocessing$label) %>% lapply(., unique) -> papers_gene_list
 
+################################################################################
+
+  
+
+
+papers_data_preprocessing %>% 
+  # filter(!(treatment %in% c("TNF", "LPS", "vehicle-ethanol", "TNFalpha"))) %>% 
+  filter(!(comparison %in% c( "FS30_vs_BLAM", "FS120_vs_BLAM", "FS360_vs_BLAM", "FS180_vs_BLAM"))) %>%
+  # filter(dose != "0mg/kg") %>% 
+  filter(source != "marpiech_tissues") %>% 
+  extract_keys_values(., "info", keys = "method") %>% 
+  mutate(simple_tissue = ifelse(source == "michkor-cells", "brain", simple_tissue)) %>% 
+  mutate(regulation = ifelse(regulation == "dwon", "down", regulation)) %>% 
+  mutate(regulation = ifelse(source == "pmid:23303060" & log2ratio > 0, "up", 
+                             ifelse(source == "pmid:23303060" & log2ratio <= 0, "down", regulation))) %>% 
+  filter(!(source == "michkor-cells" & hgnc_symbol == "ARHGAP8")) %>% 
+  filter(!(source %in% c("marpiech_tissues_dex"))) -> papers_data_preprocessing
+
+
+papers_data_preprocessing %>% 
+  filter(!(source %in% c("marpiech_tissues_dex"))) %>%
+  select(c(source, tissue, cell, system, simple_tissue)) %>% 
+  unique %>% as.data.frame() %>% 
+  write.table(file = "results/table-source-tissue-cell.tsv", sep = "\t", row.names = F, col.names = T, quote = F)
+
+
+
+# split(papers_data_preprocessing$hgnc_symbol, papers_data_preprocessing$label) %>% lapply(., unique) -> papers_gene_list
