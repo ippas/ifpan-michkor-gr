@@ -157,7 +157,7 @@ tissue_master_df %>%
       filter(metric == "log2ratio") %>% 
       filter(regulation == "up") %>% 
       .$hgnc_symbol})) %>% 
-  jaccard_matrix(gene_list = .) %>% pheatmap(display_numbers = T, main = "upregulated") 
+  jaccard_matrix(gene_list = .) %>% pheatmap(display_numbers = T, main = "Jaccard similarity index, upregulated genes") 
 
 
 tissue_master_df %>% 
@@ -174,12 +174,48 @@ tissue_master_df %>%
       filter(metric == "log2ratio") %>% 
       filter(regulation == "down") %>% 
       .$hgnc_symbol})) %>% 
-  jaccard_matrix(gene_list = .) %>% pheatmap(display_numbers = T, main = "downregulated") 
+  jaccard_matrix(gene_list = .) %>% pheatmap(display_numbers = T, main = "Jaccard similarity index, downregulated genes") 
 
 
 
 tissue_master_df %>% 
-  filter(regulation == "down", 
+  filter(regulation == "up", 
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  ungroup(hgnc_symbol) %>%
+  select(c(tissue, hgnc_symbol)) %>% 
+  as.data.frame() %>% 
+  split(.$tissue, .$hgnc_symbol ) %>% lapply(., function(x) {x$hgnc_symbol}) %>%  
+  append(list(master_up_double_rs = {regulation_master_double_rank_score_lists %>% 
+      bind_rows(.id = "label") %>% 
+      separate(label, into = c("regulation", "metric", "size_list")) %>% 
+      filter(metric == "log2ratio") %>% 
+      filter(regulation == "up") %>% 
+      .$hgnc_symbol})) %>% lapply(., unique) -> master_lists_down
+   
+  
+  perform_chi2_tests(datasets = ., total_genes = {tissue_master_df %>% 
+          filter(regulation == "up", 
+                 rank_criterion == "log2ratio",
+                 size_list == 50)}) -> master_lists_chi2
+
+
+perform_chi2_tests(c(master_lists_down), hgnc_symbols_vector_v110) -> master_lists_chi2
+
+
+tissue_master_df %>% 
+  filter(regulation == "up", 
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  filter(hgnc_symbol %in% master_lists_down$master_up_double_rs) %>% as.data.frame() %>% 
+  filter(hgnc_symbol %in% master_genes_from_lung_down) %>% .$hgnc_symbol %>% table
+
+master_lists_chi2$number_overlap_matrix %>% pheatmap()
+
+
+
+tissue_master_df %>% 
+  filter(regulation == "up", 
          rank_criterion == "log2ratio",
          size_list == 50) %>% 
   ungroup(hgnc_symbol) %>%
@@ -191,23 +227,8 @@ tissue_master_df %>%
       separate(label, into = c("regulation", "metric", "size_list")) %>% 
       filter(metric == "log2ratio") %>% 
       filter(regulation == "down") %>% 
-      .$hgnc_symbol})) %>% lapply(., unique) -> master_lists_down
-   
-  
-  perform_chi2_tests(datasets = ., total_genes = {tissue_master_df %>% 
-          filter(regulation == "down", 
-                 rank_criterion == "log2ratio",
-                 size_list == 50)}) -> master_lists_chi2
+      .$hgnc_symbol})) %>% lapply(., unique) -> master_lists_up
 
 
-perform_chi2_tests(c(master_lists_down), hgnc_symbols_vector_v110) -> master_lists_chi2
+master_lists_up$
 
-
-tissue_master_df %>% 
-  filter(regulation == "down", 
-         rank_criterion == "log2ratio",
-         size_list == 50) %>% 
-  filter(hgnc_symbol %in% master_lists_down$master_up_double_rs) %>% as.data.frame() %>% 
-  filter(hgnc_symbol %in% master_genes_from_lung_down) %>% view
-
-master_lists_chi2$number_overlap_matrix %>% pheatmap()
