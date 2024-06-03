@@ -8,7 +8,16 @@ custom_palette <- c(
 )
 
 # Function to create and plot a triangular heatmap
-plot_triangular_heatmap <- function(mat, palette) {
+plot_triangular_heatmap <- function(mat, palette, legend_name = NULL,  scale_palette = FALSE, ...) {
+  
+  if (scale_palette) {
+    # Determine the number of breaks based on the palette length
+    breaks <- seq(0, 1, length.out = length(palette))
+    scaled_palette <- colorRamp2(breaks, palette)
+  } else {
+    # Use the provided palette
+    scaled_palette <- palette
+  }
   
   # Compute the Euclidean distance matrix for rows
   row_dist <- dist(mat, method = "euclidean")
@@ -32,15 +41,17 @@ plot_triangular_heatmap <- function(mat, palette) {
   # Create and plot the heatmap using ComplexHeatmap with custom cell_fun
   ht <- Heatmap(
     reordered_mat,
-    name = "Jaccard Index",
+    name = legend_name,
     na_col = "white",
-    col = palette,
+    col = scaled_palette,
     show_row_names = TRUE,
     show_column_names = TRUE,
     cluster_rows = FALSE,
     cluster_columns = FALSE,
     rect_gp = gpar(type = "none"),
     row_names_side = "left",
+    # row_names = cf_heatmap_names,
+    
     cell_fun = function(j, i, x, y, width, height, fill) {
       if (i >= j) {
         grid.rect(x = x, y = y, width = width, height = height,
@@ -49,11 +60,19 @@ plot_triangular_heatmap <- function(mat, palette) {
                   gp = gpar(fontsize = 8, col = "black"))
       }
     },
-    heatmap_legend_param = list(direction = "horizontal")
+    heatmap_legend_param = list(direction = "horizontal"),
+    ...
   )
   draw(ht, heatmap_legend_side = "bottom")
 }
 
+
+detailed_tissue_master_df %>%
+  ungroup() %>%
+  filter(size_list == 50, regulation == "up", rank_criterion == "log2ratio") %>%
+  select(tissue, n_lists_filt) %>%
+  unique() %>%
+  mutate(name = paste0(tissue, " (", n_lists_filt, ")")) %>% select(-n_lists_filt) %>%  { set_names(.$name, .$tissue) }
 
 tissue_master_df %>% 
   filter(regulation == "down", 

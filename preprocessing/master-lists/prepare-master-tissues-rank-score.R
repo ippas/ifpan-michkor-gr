@@ -66,9 +66,7 @@ tissue_master_lists_rsLog2ratioPlusFDR %>%
     .x <- .x %>% mutate(tissue_rank_score = rank_scores)
     .x
   })) %>%
-  unnest(cols = c(data, tissue_rank_score))
-  
--> tissue_master_df
+  unnest(cols = c(data, tissue_rank_score)) -> tissue_master_df
 
 
 tissue_master_df %>% 

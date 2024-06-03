@@ -192,7 +192,7 @@ papers_data_preprocessing %>%
 
 papers_data_preprocessing %>% 
   filter(!(source %in% c("marpiech_tissues_dex"))) %>%
-  select(c(source, tissue, cell, system, simple_tissue)) %>% 
+  select(c(source, tissue, cell, simple_tissue, detailed_tissue)) %>% 
   unique %>% as.data.frame() %>% 
   write.table(file = "results/table-source-tissue-cell.tsv", sep = "\t", row.names = F, col.names = T, quote = F)
 

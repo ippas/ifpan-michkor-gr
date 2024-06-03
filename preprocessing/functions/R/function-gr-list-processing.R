@@ -7,18 +7,18 @@ categorize_tissue <- function(df, tissue_column) {
   
   # Perform the mutations using the specified column for tissue information
   df <- df %>%
-    mutate(system = case_when(
-      str_detect(!!sym(tissue_column), "brain|cortex(?<!adrenal-cortex)|hippocampal|neuronal|astrocyte|striatum|hypothalamus|hippocampus|ARC|pituitary") ~ "brain_and_nervous_system",
-      str_detect(!!sym(tissue_column), "blood|placenta") ~ "blood_and_immune_system",
-      str_detect(!!sym(tissue_column), "lung") ~ "respiratory_system",
-      str_detect(!!sym(tissue_column), "liver|kidney|small-intestine|spleen") ~ "digestive_system",
-      str_detect(!!sym(tissue_column), "muscle|adipose|adipocyte|bone|cartilage|anterior") ~ "musculoskeletal_system",
-      str_detect(!!sym(tissue_column), "embryos") ~ "embryos",
-      str_detect(!!sym(tissue_column), "adrenal-gland|adrenal-cortex") ~ "endocrine_system",
-      TRUE ~ "other_tissues"
-    )) %>%
+    # mutate(system = case_when(
+    #   str_detect(!!sym(tissue_column), "brain|cortex(?<!adrenal-cortex)|hippocampal|neuronal|astrocyte|striatum|hypothalamus|hippocampus|ARC|pituitary|astrocyte") ~ "brain_and_nervous_system",
+    #   str_detect(!!sym(tissue_column), "blood|placenta") ~ "blood_and_immune_system",
+    #   str_detect(!!sym(tissue_column), "lung") ~ "respiratory_system",
+    #   str_detect(!!sym(tissue_column), "liver|kidney|small-intestine|spleen") ~ "digestive_system",
+    #   str_detect(!!sym(tissue_column), "muscle|adipose|adipocyte|bone|cartilage|anterior") ~ "musculoskeletal_system",
+    #   str_detect(!!sym(tissue_column), "embryos") ~ "embryos",
+    #   str_detect(!!sym(tissue_column), "adrenal-gland|adrenal-cortex") ~ "endocrine_system",
+    #   TRUE ~ "other_tissues"
+    # )) %>%
     mutate(simple_tissue = case_when(
-      str_detect(!!sym(tissue_column), "brain|cortex(?<!adrenal-cortex)|hippocampal|neuronal|astrocyte|striatum|hypothalamus|hippocampus|ARC|pituitary") ~ "brain",
+      str_detect(!!sym(tissue_column), "brain|cortex(?<!adrenal-cortex)|hippocampal|neuronal|astrocyte|striatum|hypothalamus|hippocampus|ARC|pituitary|astrocyte") ~ "brain",
       grepl("embryos", !!sym(tissue_column), ignore.case = TRUE) ~ "embryos",
       grepl("placenta", !!sym(tissue_column), ignore.case = TRUE) ~ "placenta",
       grepl("bone", !!sym(tissue_column), ignore.case = TRUE) ~ "bone",
@@ -29,14 +29,80 @@ categorize_tissue <- function(df, tissue_column) {
       grepl("adipose|adipocyte", !!sym(tissue_column), ignore.case = TRUE) ~ "adipose",
       grepl("blood", !!sym(tissue_column), ignore.case = TRUE) ~ "blood",
       grepl("lung", !!sym(tissue_column), ignore.case = TRUE) ~ "lung",
+      grepl("bronchial", tissue, ignore.case = TRUE) ~ "lung",
       grepl("adrenal-gland|adrenal-cortex", !!sym(tissue_column), ignore.case = TRUE) ~ "adrenal-gland",
       grepl("small-intestine", !!sym(tissue_column), ignore.case = TRUE) ~ "small-intestine",
       grepl("muscle|anterior", !!sym(tissue_column), ignore.case = TRUE) ~ "muscle",
       TRUE ~ "Other"  # This will categorize any tissue not matched above as "Other"
+    )) %>% 
+    mutate(detailed_tissue = case_when(
+      simple_tissue == "lung" & (cell == "NA" | is.na(cell)) ~ "lung",
+      tissue == "bronchial" & cell == "HBE" ~ "lung-epithelial",
+      tissue == "bronchial" & (cell == "NA" | is.na(cell)) ~ "lung",
+      simple_tissue == "lung" & grepl("ASM", cell, ignore.case = TRUE) ~ "lung-AirwaySmoothMuscle",
+      simple_tissue == "lung" & grepl("A549|BEAS-2B|pHBECs|H1944|H1975|H2122|H460", cell, ignore.case = TRUE) ~ "lung-epithelial",
+      simple_tissue == "blood" & grepl("THP-1|macrophages|mBMDM|hMDM", cell, ignore.case = TRUE) ~ "blood-macrophages",
+      simple_tissue == "blood" & grepl("Tcell|NKcell|Monocyte|Bcell|REH-overexpression-GCR|NALM6", cell, ignore.case = TRUE) ~ "blood-noMacrophages",
+      simple_tissue == "blood" & (cell == "NA" | is.na(cell)) ~ "blood",
+      tissue == "prefrontal-cortex" ~ "brain-organ",
+      tissue == "ARC" ~ "brain-organ",
+      tissue == "hippocampus" ~ "brain-organ",
+      tissue == "hippocampla-slices" ~ "brain-organ",
+      tissue == "hippocampal-progenitor-cell-line" ~ "brain-organ",
+      tissue == "hippocampal-slices" ~ "brain-organ",
+      tissue == "cells-derived-from-human-fetal-brain-tissue" ~ "brain-organ",
+      tissue == "cortex" ~ "brain-organ",
+      tissue == "neuronal-pc12-cells" ~ "brain-neurons",
+      tissue == "hypothalamus" ~ "brain-organ",
+      grepl("neurones|neurons|neuron", cell, ignore.case = TRUE) ~ "brain-neurons", 
+      grepl("mglia|astrocytes|astrocyte|oligodendrocytes|OPC", cell, ignore.case = TRUE) ~ "brain-glia",
+      TRUE ~ simple_tissue
     )) 
   
   return(df)
 }
+  
+  
+  
+  
+#   function(df, tissue_column) {
+#   # Check if the specified tissue_column exists in the dataframe
+#   if(!tissue_column %in% names(df)) {
+#     stop(paste("The dataframe does not contain a", tissue_column, "column."), call. = FALSE)
+#   }
+#   
+#   # Perform the mutations using the specified column for tissue information
+#   df <- df %>%
+#     mutate(system = case_when(
+#       str_detect(!!sym(tissue_column), "brain|cortex(?<!adrenal-cortex)|hippocampal|neuronal|astrocyte|striatum|hypothalamus|hippocampus|ARC|pituitary") ~ "brain_and_nervous_system",
+#       str_detect(!!sym(tissue_column), "blood|placenta") ~ "blood_and_immune_system",
+#       str_detect(!!sym(tissue_column), "lung") ~ "respiratory_system",
+#       str_detect(!!sym(tissue_column), "liver|kidney|small-intestine|spleen") ~ "digestive_system",
+#       str_detect(!!sym(tissue_column), "muscle|adipose|adipocyte|bone|cartilage|anterior") ~ "musculoskeletal_system",
+#       str_detect(!!sym(tissue_column), "embryos") ~ "embryos",
+#       str_detect(!!sym(tissue_column), "adrenal-gland|adrenal-cortex") ~ "endocrine_system",
+#       TRUE ~ "other_tissues"
+#     )) %>%
+#     mutate(simple_tissue = case_when(
+#       str_detect(!!sym(tissue_column), "brain|cortex(?<!adrenal-cortex)|hippocampal|neuronal|astrocyte|striatum|hypothalamus|hippocampus|ARC|pituitary") ~ "brain",
+#       grepl("embryos", !!sym(tissue_column), ignore.case = TRUE) ~ "embryos",
+#       grepl("placenta", !!sym(tissue_column), ignore.case = TRUE) ~ "placenta",
+#       grepl("bone", !!sym(tissue_column), ignore.case = TRUE) ~ "bone",
+#       grepl("cartilage", !!sym(tissue_column), ignore.case = TRUE) ~ "cartilage",
+#       grepl("liver", !!sym(tissue_column), ignore.case = TRUE) ~ "liver",
+#       grepl("kidney", !!sym(tissue_column), ignore.case = TRUE) ~ "kidney",
+#       grepl("spleen", !!sym(tissue_column), ignore.case = TRUE) ~ "spleen",
+#       grepl("adipose|adipocyte", !!sym(tissue_column), ignore.case = TRUE) ~ "adipose",
+#       grepl("blood", !!sym(tissue_column), ignore.case = TRUE) ~ "blood",
+#       grepl("lung", !!sym(tissue_column), ignore.case = TRUE) ~ "lung",
+#       grepl("adrenal-gland|adrenal-cortex", !!sym(tissue_column), ignore.case = TRUE) ~ "adrenal-gland",
+#       grepl("small-intestine", !!sym(tissue_column), ignore.case = TRUE) ~ "small-intestine",
+#       grepl("muscle|anterior", !!sym(tissue_column), ignore.case = TRUE) ~ "muscle",
+#       TRUE ~ "Other"  # This will categorize any tissue not matched above as "Other"
+#     )) 
+#   
+#   return(df)
+# }
 
 
 ################################################################################

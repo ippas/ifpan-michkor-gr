@@ -90,9 +90,12 @@ create_ranked_master_list <-
         data = .,
         columns = columns,
         size_threshold = 0,
-        keep_column =  c("simple_tissue", "method"),
+        # keep_column =  c("simple_tissue", "method"),
+        keep_column = {{keep_column}},
         arrange_by = arrange_by,
       ) -> preprocessing_data
+    
+    print(preprocessing_data)
     
     preprocessing_data$metadata$source %>% unique() %>% length() -> n_papers_raw
     preprocessing_data$metadata$label %>% unique()  %>% length() -> n_lists_raw
@@ -106,9 +109,12 @@ create_ranked_master_list <-
                                     rank_criterion = arrange_by,
                                     sort_order = sort_order) -> ranked_data
     
+    print(ranked_data)
+    
     ranked_data$ranked_scores_data %>%
       lapply(., function(x){x %>% filter(score > 0)}) %>%
       lapply(., function(x){x$hgnc_symbol}) -> gene_lists_top
+
     
     ranked_data$ranked_scores_data %>%
       bind_rows(., .id = "list_name") %>%
@@ -124,19 +130,25 @@ create_ranked_master_list <-
              n_lists_filt = n_lists_filtered
       ) -> genes_sum_score_df
     
+ 
+    
     genes_sum_score_df %>% 
       head(top_n) %>%
       mutate(n_papers_raw = n_papers_raw,
              n_lists_raw = n_lists_raw,
              n_papers_filt = n_papers_filtered,
              n_lists_filt = n_lists_filtered
-      ) %>% 
-      mutate(tissue_rank_score = c(top_n:1)) -> master_df
+      ) -> master_df
+    
+
     
     ranked_data$ranked_metric <- arrange_by
     ranked_data$gene_lists_top <- gene_lists_top
     ranked_data$genes_sum_score_df <- genes_sum_score_df
     ranked_data$master_df <- master_df
+    
+    print("#################################################################")
+    print(ranked_data)
     
     return(ranked_data)
     
