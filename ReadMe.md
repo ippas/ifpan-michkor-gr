@@ -95,15 +95,15 @@ In order to have just one unique column for each GWAS phenotype data, we used **
 
 - First, the categories with more than one column mergerd into array, using ***8_0_MakeMergeIntoArray.py*** for each category like waist circumference, vitamin and mineral supplement, etc.
 - Next, ***one-hot encoded*** was done for each category separately by ***8_1_MakeOneHotEncoded.py***.
-- Finally, the average data for the categories with more than one column calculated by the ***8_2_GettingAverageForOneHotEncoded.py.***
+- Finally, the average data for the categories with more than one column calculated by the ***8_2_******GettingAverageForOneHotEncoded.py.***
 
 > All the data have been merged and normalized into **AllGWASphenotypesNormalized.csv** and prepared to be added to our main **matrix**: **output_file4_withoutEID.csv**.
 
-Before merging the main data, the selected samples from **AllGWASphenotypesNormalized.csv** must have been found and extracted from **output_file4.csv** as well. These samples were not considered for further studies as most of their GWAS phenotypes (from our list) had no available data! This way, all the related samples in our **matrix** would be matched with the data from GWAS phenotypes data. The utilized scripts could be found in **9_ExtractionOfRowNumbersFromICD10NormalizedMatchWithGWASsamples.py** and ***10_ExtractInterestedRowsFromNormalizedICD.py***.
+Before merging the main data, the selected samples from **AllGWASphenotypesNormalized.csv** must have been found and extracted from **output_file4.csv** as well. These samples were not considered for further studies as most of their GWAS phenotypes (from our list) had no available data! This way, all the related samples in our **matrix** would be matched with the data from GWAS phenotypes data. The utilized scripts could be found in **9_ExtractionOfRowNumbersFromICD10NormalizedMatchWithGWASsamples.py** and ***10_ExtractInterestedRowsFromNormalizedICD.py**.*
 
-At the end of stage1, **AllGWASphenotypesNormalized.csv** and the output file from ***10_ExtractInterestedRowsFromNormalizedICD.py*** named as **FINALofFINALsICD10Normalized77_2.csv** would be merged by ***11_MakingReadyForPCA.sh.***. However, before we get the final file for running PCA, we modified the assessment centers by removing the related column and replace it by the name of cities (22 extra columns). Also, we added pre-calculated genetic PCs (20 columns) and Townsend data to our big matrix. All of new data also standardized and placed at the end of the main matrix. Next, we filtered the participants toward the ***Eauropean ancestors*** to only have the selected samples for running the PCA.
+At the end of stage1, **AllGWASphenotypesNormalized.csv** and the output file from ***10_ExtractInterestedRowsFromNormalizedICD.py*** named as **FINALofFINALsICD10Normalized77_2.csv** would be merged by *11_MakingReadyForPCA.sh.* However, before we get the final file for running PCA, we modified the assessment centers by removing the related column and replace it by the name of cities (22 extra columns). Also, we added pre-calculated genetic PCs (20 columns) and Townsend data to our big matrix. All of new data also standardized and placed at the end of the main matrix. Next, we filtered the participants toward the ***European ancestors*** to only have the selected samples for running the PCA. For that, we first used ***1_ExtractionOfEuropeans.sh*** to have ethnic groups data out of main data in **output_ukb.txt**. The output file, named as **NewData.txt**, containing participants' IDs and the related ethnic groups information for all participants. Next, we utilized **NewData.txt** to extract all the European eid by ***2_ExtractionOfEIDsFromEuropeans.py***, which was employed for white people data extraction from our big matrix later. Finally, the data was adjusted for genetic principal components by ***14_Trait_adjustment.py.***
 
-> The output file (**ReadyForPCA.csv**) was ready to run PCA (principle component analysis).
+> The output file (**adjusted_genetic_data.tsv**) was ready to run PCA (principle component analysis). File name changed to **ReadyForPCA.csv.**
 
 ### Stage 2 (Running PCA)
 
@@ -131,4 +131,4 @@ Phenotypes with highest importance selected from each component and the related 
 
 ### Stage 3 (Data Clustering)
 
-In progress...
+Both Hierarchical and K-means were used for data clustering. Adjusted data by genetic PCs were used in both models. However, because of large size of the input file, only first 150000 samples were used for plotting. Having top50 PC data for them, we used   to have the data only for selected phenotypes in our 150000 samples. The output named as **input_data50.tsv** and used for hierarchical and Euclidean hierarchical clustering with threshold of 0.6 and K-mwans by ***2_DataClusteringHierarchical0.6.py***, ***2_DataClusteringHierarchicalEuclidean.py***, and ***3_K_MeansClustering.py*** respectively.
