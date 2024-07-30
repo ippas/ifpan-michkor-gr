@@ -1,7 +1,8 @@
 /raw
 /data
 /results
-
+/tools
+/tmp
 
 ########## R.gitignore ##########
 

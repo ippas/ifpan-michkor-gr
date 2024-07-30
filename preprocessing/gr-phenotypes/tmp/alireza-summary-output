@@ -1,0 +1,131 @@
+# import modules
+import os
+import pandas as pd
+from tqdm import tqdm
+
+# function to read the phenotype data
+def get_phenotype_data_for_field(phenotype_df, field_id):
+    # Convert field_id to string and append the specific delimiter, e.g., a period
+    prefix = field_id + "."
+    print("Prefix:", prefix)
+    # Filter columns based on this prefix
+    columns = [col for col in phenotype_df.columns if col.startswith(prefix)]
+    print("Filtered columns:", columns)
+    return phenotype_df[columns]
+
+# read the first 1000 rows of the output_ukb.txt file, without index row
+output_ukb = output_ukb = pd.read_csv('/net/pr2/projects/plgrid/plggneuromol/Alireza/UkbPhenotypes/output_ukb.txt', 
+                                      sep='\t', 
+                                      nrows=100, 
+                                      index_col=False,
+                                      skiprows=1, header=None)
+
+# remove first column
+output_ukb = output_ukb.iloc[:, 1:]
+
+# remove last column
+output_ukb = output_ukb.iloc[:, :-1]
+
+# The column names are now stored in output_ukb.columns
+output_ukb_columnames =  pd.read_csv('/net/pr2/projects/plgrid/plggneuromol/Alireza/UkbPhenotypes/output_ukb.txt', 
+                                      sep='\t', 
+                                      nrows=1).columns
+
+# replace '-' with '.' in the column names
+output_ukb_columnames = output_ukb_columnames.str.replace("-", ".")
+
+# replace the column names
+output_ukb.columns = output_ukb_columnames
+
+output_ukb.head()
+
+tmp = get_phenotype_data_for_field(output_ukb, field_id="2443")
+tmp.head(100)
+
+# find columns where all rows are NaN values
+output_ukb_dropna = output_ukb.dropna(axis=1, how='all')
+output_ukb_dropna.shape
+
+# print column names with all NaN values
+output_ukb.columns[output_ukb.columns.isin(output_ukb_dropna.columns) == False]
+
+output_ukb.columns[output_ukb.columns.isin(output_ukb_dropna.columns) == False]
+
+
+
+
+output_ukb_dropna.head()
+
+############################################################################################################
+def find_identical_column_pairs(df):
+    """
+    Find all pairs of columns in a DataFrame that are identical.
+    
+    Parameters:
+    df (pd.DataFrame): The DataFrame to analyze.
+
+    Returns:
+    list of tuples: A list containing tuples of column names that are identical.
+    """
+    identical_pairs = []
+    columns = df.columns
+    for i in range(len(columns)):
+        for j in range(i + 1, len(columns)):  # To avoid redundant checks and self-comparison
+            if df[columns[i]].equals(df[columns[j]]):
+                identical_pairs.append((columns[i], columns[j]))
+    return identical_pairs
+
+def find_identical_column_pairs(df):
+    """
+    Find all pairs of columns in a DataFrame that are identical, with a progress bar.
+    
+    Parameters:
+    df (pd.DataFrame): The DataFrame to analyze.
+
+    Returns:
+    list of tuples: A list containing tuples of column names that are identical.
+    """
+    identical_pairs = []
+    columns = df.columns
+    total_comparisons = len(columns) * (len(columns) - 1) / 2  # Total number of comparisons
+    progress_bar = tqdm(total=total_comparisons, desc="Comparing columns")
+    
+    for i in range(len(columns)):
+        for j in range(i + 1, len(columns)):  # To avoid redundant checks and self-comparison
+            if df[columns[i]].equals(df[columns[j]]):
+                identical_pairs.append((columns[i], columns[j]))
+            progress_bar.update(1)
+    
+    progress_bar.close()
+    return identical_pairs
+
+# Create a sample DataFrame
+data = {
+    'A': [1, 2, 3, 4],
+    'B': [1, 2, 3, 4],
+    'C': [4, 3, 2, 1],
+    'D': [1, 2, 3, 4],
+    'E': [4, 3, 2, 1]
+}
+df = pd.DataFrame(data)
+
+# Find identical column pairs
+identical_column_pairs = find_identical_column_pairs(df)
+print("Identical column pairs:", identical_column_pairs)
+
+identical_column_pairs = find_identical_column_pairs(output_ukb_dropna)
+print("Identical column pairs:", identical_column_pairs)
+
+len(identical_column_pairs)
+identical_column_pairs[1]
+
+# select columns ('21.1.0', '2694.1.0') from the output_ukb_dropna dataframe
+output_ukb_dropna[['21.1.0', '2694.1.0']].head(100)
+
+############################################################################################################
+realDiseaseCodesForPatiens = pd.read_csv('/net/pr2/projects/plgrid/plggneuromol/Alireza/UkbPhenotypes/RealDiseaseCodesForPatients.txt', sep='\t')
+
+print(realDiseaseCodesForPatiens.columns)
+
+
+print(output_ukb.head())
