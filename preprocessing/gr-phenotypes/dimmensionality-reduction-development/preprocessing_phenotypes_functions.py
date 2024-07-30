@@ -21,7 +21,6 @@ from tqdm import tqdm
 # function to download data from UK Biobank
 ################################################################################
 
-# function to download the UK Biobank phenotypes
 def get_biobank_field_showcase(field_id, number_attempts=5, time_duration=5):
     """
     Function to download the metadata information from the UK Biobank website.
@@ -59,7 +58,11 @@ def get_biobank_field_showcase(field_id, number_attempts=5, time_duration=5):
 
             # Extract item count
             item_count_row = soup.find('a', href="help.cgi?cd=item_count")
-            item_count = item_count_row.find_next('td', class_='int_blu').text.strip() if item_count_row else None
+            if item_count_row:
+                item_count_td = item_count_row.find_next('td', class_='int_blu')
+                item_count = item_count_td.text.strip() if item_count_td else None
+            else:
+                item_count = None
 
             # Extract item type
             item_type_row = soup.find('a', href="help.cgi?cd=item_type")
@@ -79,7 +82,11 @@ def get_biobank_field_showcase(field_id, number_attempts=5, time_duration=5):
             
             # Extract number of participants
             participants_row = soup.find('a', href="help.cgi?cd=participant")
-            participants = participants_row.find_next('td', class_='int_blu').text.strip() if participants_row else None
+            if participants_row:
+                participants_td = participants_row.find_next('td', class_='int_blu')
+                participants = participants_td.text.strip() if participants_td else None
+            else:
+                participants = None
 
             # Extract sexed information
             sexed_row = soup.find('a', href="help.cgi?cd=sexed")
@@ -90,7 +97,7 @@ def get_biobank_field_showcase(field_id, number_attempts=5, time_duration=5):
             instances = instances_row.find_next('td', class_='txt_blu').text.strip() if instances_row else None
 
             # Extract data coding number
-            data_section = soup.find('div', class_='tabbertab').find('h2', text='Data')
+            data_section = soup.find('div', class_='tabbertab')
             data_coding = None
             
             # Extract debut information
@@ -102,45 +109,50 @@ def get_biobank_field_showcase(field_id, number_attempts=5, time_duration=5):
             version = version_row.find_next('td', class_='txt_blu').text.strip() if version_row else None
             
             # Extract cost tier information
-            cost_tier_row = soup.find('a', href="help.cgi?cd=cost_tier")
+            cost_tier_row = soup.find('a', href="help.cgi?cd=tier")
             cost_tier = cost_tier_row.find_next('td', class_='txt_blu').text.strip() if cost_tier_row else None
 
             if data_section:
-                data_text = data_section.find_next_sibling(text=True)
-                if data_text and 'Data-Coding' in data_text:
-                    data_coding_tag = data_section.find_next('a', class_='basic', href=True)
-                    if data_coding_tag:
-                        href = data_coding_tag['href']
-                        data_coding = href.split('=')[-1]
+                data_header = data_section.find('h2', text='Data')
+                if data_header:
+                    data_text = data_header.find_next_sibling(text=True)
+                    if data_text and 'Data-Coding' in data_text:
+                        data_coding_tag = data_header.find_next('a', class_='basic', href=True)
+                        if data_coding_tag:
+                            href = data_coding_tag['href']
+                            data_coding = href.split('=')[-1]
 
             metadata = {
                 "description": description,
                 "category": category,
+                "last_category": category[-1] if category else None,
                 "participants": participants,
                 "item_count": item_count,
                 "value_type": value_type,
                 "stability": stability,
-                "value_type": value_type, # is not prepared
                 "item_type": item_type,
                 "strata": strata,
                 "sexed": sexed,
                 "instances": instances,
                 "array": array,
-                "debut": debut, # is not prepared
-                "version": version, # is not prepared
-                "cost_tier": cost_tier, # is not prepared
+                "debut": debut,
+                "version": version,
+                "cost_tier": cost_tier,
                 "data_coding": data_coding,
                 "url": url,
             }
 
             return metadata
-
-        except requests.RequestException as e:
+        
+        except Exception as e:
             print(f"Attempt {attempt + 1} failed: {e}")
             time.sleep(time_duration)
-    
+
+    # Return an empty template if all attempts fail
     return None
 
+get_biobank_field_showcase(41270)
+get_biobank_field_showcase(12652)
 # function to get meaning of data coding
 def get_data_coding_ukb(data_coding, number_attempts=5, time_duration=5):
     # description of function
