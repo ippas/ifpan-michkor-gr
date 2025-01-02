@@ -5,7 +5,7 @@ Please note that all code is offered "as-is", so use at your own peril!
 
 
 
-## Overview of Scripts and Analysis for GR-Dependent Genes
+### Overview of Scripts and Analysis for GR-Dependent Genes
 
 This repository contains scripts and documentation related to the preprocessing, clustering, and downstream analysis of GR-dependent genes. Below is a detailed description of each component:
 
