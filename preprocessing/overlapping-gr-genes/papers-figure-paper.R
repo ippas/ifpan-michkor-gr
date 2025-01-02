@@ -4,10 +4,20 @@ split(papers_data_preprocessing$hgnc_symbol, papers_data_preprocessing$label) %>
 # calculate chi2 tests
 lapply(papers_gene_list, unique) -> papers_gene_list
 
-chi2_results_papers <- perform_chi2_tests(c(papers_gene_list), hgnc_symbols_vector_v110)
+chi2_results_papers <- perform_chi2_tests(c(papers_gene_list, categorized_gene_lists$marpiech_cluster_dex), hgnc_symbols_vector_v110)
 
 
 papers_data_preprocessing %>% select(label) %>% filter(grepl("pmid:NA", label)) %>% unique() %>% as.vector() %>% .$label -> remove_list
+
+tissues_clusters <- c("pmid:NA_adrenal-cortex_NA", "pmid:NA_anterior-thigh_NA", "pmid:NA_hypothalamus_NA", 
+                      "pmid:NA_kidneys_NA", "pmid:NA_liver_NA", "pmid:NA_lung_NA", 
+                      "pmid:NA_perigonadal-adipose-tissue_NA", "pmid:NA_pituitary-gland_NA", "pmid:NA_spleen_NA",
+                      "cluster_1", "cluster_10", "cluster_11",
+                      "cluster_12", "cluster_13", "cluster_14",
+                      "cluster_15", "cluster_16", "cluster_17",
+                      "cluster_18", "cluster_2", "cluster_3",
+                      "cluster_4", "cluster_5", "cluster_6",
+                      "cluster_7", "cluster_8", "cluster_9")
 
 processing_overlap_results(data = chi2_results_papers ,
                            rows_to_filter = !rownames(chi2_results_papers$p_value_matrix) %in% c(remove_list, tissues_clusters),
@@ -19,24 +29,24 @@ processing_overlap_results(data = chi2_results_papers ,
 
 
 clusters_mapping <- c(
-  "marpiech_tissues_dex_1" = "cluster A",  
-  "marpiech_tissues_dex_10" = "cluster A", 
-  "marpiech_tissues_dex_11" = "cluster K", 
-  "marpiech_tissues_dex_12" = "cluster L", 
-  "marpiech_tissues_dex_13" = "cluster M", 
-  "marpiech_tissues_dex_14" = "cluster N",
-  "marpiech_tissues_dex_15" = "cluster O", 
-  "marpiech_tissues_dex_16" = "cluster P", 
-  "marpiech_tissues_dex_17" = "DOWN", 
-  "marpiech_tissues_dex_18" = "UP", 
-  "marpiech_tissues_dex_2" = "cluster B",  
-  "marpiech_tissues_dex_3" = "cluster C", 
-  "marpiech_tissues_dex_4" = "cluster D",  
-  "marpiech_tissues_dex_5" = "cluster E", 
-  "marpiech_tissues_dex_6" = "cluster F",  
-  "marpiech_tissues_dex_7" = "cluster G",  
-  "marpiech_tissues_dex_8" = "cluster H",  
-  "marpiech_tissues_dex_9" = "cluster I"
+  "cluster_1" = "cluster A",  
+  "cluster_10" = "cluster A", 
+  "cluster_11" = "cluster K", 
+  "cluster_12" = "cluster L", 
+  "cluster_13" = "cluster M", 
+  "cluster_14" = "cluster N",
+  "cluster_15" = "cluster O", 
+  "cluster_16" = "cluster P", 
+  "cluster_17" = "DOWN", 
+  "cluster_18" = "UP", 
+  "cluster_2" = "cluster B",  
+  "cluster_3" = "cluster C", 
+  "cluster_4" = "cluster D",  
+  "cluster_5" = "cluster E", 
+  "cluster_6" = "cluster F",  
+  "cluster_7" = "cluster G",  
+  "cluster_8" = "cluster H",  
+  "cluster_9" = "cluster I"
 )
 
 clusters_mapping %>%
@@ -221,14 +231,14 @@ papers_mapping %>%
 #   }
 # }) -> col_colors
 # 
-# col_colors <- c("marpiech_tissues_dex_12" = "darkred", "marpiech_tissues_dex_15" = "darkred", 
-#                 "marpiech_tissues_dex_17" = "darkblue", "marpiech_tissues_dex_18" = "darkred", 
-#                 "marpiech_tissues_dex_4" = "darkblue", "marpiech_tissues_dex_6" = "darkblue", 
-#                 "marpiech_tissues_dex_11" = "darkred", "marpiech_tissues_dex_13" = "darkred", 
-#                 "marpiech_tissues_dex_16" = "darkred", "marpiech_tissues_dex_9" = "darkred", 
-#                 "marpiech_tissues_dex_3" = "darkblue", "marpiech_tissues_dex_10" = "darkred", 
-#                 "marpiech_tissues_dex_7" = "darkred", "marpiech_tissues_dex_8" = "darkred", 
-#                 "marpiech_tissues_dex_2" = "darkblue")
+# col_colors <- c("cluster_12" = "darkred", "cluster_15" = "darkred", 
+#                 "cluster_17" = "darkblue", "cluster_18" = "darkred", 
+#                 "cluster_4" = "darkblue", "cluster_6" = "darkblue", 
+#                 "cluster_11" = "darkred", "cluster_13" = "darkred", 
+#                 "cluster_16" = "darkred", "cluster_9" = "darkred", 
+#                 "cluster_3" = "darkblue", "cluster_10" = "darkred", 
+#                 "cluster_7" = "darkred", "cluster_8" = "darkred", 
+#                 "cluster_2" = "darkblue")
 
 manual_filter_overlap_results(data = clusters_papers_data, 
                               rows_to_remove = c("pmid:24777604_embryos_hypothalamic-region_NPSCs-KO-Cav1_up",

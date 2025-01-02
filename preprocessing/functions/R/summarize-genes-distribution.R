@@ -14,7 +14,7 @@ summarize_genes_distribution <- function(data){
     summarise(
       n_hgnc_symbols = n(),
       hgnc_symbol = paste(hgnc_symbol, collapse = "|"),
-      proportion_hgnc_symbols = n_hgnc_symbols / first(total_hgnc_symbols)
+      proportion_hgnc_symbols = n_hgnc_symbols / dplyr::first(total_hgnc_symbols)
     ) %>% 
     mutate(cumulative_sum = cumsum(proportion_hgnc_symbols)) %>% 
     ungroup %>%

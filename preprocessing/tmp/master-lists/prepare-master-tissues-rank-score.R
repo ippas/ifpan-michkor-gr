@@ -12,7 +12,7 @@ rbind({parameters_df_tissues %>% mutate(regulation = "up")},
       {parameters_df_tissues %>% mutate(regulation = "down")}) %>% 
   mutate(sort_order = ifelse(regulation == "down", "increase", sort_order)) -> parameters_df_tissues
 
-lapply(1:nrow(parameters_df_tissues), function(i){
+lapply(1:nrow(parameters_df_tissues[1:2,]), function(i){
   print(parameters_df_tissues[i, ])
   
   tryCatch({
@@ -40,7 +40,7 @@ lapply(1:nrow(parameters_df_tissues), function(i){
     )
   }, error = function(e) NULL)
   
-}) -> tissue_master_lists
+}) -> tissue_master_lists2
 
 # set names for results
 names(tissue_master_lists) <- parameters_df_tissues %>% mutate(names = paste(tissue, regulation, top, metric, sep = "_")) %>% .$names 

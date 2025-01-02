@@ -233,14 +233,7 @@ extract_data <- function(results, rows_to_filter, cols_to_filter) {
   # This ensures that the final dataframe has a row for each pair of datasets
   # and columns for p_value, chi2, number_overlap, and overlap_genes
   
-  # Merge p_value_df and chi2_df
-  final_df <- merge(p_value_df, chi2_df, by = c("Var1", "Var2"))
-  
-  # Merge the above result with overlap_df
-  final_df <- merge(final_df, overlap_df, by = c("Var1", "Var2"))
-  
-  # Merge the above result with overlap_genes_df
-  final_df <- merge(final_df, overlap_genes_df, by = c("Var1", "Var2"))
+  final_df <-  bind_cols(p_value_df, select(chi2_df, chi2), select(overlap_df, gene_overlap_count), select(overlap_genes_df, overlap_genes))
   
   # Return the final merged dataframe
   return(final_df)

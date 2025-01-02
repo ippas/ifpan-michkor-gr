@@ -15,6 +15,12 @@ categorized_gene_lists$marpiech_cluster_dex <- marpiech_data_preprocessing %>%
   lapply(., unique) %>% 
   lapply(., function(x){x$hgnc_symbol})
 
+
+categorized_gene_lists$marpiech_cluster_dex_letters <- categorized_gene_lists$marpiech_cluster_dex
+
+names(categorized_gene_lists$marpiech_cluster_dex_letters) <- cluster_mapper[names(categorized_gene_lists$marpiech_cluster_dex)]
+
+
 ################################################################################
 # gene lists phenotypes
 ################################################################################
@@ -46,14 +52,14 @@ categorized_gene_lists$phenotypes_PanUkBiobank_1e08 <- categorized_gene_lists$ph
 # gene lists for metabolism 
 ################################################################################
 
-gr_gene_database_preproccesing %>%
+gr_gene_database_preproccesing %>% 
   filter(grepl("omicspred_metabolon", source)) %>% 
   extract_keys_values("info", c("Biochemical Name", "Metabolon ID", "Super Pathway", "Sub Pathway")) %>% 
   mutate(OminispreadID = str_remove(gene_list_index, "Metabolon_")) %>% 
-  rename(Biochemical_Name = "Biochemical Name") %>% 
-  rename(Metabolon_ID = "Metabolon ID") %>% 
-  rename(Super_Pathway = "Super Pathway") %>% 
-  rename(Sub_Pathway = "Sub Pathway") %>% 
+  dplyr::rename(Biochemical_Name = "Biochemical Name") %>%
+  dplyr::rename(Metabolon_ID = "Metabolon ID") %>%
+  dplyr::rename(Super_Pathway = "Super Pathway") %>%   
+  dplyr::rename(Sub_Pathway = "Sub Pathway") %>%  
   mutate(OminispreadID = str_remove(OminispreadID, "_model")) -> metabolome_data_preprocessing
 
 gr_gene_database_preproccesing %>%

@@ -16,11 +16,12 @@ clusters_phenotypes_data$significant_data$df
 
 
 clusters_papers_data$significant_data$df %>% 
-  mutate(Var2 = recode(Var2, !!!clusters_mapping)) %>%
-  select(c(Var1, Var2, chi2, p_value, fdr, number_overlap, overlap_genes)) %>% 
+  mutate(Var2 = recode(Var2, !!!clusters_mapping)) %>% 
+  select(c(Var1, Var2, chi2, p_value, fdr, gene_overlap_count, overlap_genes)) %>% 
   mutate(Var1 = str_replace_all(Var1, "michkor-cells", "pmid:28381250")) %>% 
   mutate(Var1 = str_replace_all(Var1, "_NA", "")) %>% 
-  set_colnames(c("GR_dependent_list", "transcriptional_pattern", "chi2_value", "p_value", "fdr", "number_of_genes", "overlapping_genes")) %>% 
+  set_colnames(c("GR_dependent_list", "transcriptional_pattern", "chi2_value", "p_value", "fdr", "number_of_genes", "overlapping_genes")) %>%
+  mutate(transcriptional_pattern = str_remove_all(transcriptional_pattern, " ")) %>% filter(transcriptional_pattern == "clusterA")
   write.table("results/tables/Supplementary_table2.tsv", quote = F, col.names = T, row.names = F, sep = "\t")
 
 

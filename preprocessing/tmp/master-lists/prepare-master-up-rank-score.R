@@ -2,12 +2,12 @@ papers_data_preprocessing %>%
   drop_na(log2ratio) %>%
   filter(log2ratio != "NA") %>% 
   filter(!(treatment %in% treatment_to_remove)) %>%
-  filter(regulation == "up") %>%
+  filter(regulation == "up") %>% 
   refine_gene_lists(data = .,
                     columns = c("source", "tissue", "cell", "dose", "treatment", "treatment_type", "regulation", "comparison", "environment"),
                     cumsum_thresholds = cumsum_thresholds,
                     freq_thresholds = freq_thresholds,
-                    keep_column =  c("simple_tissue", "method")) -> tmp 
+                    keep_column =  c("simple_tissue", "method")) -> tmp3
 
 
 tmp$refine_gene_lists %>%  

@@ -97,6 +97,10 @@ hgnc_symbols_df_v110 <- biomaRt::getBM(attributes = c("hgnc_symbol"),
 
 hgnc_symbols_vector_v110 <- hgnc_symbols_df_v110$hgnc_symbol
 
+# Save vector to TSV file
+write.table(hgnc_symbols_vector_v110, file = "data/overlapping-gr-genes/hgnc-symbols-biomart-v110.tsv", 
+            row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t")
+
 # List available attributes for the dataset
 available_attributes <- biomaRt::listAttributes(ensembl_mart_v110)
 available_attributes %>% 
@@ -170,7 +174,31 @@ papers_data_preprocessing %>%
   filter(!(hgnc_symbol %in% hgnc_to_remove)) %>% 
   mutate(source = ifelse(source == "marpiech_tissues_dex", "marpiech_clusters_dex", "marpiech_tissues_dex")) -> marpiech_data_preprocessing
 
-
+# saving maprich_data_preprocessing to file
+marpiech_data_preprocessing %>% 
+  select(c(hgnc_symbol, label)) %>% 
+  filter(grepl("marpiech_tissues_dex", label)) %>% 
+  mutate(
+    # Extract the numeric part of the label
+    label_number = as.numeric(sub("marpiech_tissues_dex_", "", label)),
+    
+    # Apply the renaming rules
+    new_label = case_when(
+      label_number %in% 1:16 ~ paste0("cluster_", LETTERS[label_number]),  # 1 to 16 becomes cluster_A to cluster_P
+      label_number == 17 ~ "cluster_DOWN",                                 # 17 becomes cluster_DOWN
+      label_number == 18 ~ "cluster_UP",                                   # 18 becomes cluster_UP
+      TRUE ~ NA_character_                                                 # Handle any unexpected cases
+    ),
+    # Rebuild the full label with the prefix
+    label = new_label
+  ) %>%
+  select(-label_number, -new_label) %>% 
+  group_by(label) %>%
+  mutate(row_id = row_number()) %>% 
+  ungroup() %>%
+  pivot_wider(names_from = label, values_from = hgnc_symbol)  %>% 
+  select(-row_id) %>% 
+  write_tsv_xlsx(tsv_file = "results/google-drive/gene-list-datasets/specific-profiles-gr.tsv") 
 ################################################################################
 
   

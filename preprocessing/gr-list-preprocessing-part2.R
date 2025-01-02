@@ -25,7 +25,7 @@ gr_database_blocked_gene_lists$non_GR_dependent_gene_lists <- papers_data_prepro
   lapply(., unique) %>% 
   lapply(., function(x){x$hgnc_symbol})
 
-################################################################################
+  ################################################################################
 gr_database_blocked_gene_lists$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata <- 
   papers_data_preprocessing %>% 
   filter(!(treatment %in% c("TNF", "LPS", "vehicle-ethanol", "TNFalpha"))) %>% 
@@ -54,9 +54,9 @@ gr_database_blocked_gene_lists$GR_dependent_gene_lists_pmid_tissue_cell_treatmen
   select(-c(index, gene_name, ensembl_gene_id, ensembl_transcript_id, refseq_mrna_id, hgnc_symbol, alias, info, fdr, log2ratio))
 
 gr_database_blocked_gene_lists$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_regulation$gene_lists <- papers_data_preprocessing %>% 
-  # filter(!(treatment %in% c("TNF", "LPS", "vehicle-ethanol", "TNFalpha"))) %>% 
-  # filter(!(source %in% c("marpiech_tissues_dex",  "pmid:37217509"))) %>% 
-  # filter(source != "marpiech_tissues") %>% 
+  filter(!(treatment %in% c("TNF", "LPS", "vehicle-ethanol", "TNFalpha"))) %>%
+  filter(!(source %in% c("marpiech_tissues_dex",  "pmid:37217509"))) %>%
+  filter(source != "marpiech_tissues") %>%
   mutate(label = paste(source, tissue, cell, treatment, treatment_type, regulation, sep = "_")) %>% 
   select(c(hgnc_symbol, label)) %>% 
   split(.$label, .$hgnc_symbol) %>% 

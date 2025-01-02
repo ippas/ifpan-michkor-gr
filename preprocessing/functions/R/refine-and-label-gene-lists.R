@@ -9,15 +9,15 @@ refine_and_label_gene_lists <- function(data, columns = NULL, keep_column = NULL
     lapply(., function(x){x[[genes_column]]}) -> gene_lists
   
   
-  # creating log2ratio lists
-  data %>% 
-    mutate(label = paste(!!!syms(columns), sep = "_")) %>%
-    select(c(log2ratio, label)) %>% 
-    split(.$label, .[["log2ratio"]]) %>% 
-    # lapply(., unique) %>% 
-    lapply(., function(x){x[["log2ratio"]]}) %>% 
-    lapply(., as.numeric) -> log2ratio_lists
-  
+  # # creating log2ratio lists
+  # data %>% 
+  #   mutate(label = paste(!!!syms(columns), sep = "_")) %>%
+  #   select(c(log2ratio, label)) %>% 
+  #   split(.$label, .[["log2ratio"]]) %>% 
+  #   # lapply(., unique) %>% 
+  #   lapply(., function(x){x[["log2ratio"]]}) %>% 
+  #   lapply(., as.numeric) -> log2ratio_lists
+  # 
   
   # filtering and labeling the data
   data %>%
@@ -42,9 +42,12 @@ refine_and_label_gene_lists <- function(data, columns = NULL, keep_column = NULL
   
   gene_lists <- gene_lists[lists_to_keep]
   
+  # list(metadata = metadata,
+  #      gene_lists = gene_lists, 
+  #      log2ratio_lists = log2ratio_lists) -> data
+  
   list(metadata = metadata,
-       gene_lists = gene_lists, 
-       log2ratio_lists = log2ratio_lists) -> data
+       gene_lists = gene_lists) -> data
   
   return(data)
 }
