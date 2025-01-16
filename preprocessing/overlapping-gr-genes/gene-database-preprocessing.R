@@ -177,9 +177,9 @@ papers_data_preprocessing %>%
 
 
 papers_data_preprocessing %>% 
-  # filter(!(treatment %in% c("TNF", "LPS", "vehicle-ethanol", "TNFalpha"))) %>% 
+  filter(!(treatment %in% c("TNF", "LPS", "vehicle-ethanol", "TNFalpha"))) %>%
   filter(!(comparison %in% c( "FS30_vs_BLAM", "FS120_vs_BLAM", "FS360_vs_BLAM", "FS180_vs_BLAM"))) %>%
-  # filter(dose != "0mg/kg") %>% 
+  filter(dose != "0mg/kg") %>%
   filter(source != "marpiech_tissues") %>% 
   extract_keys_values(., "info", keys = "method") %>% 
   mutate(simple_tissue = ifelse(source == "michkor-cells", "brain", simple_tissue)) %>% 
