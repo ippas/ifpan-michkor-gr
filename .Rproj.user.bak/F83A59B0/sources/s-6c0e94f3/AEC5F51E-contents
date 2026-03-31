@@ -1,0 +1,77 @@
+papers_gene_list %>%
+  unname %>% 
+  unlist %>% table %>% as.data.frame() %>% 
+  set_colnames(c("gene_name", "n")) %>% 
+  arrange(desc(n)) %>% .$n %>% table()
+  
+
+
+# Creating a data frame for your data
+categories <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 26, 29, 31, 32, 38)
+values <- c(4953, 2803, 1467, 774, 415, 212, 144, 87, 68, 30, 28, 26, 20, 19, 7, 8, 4, 10, 3, 2, 3, 2, 2, 1, 1, 1, 1, 1)
+
+data <- data.frame(categories, values)
+
+# Calculate the total
+total <- sum(data$values)
+
+# Calculate percentages and add them to the data frame
+data$percentage <- (data$values / total) * 100
+
+# Creating a pie chart
+ggplot(data, aes(x = "", y = values, fill = factor(categories))) +
+  geom_bar(width = 1, stat = "identity", color = "white") +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  labs(fill = "Category")
+
+# Example data
+values <- c(10, 15, 20, 30)
+labels <- c("A", "B", "C", "D")
+data <- data.frame(labels, values)
+
+# Create the pie chart
+ggplot(data, aes(x = "", y = values, fill = labels)) +
+  geom_bar(width = 1, stat = "identity", color = "white") +
+  coord_polar("y") +
+  theme_void() +
+  labs(fill = "Labels", title = "Pie Chart with ggplot2")
+
+
+install.packages("plotly")
+require(plotly)
+
+# Example data
+values <- c(10, 15, 20, 30)
+labels <- c("A", "B", "C", "D")
+
+# Create the pie chart
+plot_ly(labels = ~labels, values = ~values, type = 'pie', textinfo = 'label+percent',
+        insidetextorientation = 'radial') %>%
+  layout(title = 'Pie Chart with Plotly')
+
+
+install.packages("highcharter")
+require(highcharter)
+
+
+# Example data
+values <- c(10, 15, 20, 30)
+names(values) <- c("A", "B", "C", "D")
+
+# Create the pie chart
+hchart(values, type = "pie", name = "Example Pie Chart",
+       dataLabels = list(enabled = TRUE, format = '{point.name}: {point.percentage:.1f}%'))
+
+
+install.packages("lattice")
+
+library(lattice)
+
+# Example data
+set.seed(123) # For reproducibility
+x <- rnorm(100)
+y <- rnorm(100, mean=0.5, sd=1.5)
+
+# Using xyplot() to create a scatter plot
+xyplot(y ~ x, main="Scatter Plot with Lattice")

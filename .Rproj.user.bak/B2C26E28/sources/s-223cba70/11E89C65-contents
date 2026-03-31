@@ -1,0 +1,112 @@
+
+
+
+papers_data_preprocessing %>%
+  drop_na(log2ratio) %>%
+  filter(log2ratio != "NA") %>%
+  filter(!(treatment %in% treatment_to_remove)) %>%
+  filter(regulation == "up") %>%
+  refine_gene_lists_to_rank_score(
+    data = .,
+    columns = c(
+      "source",
+      "tissue",
+      "cell",
+      "dose",
+      "treatment",
+      "treatment_type",
+      "regulation",
+      "comparison",
+      "environment"
+    ),
+    size_threshold = 0,
+    keep_column =  c("simple_tissue", "method"),
+    arrange_by = "log2ratio"
+  )  -> tmp2
+
+
+
+papers_data_preprocessing %>%
+  drop_na(fdr) %>%
+  filter(fdr != "NA") %>%
+  filter(!(treatment %in% treatment_to_remove)) %>%
+  filter(regulation == "up") %>% class
+  refine_gene_lists_to_rank_score(
+    data = .,
+    columns = c(
+      "source",
+      "tissue",
+      "cell",
+      "dose",
+      "treatment",
+      "treatment_type",
+      "regulation",
+      "comparison",
+      "environment"
+    ),
+    size_threshold = 0,
+    keep_column =  c("simple_tissue", "method"),
+    arrange_by = "fdr",
+  )  -> tmp2
+
+
+
+
+
+create_ranked_master_list(data = papers_data_preprocessing,
+                          regulation == "down",
+                          simple_tissue == "brain",
+                          !(treatment %in% treatment_to_remove),
+                          arrange_by = "log2ratio",
+                          columns = c(
+                            "source",
+                            "tissue",
+                            "cell",
+                            "dose",
+                            "treatment",
+                            "treatment_type",
+                            "regulation",
+                            "comparison",
+                            "environment"
+                          ),
+                          keep_column =  c("simple_tissue", "method"),
+                          size_list = 50,
+                          max_rank = 50,
+                          sort_order = "increase"
+                          ) -> tmp2
+
+tmp2$master_list$hgnc_symbol
+tmp3$master_list$hgnc_symbol
+
+setdiff(tmp2$master_list$hgnc_symbol, tmp3$master_list$hgnc_symbol)
+
+
+
+
+test_function <- function(data, ..., arrange_by = "log2ratio") {
+  print(dim(data))
+  
+  args <- enquos(...)
+  print(args)  # Sprawdź, jakie argumenty są przekazywane
+  
+  data %>%
+    filter(!!!args) -> data
+  
+  print(dim(data))
+  print("check")
+  data %>% 
+    drop_na(!!!sym(arrange_by)) %>%
+    filter(get(arrange_by) != "NA") -> data
+  
+  
+  print(dim(data))
+}
+
+# Poprawione wywołanie funkcji
+test_function(data = papers_data_preprocessing, regulation == "up", simple_tissue == "lung", !(treatment %in% treatment_to_remove))
+
+filter(!(treatment %in% {{treatment_to_remove}})) %>% 
+  drop_na(!!!sym(arrange_by)) %>%
+  filter(get(arrange_by) != "NA")
+
+

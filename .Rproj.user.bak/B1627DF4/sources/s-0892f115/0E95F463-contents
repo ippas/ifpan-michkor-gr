@@ -1,0 +1,30 @@
+# Load necessary libraries
+library(ComplexHeatmap)
+library(circlize)
+
+# Generate a random matrix for the heatmap
+set.seed(123) # For reproducibility
+data_matrix <- matrix(rnorm(100), nrow = 10)
+
+# Define a custom color palette
+my_palette <- c("#69A6D1", "#94DFFF", "#ffffcc", "#fed976", "#fc4e2a")
+
+# Define breaks for the heatmap scale
+breaks <- seq(-3, 3, length.out = length(my_palette))
+
+# Create color mapping function
+color_mapping <- colorRamp2(breaks, my_palette)
+
+# Create the heatmap
+Heatmap(data_matrix, 
+        name = "example", 
+        col = color_mapping, 
+        heatmap_legend_param = list(
+          title = "Value", # Title for the legend
+          direction = "horizontal",
+          legend_width = unit(6, "cm"), # Width of the legend
+          legend_height = unit(1, "cm"), # Height of the legend
+          labels_gp = gpar(fontsize = 10), # Font size for labels
+          title_gp = gpar(fontsize = 12) # Font size for title
+        )
+)

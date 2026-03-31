@@ -1,0 +1,8 @@
+gr_database_blocked_gene_lists$marpiech_cluster_dex
+
+categorized_gene_lists$marpiech_cluster_dex_letters %>% 
+  lapply(., as.data.frame) %>% 
+  bind_rows(., .id="label") %>% 
+  set_colnames(c("label", "hgnc_symbol")) %>% 
+  write.table("results/marpiech-gr-clusters.tsv", col.names = TRUE, sep = "\t", quote = FALSE, row.names = FALSE)
+

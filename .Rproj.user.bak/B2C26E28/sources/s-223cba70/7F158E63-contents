@@ -1,0 +1,184 @@
+blood_enrichr_results <- list()
+
+
+overlap_threshold <- 3
+
+tissue_master_df %>%
+  filter(regulation == "up",
+         tissue == "blood",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>%
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.05, overlap_threshold) -> blood_enrichr_results$blood
+
+
+detailed_tissue_master_df %>% 
+  filter(regulation == "up",
+         tissue == "blood-macrophages",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.05, overlap_threshold) -> blood_enrichr_results$blood_macrophages
+
+
+
+detailed_tissue_master_df %>% 
+  filter(regulation == "up",
+         tissue == "blood-noMacrophages",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.05, overlap_threshold) -> blood_enrichr_results$blood_noMacrophages
+
+
+blood_enrichr_results$blood %>% 
+  plotEnrich(., showTerms = 40, numChar = 50, y = "Count", orderBy = "P.value", title = "blood")
+
+blood_enrichr_results$blood_macrophages %>% 
+  plotEnrich(., showTerms = 40, numChar = 50, y = "Count", orderBy = "P.value", title = "blood macrophages")
+
+blood_enrichr_results$blood_noMacrophages %>% 
+  plotEnrich(., showTerms = 40, numChar = 50, y = "Count", orderBy = "P.value", title = "blood no macrophages")
+
+
+################################################################################
+#brain
+
+blood_brain_lung_enrichr_results <-list()
+
+tissue_master_df %>%
+  filter(regulation == "up",
+         tissue == "brain",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>%
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.1, overlap_threshold) -> blood_brain_lung_enrichr_results$brain
+  
+
+detailed_tissue_master_df %>% 
+  filter(regulation == "up",
+         tissue == "brain-cortex",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.1, overlap_threshold) ->blood_brain_lung_enrichr_results$brain_cortex
+
+
+
+detailed_tissue_master_df %>% 
+  filter(regulation == "up",
+         tissue == "brain-glia",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.1, overlap_threshold) -> blood_brain_lung_enrichr_results$brain_glia
+
+detailed_tissue_master_df %>% 
+  filter(regulation == "up",
+         tissue == "brain-hippocampus",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.1, overlap_threshold) -> blood_brain_lung_enrichr_results$brain_hippocampus
+
+# down
+tissue_master_df %>%
+  filter(regulation == "down",
+         tissue == "brain",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>%
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.1, overlap_threshold) -> blood_brain_lung_enrichr_results$brain_down
+
+
+detailed_tissue_master_df %>% 
+  filter(regulation == "down",
+         tissue == "brain-cortex",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.1, overlap_threshold) ->blood_brain_lung_enrichr_results$brain_cortex_down
+
+
+
+detailed_tissue_master_df %>% 
+  filter(regulation == "down",
+         tissue == "brain-glia",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.1, overlap_threshold) -> blood_brain_lung_enrichr_results$brain_glia_down
+
+
+detailed_tissue_master_df %>% 
+  filter(regulation == "down",
+         tissue == "brain-hippocampus",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.1, overlap_threshold) -> blood_brain_lung_enrichr_results$brain_hippocampus_down
+
+blood_brain_lung_enrichr_results
+
+
+blood_brain_lung_enrichr_results$brain %>% 
+  plotEnrich(., showTerms = 10, numChar = 50, y = "Count", orderBy = "P.value", title = "brain") + theme(text = element_text(size = 16)) -> p1
+
+blood_brain_lung_enrichr_results$brain_cortex %>% 
+  plotEnrich(., showTerms = 10, numChar = 50, y = "Count", orderBy = "P.value", title = "cortex") + theme(text = element_text(size = 16)) -> p2
+
+blood_brain_lung_enrichr_results$brain_hippocampus %>% 
+  plotEnrich(., showTerms = 10, numChar = 50, y = "Count", orderBy = "P.value", title = "hippocampus") + theme(text = element_text(size = 16))-> p3
+
+blood_brain_lung_enrichr_results$brain_glia %>% 
+  plotEnrich(., showTerms = 10, numChar = 50, y = "Count", orderBy = "P.value", title = "glia") + theme(text = element_text(size = 16)) -> p4
+
+
+p1 + p2 + p3 + p4 
+
+
+blood_brain_lung_enrichr_results$brain_down %>% 
+  plotEnrich(., showTerms = 40, numChar = 50, y = "Count", orderBy = "P.value", title = "brain")
+
+blood_brain_lung_enrichr_results$brain_cortex_down %>% 
+  plotEnrich(., showTerms = 40, numChar = 50, y = "Count", orderBy = "P.value", title = "cortex")
+
+blood_brain_lung_enrichr_results$brain_hippocampus_down %>% 
+  plotEnrich(., showTerms = 40, numChar = 50, y = "Count", orderBy = "P.value", title = "hippocampus")
+
+blood_brain_lung_enrichr_results$brain_glia_down %>% 
+  plotEnrich(., showTerms = 40, numChar = 50, y = "Count", orderBy = "P.value", title = "glia")
+
+################################################################################
+# lung
+tissue_master_df %>%
+  filter(regulation == "up",
+         tissue == "lung",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>%
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.1, overlap_threshold) -> blood_brain_lung_enrichr_results$lung
+
+detailed_tissue_master_df %>% 
+  filter(regulation == "up",
+         tissue == "lung-epithelial",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.1, overlap_threshold) ->blood_brain_lung_enrichr_results$lung_epithelial
+
+detailed_tissue_master_df %>%
+  filter(regulation == "up",
+         tissue == "lung-AirwaySmoothMuscle",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.1, overlap_threshold) ->blood_brain_lung_enrichr_results$lung_ASM
+
+detailed_tissue_master_df %>%
+  filter(regulation == "up",
+         tissue == "lung",
+         rank_criterion == "log2ratio",
+         size_list == 50) %>% 
+  .$hgnc_symbol %>% 
+  perform_enrichment_analysis(gene_list = ., databases = "GO_Biological_Process_2023", fdr_threshold = 0.1, overlap_threshold) -> blood_brain_lung_enrichr_results$lung2

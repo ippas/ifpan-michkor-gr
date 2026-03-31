@@ -1,0 +1,84 @@
+# ##############################################################################
+# ---- prepare data ----
+# ##############################################################################
+
+lite_grSignatures
+hgnc_symbols_vector_v110
+
+factors_rsidGenes_P1e2locus20kb <- read.table(file = "data/factors-pmid38965376/annotated-rsid-p1e2/annotated_rsid_locus20kbp_p1e2.tsv",
+                                              sep = "\t",
+                                              header = TRUE) %>% 
+  group_by(factor_id, gene_symbol) %>% 
+  slice_min(order_by = pvalue, with_ties = FALSE) %>% 
+  ungroup
+
+factors_rsidGenes_P1e2geneCenter100kb <- read.table(file = "data/factors-pmid38965376/annotated-rsid-p1e2/annotated_rsid_center100kbp_p1e2.tsv",
+                                                    sep = "\t",
+                                                    header = TRUE) %>% 
+  group_by(factor_id, gene_symbol) %>% 
+  slice_min(order_by = pvalue, with_ties = FALSE) %>% 
+  ungroup
+
+# ##############################################################################
+# ---- overlapping genes ----
+# ##############################################################################
+
+split(lite_grSignatures$gene_symbol, lite_grSignatures$signature_name)
+
+split(factors_rsidGenes_P1e2locus20kb$gene_symbol, factors_rsidGenes_P1e2locus20kb$factor_name) %>% 
+  lapply(., function(x){
+    x %>% unique
+  })
+
+results <- perform_chi2_tests(c(split(lite_grSignatures$gene_symbol, lite_grSignatures$signature_name),
+                                split(factors_rsidGenes_P1e2locus20kb$gene_symbol, factors_rsidGenes_P1e2locus20kb$factor_name) %>% 
+                                  lapply(., function(x){
+                                    x %>% unique
+                                  })), 
+                              hgnc_symbols_vector_v110)
+
+
+processing_overlap_results(data = chi2_results_phenotypes,
+                           rows_to_filter = !rownames(chi2_results_phenotypes$p_value_matrix) %in% tissues_clusters,
+                           # rows_to_filter = tissues_clusters[10:27],
+                           cols_to_filter = tissues_clusters[10:27],
+                           overlap_threshold = 3,
+                           fdr_threshold = 0.01,
+                           genes_list = phenotypes_clusters_list) -> clusters_phenotypes_data
+
+
+
+draw_custom_heatmap(
+  clusters_phenotypes_data,
+  data_type = "significant_uniq_data",
+  palette = c(
+    "pastel_blue"       = "white",
+    "pastel_light_blue" = "#f8dedd",
+    "white"        = "#f1bcbb",
+    "pastel_orange"= "#edacab",
+    "pastel_red"   = "#e68a89"
+  ),
+  col_mapping_vector =  clusters_mapping,
+  row_mapping_vector =  phenotyepes_mapping,
+  fdr_threshold = 0.01,
+  fdr_thresholds = c(0.01, 0.0001),
+  color_rects =  c("#4C8D05", "#66023C"),
+  color_rect = "green",
+  lwd_rect = 2,
+  alpha_rect = 1,
+  apply_filling = F,
+  color_filling = "gray",
+  alpha_filling = 0.6,
+  size_filling = 1,
+  pch_filling = 16,
+  col_significant = T,
+  row_dend_width = unit(4, "cm"),  # Adjust row dendrogram width
+  column_dend_height = unit(3, "cm"),  # Adjust column dendrogram height
+  row_names_gp = gpar(fontsize = 16),
+  column_names_gp = gpar(fontsize = 16),
+  column_names_rot = 45,
+  column_names_side = "top",
+  overlap_threshold = 3
+)
+
+

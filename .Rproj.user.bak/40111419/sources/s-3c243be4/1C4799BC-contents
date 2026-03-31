@@ -1,0 +1,36 @@
+filter_phenotypes_by_category(
+  genes_list = genes_phenotypes_PanUkBiobank,
+  path_metafile = "data/phenotypes/panukbiobank-phenotype-category.csv",
+  category_name = "Mental health"
+) -> tmp_phenotypes
+
+
+tmp_phenotypes -> col_lists
+papers_gene_list[!grepl("marpiech", names(papers_gene_list))] -> row_lists
+analyze_gene_list_overlap(
+  row_lists = papers_gene_list[!grepl("marpiech", names(papers_gene_list))],
+  col_lists = tmp_phenotypes,
+  reference_hgnc_vector = hgnc_symbols_vector_v110,
+  fdr_threshold = 0.01,
+  overlap_threshold = 3,
+  keep_original_data = FALSE
+) -> tmp
+
+
+lapply(c(papers_gene_list[!grepl("marpiech", names(papers_gene_list))], tmp_phenotypes), unique) -> combined_list
+
+analysis_results <-  perform_chi2_tests(combined_list, hgnc_symbols_vector_v110, verbose = T)
+
+
+processed_data <- processing_overlap_results(
+  data = analysis_results,
+  rows_to_filter = !rownames(analysis_results$p_value_matrix) %in% names(row_lists),
+  cols_to_filter = names(row_lists),
+  overlap_threshold = 3,
+  fdr_threshold = 0.01,
+  genes_list = combined_list
+) 
+
+
+processed_data$significant_uniq_data$df %>% dim
+analysis_results$

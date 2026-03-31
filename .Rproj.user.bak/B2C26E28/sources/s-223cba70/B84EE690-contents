@@ -1,0 +1,70 @@
+# Wprowadzanie danych do tabeli kontyngencji
+data <- matrix(c(40, 10, 10, 10), nrow = 2, byrow = TRUE)
+rownames(data) <- c("W liście B", "Nie w liście B")
+colnames(data) <- c("W liście A", "Nie w liście A")
+
+# Wyświetlenie tabeli kontyngencji
+print("Tabela kontyngencji:")
+print(data)
+
+# Przeprowadzenie testu chi-kwadrat
+test_chi2 <- chisq.test(data)
+fisher_test <- fisher.test(data)
+# Wyświetlenie wyników testu
+print("Wyniki testu chi-kwadrat:")
+print(test_chi2)
+
+
+list1 <- c("GEN1", "GEN2", "GEN3", "GEN4", "GEN5")
+list2 <- c("GEN1", "GEN2", "GEN3", "GEN6", "GEN7")
+
+
+# Obliczenie części wspólnej (intersection)
+intersection <- length(intersect(list1, list2))
+
+# Obliczenie unii (union)
+union <- length(union(list1, list2))
+
+# Obliczenie indeksu Jaccarda
+jaccard_index <- intersection / union
+
+# Wydruk wyniku
+print(jaccard_index)
+
+
+# Przykładowe dane
+list1 <- c("GEN1", "GEN2", "GEN3", "GEN4", "GEN5")
+list2 <- c("GEN1", "GEN2", "GEN3", "GEN6", "GEN7", "GEN8")
+
+# Obliczenie przecięcia zbiorów
+intersection <- intersect(list1, list2)
+intersection_size <- length(intersection)
+
+# Obliczenie mniejszego zbioru
+min_size <- min(length(list1), length(list2))
+
+# Obliczenie miary Simpsona
+simpson_index <- intersection_size / min_size
+
+# Wydruk wyniku
+print(simpson_index)
+
+
+################################################################################
+# Definicja dwóch sekwencji DNA
+seq1 <- "GATTACA"
+seq2 <- "GATCTCA"
+
+# Funkcja do obliczania odległości Hamminga
+hamming_distance <- function(s1, s2) {
+  if (nchar(s1) != nchar(s2)) {
+    stop("Sekwencje muszą mieć tę samą długość")
+  }
+  
+  # Obliczanie różnic między sekwencjami
+  sum(s1 != s2)
+}
+
+# Obliczenie i wydrukowanie odległości Hamminga
+distance <- hamming_distance(seq1, seq2)
+print(distance)

@@ -1,0 +1,27 @@
+{
+    "id": "D87C5D07",
+    "path": "~/projects/ifpan-michkor-gr/preprocessing/functions/R/summarize-genes-distribution.R",
+    "project_path": "preprocessing/functions/R/summarize-genes-distribution.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1713517947929.0,
+    "source_on_save": false,
+    "relative_order": 9,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "tempName": "Untitled6",
+        "cursorPosition": "80,76",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1713522098,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1713522098084,
+    "read_only": false,
+    "read_only_alternatives": []
+}

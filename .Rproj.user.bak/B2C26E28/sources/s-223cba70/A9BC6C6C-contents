@@ -1,0 +1,8 @@
+getwd()
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("BeadArray")
+
+library(BeadArray)
+data <- readBeadSummaryData(path="tmp/")

@@ -1,0 +1,21 @@
+
+
+overlap_results %>% 
+  enframe(name = "category", value = "data") %>%
+  mutate(n_overlap_genes = map_dbl(data, ~ .x$significant_data$df$overlap_genes %>%
+                                     strsplit(., ",") %>%
+                                     unlist() %>%
+                                     unique() %>%
+                                     length())) %>%
+  # Arrange the data from largest to smallest number of unique genes
+  arrange(desc(n_overlap_genes)) %>%
+  filter(n_overlap_genes > 20) %>%  
+  # Reorder the category factor based on n_overlap_genes to reflect the arrangement in the plot
+  mutate(category = factor(category, levels = category)) %>%
+  ggplot(aes(x = category, y = n_overlap_genes)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Number of Unique Overlap Genes by Category",
+       x = "Category",
+       y = "Number of Unique Genes") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))

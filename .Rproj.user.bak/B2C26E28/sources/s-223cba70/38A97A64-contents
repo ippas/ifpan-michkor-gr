@@ -1,0 +1,154 @@
+
+c(categorized_gene_lists$phenotypes_PanUkBiobank_1e08$gene_lists, 
+  gr_genes_signatures_multi_approach_list[setdiff(names(gr_genes_signatures_multi_approach_list), 
+                                                  c(
+                                                    # "frequently_up", "frequently_down", "frequently_bidirectional",
+                                                    "acute_stress_juszczak", "prolonged_stress_juszczak",
+                                                    "ptsd1_juszczak", "ptsd2_juszczak", "vulnerable_juszczak"))]) %>% 
+  lapply(., unique) -> gene_lists
+
+# gr_genes_signatures_multi_approach_list[setdiff(names(gr_genes_signatures_multi_approach_list), 
+#         c("frequently_up", "frequently_down", "frequently_bidirectional"))]
+
+chi2_results_phenotypes_signatures <- perform_chi2_tests(
+  gene_lists, 
+  hgnc_symbols_vector_v110)
+
+###
+processing_overlap_results(data = chi2_results_phenotypes_signatures,
+                           # rows_to_filter = !rownames(chi2_results_phenotypes_signatures$p_value_matrix) %in% names(gr_genes_signatures_multi_approach_list),
+                           rows_to_filter = setdiff(names(gr_genes_signatures_multi_approach_list),
+                                                    c(
+                                                      "frequently_up", "frequently_down", "frequently_bidirectional",
+                                                      "acute_stress_juszczak", "prolonged_stress_juszczak",
+                                                      "ptsd1_juszczak", "ptsd2_juszczak", "vulnerable_juszczak")),
+                           # cols_to_filter = c("frequently_up", "frequently_down", "frequently_bidirectional"),
+                           cols_to_filter = names(categorized_gene_lists$phenotypes_PanUkBiobank_1e08$gene_lists),
+                           overlap_threshold = 3,
+                           fdr_threshold = 0.01,
+                           genes_list = gene_lists) -> phenotypes_signatures_gr
+
+
+phenotypes_signatures_gr$significant_uniq_data$df 
+
+phenotypes_signatures_gr$significant_data$df %>% 
+  rename(Var1 = "signature_name") %>% 
+  rename(Var2 = "phenotype") %>% 
+  write.table("results/gr-signatures/overlap-PanUKB-tissuCellUniversal-23.03.2025.tsv",
+              quote = FALSE,
+              row.names = FALSE,
+              col.names = TRUE,
+              sep = "\t")
+
+svg("results/figures/overlapping-signatures/tissue-universal-signatures-panUKB.svg", height = 18, width = 28)
+
+draw_custom_heatmap(
+  phenotypes_signatures_gr,
+  data_type = "significant_uniq_data",
+  palette = c(
+    "pastel_blue"       = "white",
+    "pastel_light_blue" = "#f8dedd",
+    "white"        = "#f1bcbb",
+    "pastel_orange"= "#edacab",
+    "pastel_red"   = "#e68a89"
+  ),
+  # col_mapping_vector =  clusters_mapping,
+  # row_mapping_vector =  phenotyepes_mapping,
+  fdr_threshold = 0.01,
+  fdr_thresholds = c(0.01, 0.0001),
+  color_rects =  c("#4C8D05", "#66023C"),
+  color_rect = "green",
+  lwd_rect = 2,
+  alpha_rect = 1,
+  apply_filling = F,
+  color_filling = "gray",
+  alpha_filling = 0.6,
+  size_filling = 1,
+  pch_filling = 16,
+  col_significant = T,
+  row_dend_width = unit(4, "cm"),  # Adjust row dendrogram width
+  column_dend_height = unit(3, "cm"),  # Adjust column dendrogram height
+  row_names_gp = gpar(fontsize = 16),
+  column_names_gp = gpar(fontsize = 16),
+  column_names_rot = 45,
+  column_names_side = "top",
+  overlap_threshold = 3,
+  cluster_columns = FALSE,
+  gene_list_sizes = T
+) 
+dev.off()
+
+
+################################################################################
+processing_overlap_results(data = chi2_results_phenotypes_signatures,
+                           # rows_to_filter = !rownames(chi2_results_phenotypes_signatures$p_value_matrix) %in% names(gr_genes_signatures_multi_approach_list),
+                           # cols_to_filter = setdiff(names(gr_genes_signatures_multi_approach_list), 
+                           #                          c(
+                           #                            # "frequently_up", "frequently_down", "frequently_bidirectional",
+                           #                            "acute_stress_juszczak", "prolonged_stress_juszczak",
+                           #                            "ptsd1_juszczak", "ptsd2_juszczak", "vulnerable_juszczak")),
+                           rows_to_filter = c("frequently_up", "frequently_down", "frequently_bidirectional"),
+                           cols_to_filter = names(categorized_gene_lists$phenotypes_PanUkBiobank_1e08$gene_lists),
+                           overlap_threshold = 3,
+                           fdr_threshold = 0.01,
+                           genes_list = gene_lists) -> phenotypes_signatures_gr
+
+
+phenotypes_signatures_gr$significant_data$df %>% 
+  rename(Var1 = "signature_name") %>% 
+  rename(Var2 = "phenotype") %>% 
+  write.table("results/gr-signatures/overlap-PanUKB-frequentUpDown-23.03.2025.tsv",
+              quote = FALSE,
+              row.names = FALSE,
+              col.names = TRUE,
+              sep = "\t")
+
+svg("results/figures/overlapping-signatures/freqGenes-signatures-panUKB.svg", height = 26, width = 17)
+
+draw_custom_heatmap(
+  phenotypes_signatures_gr,
+  data_type = "significant_uniq_data",
+  palette = c(
+    "pastel_blue"       = "white",
+    "pastel_light_blue" = "#f8dedd",
+    "white"        = "#f1bcbb",
+    "pastel_orange"= "#edacab",
+    "pastel_red"   = "#e68a89"
+  ),
+  # col_mapping_vector =  clusters_mapping,
+  # row_mapping_vector =  phenotyepes_mapping,
+  fdr_threshold = 0.01,
+  fdr_thresholds = c(0.01, 0.0001),
+  color_rects =  c("#4C8D05", "#66023C"),
+  color_rect = "green",
+  lwd_rect = 2,
+  alpha_rect = 1,
+  apply_filling = F,
+  color_filling = "gray",
+  alpha_filling = 0.6,
+  size_filling = 1,
+  pch_filling = 16,
+  col_significant = T,
+  row_dend_width = unit(4, "cm"),  # Adjust row dendrogram width
+  column_dend_height = unit(3, "cm"),  # Adjust column dendrogram height
+  row_names_gp = gpar(fontsize = 16),
+  column_names_gp = gpar(fontsize = 16),
+  column_names_rot = 45,
+  column_names_side = "top",
+  overlap_threshold = 3,
+  cluster_columns = FALSE
+)
+
+dev.off()
+
+
+################################################################################
+# metabolone
+
+
+phenotypes_signatures_gr$significant_uniq_data$rows
+
+categorized_gene_lists$phenotypes_PanUkBiobank_1e08$metadata %>% 
+  filter(label %in% phenotypes_signatures_gr$significant_uniq_data$rows) %>% 
+  as.data.frame()
+

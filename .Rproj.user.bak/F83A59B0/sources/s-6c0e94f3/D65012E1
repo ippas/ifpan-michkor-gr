@@ -1,0 +1,26 @@
+{
+    "id": "D65012E1",
+    "path": "~/projects/ifpan-michkor-gr/preprocessing/overlapping-gr-genes/psychiatric/overlap-category-biobankuk-papers.R",
+    "project_path": "preprocessing/overlapping-gr-genes/psychiatric/overlap-category-biobankuk-papers.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": true,
+    "created": 1707294068900.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "27,0",
+        "scrollLine": "8"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1707835778,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1707855817546,
+    "read_only": false,
+    "read_only_alternatives": []
+}

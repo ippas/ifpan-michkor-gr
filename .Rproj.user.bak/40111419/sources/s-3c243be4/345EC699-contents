@@ -1,0 +1,173 @@
+# refine_and_label_gene_lists(papers_data_preprocessing, columns = c("source", "simple_tissue", "cell", "environment", "treatment", "dose", "time")) -> tmp 
+secondary_gene_lists_all <- list()
+
+refine_and_label_gene_lists(papers_data_preprocessing, columns = c("source")) -> secondary_gene_lists_all$refine_gene_lists
+
+summarize_genes_distribution(secondary_gene_lists_all$refine_gene_lists) -> secondary_gene_lists_all$genes_distribution
+
+create_secondary_list(secondary_gene_lists_all$genes_distribution$genes_frequency,
+                      gene_column = "hgnc_symbol",
+                      cumulative_sum > 0.99) -> tmp2
+
+create_secondary_list(secondary_gene_lists_all$genes_distribution$genes_frequency,
+                      gene_column = "hgnc_symbol",
+                      cumulative_sum > 0.992) -> tmp2
+
+create_secondary_list(secondary_gene_lists_all$genes_distribution$genes_frequency,
+                      gene_column = "hgnc_symbol",
+                      cumulative_sum > 0.994) -> tmp2
+
+create_secondary_list(secondary_gene_lists_all$genes_distribution$genes_frequency,
+                      gene_column = "hgnc_symbol",
+                      cumulative_sum > 0.996) -> tmp2
+
+
+create_secondary_list(secondary_gene_lists_all$genes_distribution$genes_frequency,
+                      gene_column = "hgnc_symbol",
+                      NULL) -> tmp2
+
+
+
+
+
+c(
+  "cumulative_sum > 0.998",
+  "cumulative_sum > 0.996",
+  "cumulative_sum > 0.994",
+  "cumulative_sum > 0.992",
+  "cumulative_sum > 0.99"
+)
+
+c(
+  "cumulative_sum_0.998",
+  "cumulative_sum_0.996",
+  "cumulative_sum_0.994",
+  "cumulative_sum_0.992",
+  "cumulative_sum_0.99"
+)
+
+
+params_genes_list <- data.frame(
+  name <- c(
+    "cumulative_sum_0.998",
+    "cumulative_sum_0.996",
+    "cumulative_sum_0.994",
+    "cumulative_sum_0.992",
+    "cumulative_sum_0.99"
+  )
+  
+)
+
+
+
+tmp2 %>% filter_vector(value = c(get(""), "SLA"), operation = "!%in%")
+
+
+tmp %>% filter_vector(., value = "", operation = "!=")
+
+secondary_gene_lists_all$genes_distribution$genes_frequency %>% 
+  filter(a"NULL") %>%
+  .$hgnc_symbol %>% 
+  convert_genes_to_vector()
+
+
+
+refine_gene_lists %>% 
+  # filter_gene_list(regulation == "up") %>% 
+  summarize_genes_distribution() %>% 
+  .$genes_frequency %>% 
+  filter(cumulative_sum > 0.995) %>% 
+  .$hgnc_symbol %>% 
+  convert_genes_to_vector()
+
+refine_gene_lists %>% 
+  filter_gene_list(regulation == "down") %>% 
+  summarize_genes_distribution() %>% 
+  .$genes_frequency %>% 
+  filter(cumulative_sum > 0.995) %>% 
+  .$hgnc_symbol %>% 
+  convert_genes_to_vector()
+
+
+
+
+summarize_genes_distribution(refine_gene_lists) -> genes_distribution
+
+
+genes_distribution$genes_frequency %>% 
+  filter(cumulative_sum > 0.998) %>% 
+  # filter(freq < 10) %>%
+  .$hgnc_symbol %>% 
+  lapply(., function(x)(strsplit(x, split = "\\|") %>% unlist )) %>% unlist -> common_genes
+
+
+genes_distribution$genes_frequency %>% 
+  filter(freq %in% c(1, 2)) %>% 
+  .$hgnc_symbol %>% 
+  convert_genes_to_vector() -> unique_genes_vector
+
+
+papers_data_preprocessing %>% 
+  filter(!(hgnc_symbol %in% unique_genes_vector)) %>%
+  filter(!(hgnc_symbol %in% common_genes)) %>% 
+  refine_and_label_gene_lists(., columns = c("source", "simple_tissue", "cell", "regulation")) -> refine_remove_unique_gene_tissue_cell_regulation
+
+refine_remove_unique_gene_tissue_cell_regulation %>% 
+  filter_gene_list(simple_tissue == "liver", regulation == "up") %>% 
+  summarize_genes_distribution() %>% 
+  .$genes_frequency %>% tail(3) %>% .$hgnc_symbol %>% convert_genes_to_vector()
+  
+
+summarize_genes_distribution(refine_remove_unique_gene_tissue_cell_regulation) -> distribution_remove_unique_gene_tissue_cell_regulation
+
+
+distribution_remove_unique_gene_tissue_cell_regulation$genes_frequency
+
+genes_distribution$gene_co_occurrence_probability_matrix %>% 
+  .[common_genes, common_genes] %>% 
+  Heatmap(cluster_rows = F, cluster_columns = F,
+          row_names_side = "left")
+
+
+
+analyze_gene_list_overlap()
+
+filter_gene_list(list = tmp, simple_tissue == "", regulation == "up") -> tmp2
+summarize_genes_distribution(tmp2) -> kidney_genes_distribution
+
+kidney_genes_distribution$genes_frequency %>% 
+  tail(4) %>% 
+  .$hgnc_symbol %>% convert_genes_to_vector()
+  
+
+
+
+common_genes
+
+tmp$gene_lists
+
+
+
+filter_by_gens <- function(data, genes_vector) {
+  
+}
+
+
+
+genes_distribution$genes_frequency
+
+
+gluconeogenesis_genes_vector <- c("ENO1", "AKR1A1", "PGM1", "PKLR", "ALDH9A1", "GALM", "HK2", "G6PC2", "PDHB", "PGM2", "PDHA2",
+                  "ADH5", "ADH4", "ADH6", "ADH1A", "ADH1B", "ADH1C", "ADH7", "ALDH7A1", "HK3", "PGK2", "PGAM2",
+                  "GCK", "DLD", "BPGM", "ALDH1B1", "FBP2", "FBP1", "ALDOB", "PFKP", "HKDC1", "HK1", "MINPP1", "PGAM1",
+                  "ENO4", "LDHA", "LDHC", "LDHAL6A", "ALDH3B2", "ALDH3B1", "DLAT", "GAPDH", "TPI1", "ENO2", "LDHB",
+                  "PFKM", "ALDH2", "PCK2", "LDHAL6B", "PKM", "ADPGK", "ALDOA", "ENO3", "ALDH3A2", "ALDH3A1", "ALDOC",
+                  "G6PC1", "G6PC3", "GPI", "GAPDHS", "ACSS1", "ACSS2", "PCK1", "PFKL", "PDHA1", "PGAM4", "PGK1")
+
+intersect(vector1, vector2)
+
+refine_remove_unique_gene_tissue_cell_regulation %>% 
+  filter_gene_list(simple_tissue == "lung", regulation == "up") %>% 
+  summarize_genes_distribution() %>% 
+  .$genes_frequency %>% tail(3) %>% .$hgnc_symbol %>% convert_genes_to_vector() -> liver_genes_vector
+  intersect(., gluconeogenesis_genes_vector)

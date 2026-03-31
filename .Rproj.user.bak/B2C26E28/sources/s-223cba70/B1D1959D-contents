@@ -1,0 +1,107 @@
+################################################################################
+# prepare data frame with parameters to prepare master lists for tissues
+data.frame(tissue = papers_data_preprocessing %>% 
+             filter(!(simple_tissue %in% c("Other"))) %>% 
+             .$simple_tissue %>% unique() %>% rep(each = 8),
+           metric = rep(c("log2ratio", "fdr"), 56),
+           sort_order = rep(c("decrease", "increase"), 56),
+           top = rep(rep(c(10, 25, 50, 100), each = 2), 14)
+           ) -> parameters_df_tissues
+
+rbind({parameters_df %>% mutate(regulation = "up")}, 
+      {parameters_df %>% mutate(regulation = "down")}) %>% 
+  mutate(sort_order = ifelse(regulation == "down", "increase", sort_order)) -> parameters_df_tissues
+
+lapply(1:nrow(parameters_df_tissues), function(i){
+  print(parameters_df_tissues[i, ])
+  
+  tryCatch({
+    create_ranked_master_list(data = papers_data_preprocessing,
+                              arrange_by = parameters_df_tissues[i, "metric"],
+                              simple_tissue == parameters_df_tissues[i, "tissue"],
+                              regulation == parameters_df_tissues[i, "regulation"],
+                              !(treatment %in% treatment_to_remove),
+                              columns = c(
+                                "source",
+                                "tissue",
+                                "cell",
+                                "dose",
+                                "treatment",
+                                "treatment_type",
+                                "regulation",
+                                "comparison",
+                                "environment"
+                              ),
+                              keep_column =  c("simple_tissue", "method"),
+                              size_list = parameters_df_tissues[i, "top"],
+                              max_rank = parameters_df_tissues[i, "top"],
+                              top_n = parameters_df_tissues[i, "top"],
+                              sort_order = parameters_df_tissues[i, "sort_order"]
+    )
+  }, error = function(e) NULL)
+  
+}) -> tissue_master_lists
+
+# set names for results
+names(tissue_master_lists) <- parameters_df_tissues %>% mutate(names = paste(tissue, regulation, top, metric, sep = "_")) %>% .$names 
+
+tissue_master_lists$brain_up_10_log2ratio$master_df
+
+tissue_master_lists %>% lapply(., function(x){
+  x$master_df
+}) %>% bind_rows(.id = "label") %>% 
+  separate(label, into = c("tissue", "regulation", "size_list", "rank_criterion"), sep = "_") -> tissue_master_df
+
+tissue_master_df %>% filter(size_list == 50) %>% 
+write_tsv_xlsx(data = ., 
+               tsv_file= "results/google-drive/master-lists/tissue-master-list-rank-score.tsv")
+
+
+################################################################################
+# prepare master up and down gene lists
+parameters_df_tissues %>% 
+  select(-tissue) %>% unique() -> parameters_df_regulation
+
+lapply(1:nrow(parameters_df_regulation), function(i){
+  print(parameters_df_regulation[i, ])
+  
+  tryCatch({
+    create_ranked_master_list(data = papers_data_preprocessing,
+                              arrange_by = parameters_df_regulation[i, "metric"],
+                              # simple_tissue == parameters_df_regulation[i, "tissue"],
+                              regulation == parameters_df_regulation[i, "regulation"],
+                              !(treatment %in% treatment_to_remove),
+                              columns = c(
+                                "source",
+                                "tissue",
+                                "cell",
+                                "dose",
+                                "treatment",
+                                "treatment_type",
+                                "regulation",
+                                "comparison",
+                                "environment"
+                              ),
+                              keep_column =  c("simple_tissue", "method"),
+                              size_list = parameters_df_regulation[i, "top"],
+                              max_rank = parameters_df_regulation[i, "top"],
+                              top_n = parameters_df_regulation[i, "top"],
+                              sort_order = parameters_df_regulation[i, "sort_order"]
+    )
+  }, error = function(e) NULL)
+  
+}) -> regulation_master_lists
+
+# set names for results
+names(regulation_master_lists) <- parameters_df_regulation %>% mutate(names = paste(regulation, top, metric, sep = "_")) %>% .$names 
+
+regulation_master_lists %>% lapply(., function(x){
+  x$master_df
+}) %>% bind_rows(.id = "label") %>% 
+  separate(label, into = c("regulation", "size_list", "rank_criterion")) -> regulation_master_df
+
+regulation_master_df %>% filter(size_list == 50) %>% 
+write_tsv_xlsx(data = ., 
+               tsv_file= "results/google-drive/master-lists/regulation-master-list-rank-score.tsv")
+
+

@@ -1,0 +1,41 @@
+library(ggplot2)
+library(reshape2)
+
+create_heatmap <- function(data, x_axis, y_axis, panel_spacing_size = 6, border_size = 1.5, tile_size = 0.7,
+                           x_axis_text_size = 12, y_axis_text_size = 12) {
+  # Adjusting the factor levels to add space between specific columns
+  data$variable <- factor(data$variable, levels = c("Phenotype", "blank", "Expression", "Localization", "Pathway"))
+  
+  # Create the heatmap
+  plot <- ggplot(data, aes(x = get(x_axis), y = get(y_axis), fill = factor(value))) +
+    geom_tile(color = "black", size = border_size, width = tile_size, height = tile_size, na.rm = TRUE) + # Tiles with custom sizes
+    scale_fill_manual(values = c("0" = "grey", "1" = "red")) + # Custom colors
+    theme_minimal() + # Minimal theme
+    theme(
+      axis.text.x.top = element_text(angle = 90, hjust = 1, size = x_axis_text_size, color = "black", vjust = 0.5), # X-axis labels at the top
+      axis.ticks.x.top = element_line(color = "black"), # Ensure ticks are at top if needed
+      axis.text.x = element_blank(), # Hide the default x-axis text at bottom
+      axis.text.y = element_text(size = y_axis_text_size), # Y-axis text size
+      axis.title.x.top = element_blank(), # Ensure no title at the top x-axis
+      axis.title.x = element_blank(), # Hide the bottom x-axis title if it exists
+      axis.title.y = element_blank(), # Hide y-axis title
+      axis.ticks.length = unit(0, "points"), # Remove tick marks
+      panel.spacing = unit(panel_spacing_size, "lines"), # Custom spacing between cells
+      plot.background = element_rect(fill = "white", colour = NA), # Transparent plot background
+      panel.grid.major = element_blank(), # Remove major grid lines
+      panel.grid.minor = element_blank(), # Remove minor grid lines
+      strip.background = element_rect(fill = "white", colour = "black"), # Adjust the background of facet labels
+      panel.border = element_blank(), # Remove default panel border
+      legend.position = "bottom", # Move legend to bottom
+      legend.box = "horizontal", # Align legend items horizontally
+      legend.title = element_blank() # Remove legend title if desired
+    ) +
+    scale_x_discrete(position = "top")  # Move the x-axis labels to the top
+  
+  # Add a vertical line on the left side only
+  plot + geom_vline(xintercept = 0.5, color = "black", size = 1)
+}
+
+# Example usage:
+create_heatmap(data = melted_data, x_axis = "variable", y_axis = "Gene", 
+               border_size = 1, tile_size = 0.7, x_axis_text_size = 14, y_axis_text_size = 14)

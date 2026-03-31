@@ -1,0 +1,47 @@
+install.packages("reshape2")
+
+ensembl = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+
+# Retrieve the HGNC symbols for protein-coding genes
+hgnc_symbols <- getBM(
+  attributes = c("hgnc_symbol", "gene_biotype"),
+  filters = "biotype",
+  values = "protein_coding",
+  mart = ensembl
+)
+
+hgnc_symbols %>% .$hgnc_symbol -> hgnc_symbols_vector
+
+
+# Create a new dataframe combining the relevant rows and selecting the relevant columns
+gr_gene_database <- gr_gene_database %>% 
+  filter(source != "michkor-cells") %>% 
+  bind_rows(tmp_michkor) 
+
+# Preprocess the gene database
+gr_gene_database %>%   
+  # print_simple_database() %>%
+  mutate(source = str_replace_all(source, "PMID: ", "")) %>% 
+  # filter(Source != "michkor-cells-dex") %>%
+  mutate(gene_name = tolower(gene_name)) %>%
+  mutate(label = paste0(source, "_", tissue, "_", cell)) %>%
+  mutate(label = ifelse(source == "marpiech_tissues_dex", paste0(source, "_", gene_list_number), label)) %>% 
+  filter(hgnc_symbol %in% hgnc_symbols_vector) %>% 
+# filter(Gene_name %in% {filtered_biomart_by_go %>% .$gene_name %>% tolower() %>% unique()}) %>%
+  filter(label != "34362910_NA_NA") %>% 
+  filter(!grepl("Nithingale", gene_list_index)) %>% 
+  filter(!grepl("Metabolon", gene_list_index)) -> gr_gene_filter_biomart
+
+# Split gene names by label
+split(gr_gene_filter_biomart$hgnc_symbol, gr_gene_filter_biomart$label) -> gr_gene_list
+
+# Get unique total genes
+total_genes = filtered_biomart_by_go %>% .$gene_name %>% tolower() %>% unique()
+
+# Perform chi-square tests
+results <- perform_chi2_tests(gr_gene_list, total_genes)
+
+# Create heatmaps
+pheatmap(log2(results$chi2_value_matrix+1), cluster_rows = T, cluster_cols = T, display_numbers = T)
+pheatmap(results$p_value_matrix, cluster_rows = T, cluster_cols = T, display_numbers = T)
+

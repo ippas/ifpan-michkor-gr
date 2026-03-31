@@ -1,0 +1,65 @@
+pgc_mdd2025_no23andMe_eur %>% 
+  filter(pvalue < 0.00001) %>% 
+  ggplot(aes(x = -log10(pvalue))) +
+  geom_density(fill = "gray80", alpha = 0.6, color = "black") +
+  labs(title = "KDE plot -log10(p-value)",
+       x = expression(-log[10](p)),
+       y = "Gęstość") +
+  theme_minimal()
+
+rbind(pgc_mdd2025_no23andMe_eur_processing,
+      intesection_results_all_gr_signatures) %>% 
+  filter(pvalue < 0.00001) %>% 
+  ggplot(aes(x = -log10(pvalue))) +
+  geom_density(fill = "gray80", alpha = 0.6, color = "black") +
+  labs(title = "KDE plot -log10(p-value)",
+       x = expression(-log[10](p)),
+       y = "Gęstość") +
+  theme_minimal()
+
+rbind(pgc_mdd2025_no23andMe_eur_processing,
+      intesection_results_all_gr_signatures) %>% 
+  filter(pvalue < 0.00001) %>%
+  filter(range_plus_minus %in% c("100000", "all")) %>% 
+  filter(signature_derivation %in% c("GWAS", "universal")) %>% 
+  ggplot(aes(x = -log10(pvalue), 
+             color = signature_derivation, 
+             fill = signature_derivation)) +
+  geom_density(alpha = 0.001, adjust = 1.0) +
+  labs(title = "",
+       x = expression(-log[10](p)),
+       y = "Gęstość",
+       color = "Signature Derivation",
+       fill = "Signature Derivation") +
+  theme_minimal()
+
+
+
+################################################################################
+# Połącz dane
+
+# Połącz dane
+combined_data <- rbind(pgc_mdd2025_no23andMe_eur_processing,
+                       intesection_results_all_gr_signatures) %>%
+  filter(range_plus_minus %in% c("100000", "all"),
+         signature_derivation %in% c("GWAS", "universal")) %>%
+  mutate(log_pvalue = -log10(pvalue)) %>% 
+  filter(pvalue < 0.00001)
+
+# Oblicz gęstość ręcznie
+density_data <- combined_data %>%
+  group_by(signature_derivation) %>%
+  summarise(dens = list(density(log_pvalue, adjust = 1.0))) %>%
+  mutate(density_df = map(dens, ~data.frame(x = .x$x, y = .x$y))) %>%
+  select(signature_derivation, density_df) %>%
+  unnest(density_df) %>%
+  mutate(log_density = log10(y + 1e-10))  # unikamy log(0)
+
+# Wykres log-density
+ggplot(density_data, aes(x = x, y = log_density, color = signature_derivation)) +
+  geom_line(size = 1) +
+  labs(title = "",
+       x = expression(-log[10](p)),
+       y = expression(log[10]("Gęstość")),
+       color = "Signature Derivation") +
+  theme_minimal()

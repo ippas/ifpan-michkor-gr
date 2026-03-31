@@ -1,7 +1,9 @@
 /raw
 /data
 /results
-
+/tmp
+/results_v2
+/tools
 ########## R.gitignore ##########
 
 # History files

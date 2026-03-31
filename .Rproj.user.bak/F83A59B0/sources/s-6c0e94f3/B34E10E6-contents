@@ -1,0 +1,22 @@
+generate_random_gene_sets(genes_vector = hgnc_symbols_vector_v110,
+                          size_vector = sapply(papers_gene_list, length),
+                          seed = 123) -> random_gene_list 
+
+
+
+
+create_gene_pie_chart(gene_list = papers_gene_list, threshold_percent = 98)
+
+create_gene_pie_chart(gene_list = random_gene_list, threshold_percent = 98)
+
+create_gene_pie_chart(gene_list = tmp2, threshold_percent = 98)
+
+# 
+# papers_gene_list[grep("_down", names(papers_gene_list))] %>% length()
+# 
+# 
+# 
+# create_gene_pie_chart(gene_list = papers_gene_list[grep("_down", names(papers_gene_list))], threshold_percent = 96) 
+# 
+# 
+# create_gene_pie_chart(gene_list = papers_gene_list[grep("_up", names(papers_gene_list))], threshold_percent = 96) 

@@ -1,0 +1,24 @@
+# Assuming you have two matrices mat1 and mat2
+# Find the global min and max
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Create two matrices with random data
+mat1 <- matrix(rnorm(100), nrow = 10)  # 10x10 matrix
+mat2 <- matrix(rnorm(100), nrow = 10)  # 10x10 matrix
+
+global_min <- min(min(mat1, na.rm = TRUE), min(mat2, na.rm = TRUE))
+global_max <- max(max(mat1, na.rm = TRUE), max(mat2, na.rm = TRUE))
+
+# Define a color mapping function
+color_mapping <- colorRamp2(c(global_min, 0, global_max), c("blue", "white", "red"))
+
+# Create the first heatmap
+heatmap1 <- Heatmap(mat1, name = "heatmap1", col = color_mapping)
+
+# Create the second heatmap
+heatmap2 <- Heatmap(mat2, name = "heatmap2", col = color_mapping)
+
+# Combine and draw the heatmaps
+draw(heatmap1 + heatmap2, heatmap_legend_side = "bot")

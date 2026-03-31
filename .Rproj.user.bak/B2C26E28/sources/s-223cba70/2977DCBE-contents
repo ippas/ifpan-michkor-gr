@@ -1,0 +1,94 @@
+compute_ranked_scores_for_genes <- function(data){
+  metadata <- data$metadata
+  
+  calculate_ranked_scores <- function(data, gene_list_name){
+    
+    gene_lists <- data$gene_lists
+    log2ratio_lists <- data$log2ratio_lists
+    
+    
+    data.frame(
+      hgnc_symbol = gene_lists[[gene_list_name]],
+      log2ratio = log2ratio_lists[[gene_list_name]]
+    ) %>% 
+      arrange(desc(log2ratio)) %>%
+      mutate(
+        rank = row_number(),  # Adds a new column 'rank' with values from 1 to n
+        score = pmax(51 - rank, 0)  # Calculates the score
+      ) -> ranked_df
+    
+    return(ranked_df)
+  }
+  
+  print(metadata)
+  lapply(metadata$label, function(x){
+    calculate_ranked_scores(data = {{data}}, gene_list_name = x)
+  }) -> ranked_scores_data
+  
+  names(ranked_scores_data) <- metadata$label
+  
+  data$ranked_scores_data <- ranked_scores_data
+  
+  return(data)
+}
+
+
+# Define the function
+calculate_top_genes <- function(data, top_n = 50) {
+  data %>%
+    bind_rows(., .id = "list_name") %>%  # Bind rows and add an identifier column
+    group_by(hgnc_symbol) %>%           # Group by gene symbol
+    nest() %>%                          # Nest the data within each group
+    mutate(sum_score = map(data, ~ sum(.x$score))) %>%  # Calculate sum of scores
+    unnest(sum_score) %>%               # Unnest the sum_score column
+    arrange(desc(sum_score)) %>%        # Arrange in descending order of sum_score
+    select(hgnc_symbol, sum_score) %>%  # Select the necessary columns
+    head(top_n) %>%                     # Get the top 'n' entries
+    pull(hgnc_symbol)                   # Extract only the hgnc_symbol column
+}
+
+
+
+create_ranked_master_list <- function(data, treatment_to_remove, cumsum_thresholds, freq_thresholds, regulation, simple_tissue, top_n = 50, size_list = 10) {
+  
+  data %>% 
+    drop_na(log2ratio) %>%
+    filter(log2ratio != "NA") %>% 
+    filter(!(treatment %in% {{treatment_to_remove}})) %>%
+    filter(regulation == {{regulation}}) %>%
+    filter(simple_tissue == {{simple_tissue}}) %>% 
+    refine_gene_lists(data = .,
+                      columns = c("source", "tissue", "cell", "dose", "treatment", "treatment_type", "regulation", "comparison", "environment"),
+                      cumsum_thresholds = {{cumsum_thresholds}},
+                      freq_thresholds = {{freq_thresholds}},
+                      keep_column =  c("simple_tissue", "method")) -> tmp 
+  
+
+
+  
+  tmp$refine_gene_lists %>%  
+    filter_gene_list(gene_count > size_list, log2ratio = TRUE) -> tmp
+  
+  
+  tmp$metadata$source %>% unique() %>% length() -> n_papers
+  tmp$metadata$label %>% unique()  %>% length() -> n_lists
+  
+  print("papers")
+  print(n_papers)
+  
+  compute_ranked_scores_for_genes(data = tmp) -> tmp
+  
+  
+  tmp$ranked_scores_data %>% 
+    bind_rows(., .id = "list_name") %>% 
+    group_by(hgnc_symbol) %>% 
+    nest() %>% 
+    mutate(sum_score = map(data, ~sum(.x$score))) %>% 
+    unnest(sum_score) %>% 
+    arrange(desc(sum_score)) %>% 
+    select(c(hgnc_symbol, sum_score)) %>% head(top_n) %>% 
+    mutate(n_papers = n_papers,
+           n_lists = n_lists) -> master_list
+  
+  return(master_list)
+}

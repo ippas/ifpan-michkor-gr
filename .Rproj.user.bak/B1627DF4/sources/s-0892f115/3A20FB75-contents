@@ -1,0 +1,38 @@
+library(ggplot2)
+library(reshape2)
+library(stats)  # for dist and hclust functions
+
+# Assuming 'heatmap_phenotypes_clusters' is already defined and is a matrix
+
+# Perform clustering
+# Compute the distance matrix for rows and columns
+dist_rows <- dist(t(heatmap_phenotypes_clusters))  # transpose to cluster by rows
+dist_cols <- dist(heatmap_phenotypes_clusters)
+
+# Perform hierarchical clustering
+hc_rows <- hclust(dist_rows, method = "complete")
+hc_cols <- hclust(dist_cols, method = "complete")
+
+# Reorder matrix according to clustering
+heatmap_ordered <- heatmap_phenotypes_clusters[hc_rows$order, hc_cols$order]
+
+# Convert the ordered matrix to long format
+long_heatmap_data <- melt(heatmap_ordered)
+colnames(long_heatmap_data) <- c("Phenotypes", "Clusters", "value")
+
+# Add log2 transformation
+long_heatmap_data$value <- log2(long_heatmap_data$value + 1)
+
+# Create the ggplot heatmap with clustering
+p <- ggplot(long_heatmap_data, aes(x = Clusters, y = Phenotypes, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "blue", high = "red") +
+  geom_text(aes(label = sprintf("%.2f", value)), size = 3.5, vjust = 1) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        axis.text.y = element_text(size = 15),
+        axis.title = element_blank(),
+        legend.position = "right")
+
+# Print the heatmap
+print(p)

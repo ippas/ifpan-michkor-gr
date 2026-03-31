@@ -1,0 +1,10 @@
+filter(papers_data_preprocessing, regulation == "up") %>% 
+  filter(simple_tissue == "brain") %>% 
+  filter(!(hgnc_symbol %in% set_data$gr_list$master_gene_lists$master_cumsum_0.996 )) %>% 
+  refine_gene_lists(data = .,
+                  columns = c("source", "tissue", "cell", "treatment", "treatment_type", "regulation", "comparison", "environment"),
+                  cumsum_thresholds = cumsum_thresholds, size_threshold = 5,
+                  freq_thresholds = freq_thresholds) -> tmp
+
+
+tmp$master_gene_lists$master_cumsum_0.99 %>% cat(sep = "\n")

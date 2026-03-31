@@ -1,0 +1,45 @@
+generate_random_gene_sets_with_internal_size <- function(genes_vector, papers_gene_list, seed = NULL) {
+  # Function: generate_random_gene_sets_with_internal_size
+  # Description:
+  #   Generates a list of random gene sets, with each set's size based on the gene list sizes from multiple papers.
+  #   The gene frequencies in the generated sets reflect the original gene frequencies in the provided genes_vector.
+  #   This version calculates the size of each gene set internally based on the provided papers_gene_list.
+  # Parameters:
+  #   genes_vector - Vector containing gene names for sampling (e.g., hgnc_symbols_vector_v110).
+  #   papers_gene_list - A list where each element is a vector of gene names from a different paper.
+  #   seed - Optional; integer for setting the seed for random number generation.
+  # Returns:
+  #   A named list of gene vectors, each representing a random gene set with preserved
+  #   frequency structure and sizes based on the papers' gene lists. Names are formatted as "random1", "random2", etc.
+  
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+  
+  # Calculate the size of each gene set based on the papers' gene lists
+  size_vector <- sapply(papers_gene_list, length)
+  
+  # Calculate frequencies of each gene in the original vector
+  gene_frequencies <- table(genes_vector)
+  gene_names <- names(gene_frequencies)
+  total_genes <- sum(gene_frequencies)
+  
+  # Normalize frequencies to probabilities
+  gene_probabilities <- gene_frequencies / total_genes
+  
+  # Generate random gene sets with preserved frequency structure
+  random_gene_sets <- lapply(size_vector, function(set_size) {
+    sample(gene_names, size = set_size, replace = TRUE, prob = gene_probabilities)
+  })
+  
+  # Assign names to each gene set
+  names(random_gene_sets) <- paste("random", seq_along(random_gene_sets), sep = "")
+  return(random_gene_sets)
+}
+
+
+generate_random_gene_sets_with_internal_size(
+  genes_vector = hgnc_symbols_vector_v110,
+  papers_gene_list = papers_gene_list,
+  seed = 123 # Setting a seed for reproducibility
+) -> tmp2

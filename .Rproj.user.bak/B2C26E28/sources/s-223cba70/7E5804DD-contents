@@ -1,0 +1,8 @@
+# Instalacja i ładowanie pakietu googledrive
+if (!requireNamespace("googledrive", quietly = TRUE)) {
+  install.packages("googledrive")
+}
+library(googledrive)
+
+# Uwierzytelnianie - musisz to zrobić tylko raz
+drive_auth()

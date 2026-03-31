@@ -1,0 +1,56 @@
+# ================================================
+# Ensure consistent types
+# ================================================
+gr_signatures_intersection_data <- gr_signatures_intersection_data %>%
+  mutate(
+    range_plus_minus = as.character(range_plus_minus),
+    signature_derivation = as.character(signature_derivation)
+  )
+
+# ================================================
+# Helper function: create complement set for given signature
+# ================================================
+create_complement_set <- function(signature_name) {
+  mdd2025_no23andMe_eur_gwas_preprocessing %>%
+    filter(!rsID %in% gr_signatures_intersection_data %>%
+             filter(signature_derivation == signature_name) %>%
+             pull(rsID)) %>%
+    mutate(signature_derivation = signature_name)
+}
+
+# ================================================
+# Combine all GR signature sets (original + complements)
+# ================================================
+gr_signature_sets_combined <- bind_rows(
+  create_complement_set("frequent"),
+  create_complement_set("juszczak_PMID:35405299"),
+  create_complement_set("tissue_cell"),
+  create_complement_set("universal"),
+  create_complement_set("marpiech_cluster"),
+  gr_signatures_intersection_data
+)
+
+
+# ================================================
+# Plot histogram: -log10(p-value) grouped by signature and range
+# ================================================
+gr_signature_sets_combined %>%
+  filter(range_plus_minus != "100") %>%
+  select(rsID, pvalue, range_plus_minus, signature_derivation) %>%
+  distinct() %>%
+  ggplot(aes(x = -log10(pvalue))) +
+  geom_histogram(binwidth = 0.1, fill = "gray80") +
+  geom_vline(xintercept = c(5, 8), linetype = "dashed", color = "red", size = 0.7) +
+  labs(
+    title = "Histogram -log10(p-value) by GR signature",
+    x = expression(-log[10](p)),
+    y = "Liczba obserwacji (log10)"
+  ) +
+  scale_y_log10() +
+  theme_minimal() +
+  facet_grid(signature_derivation ~ range_plus_minus)
+
+# ================================================
+# Clean up temporary variables
+# ================================================
+rm(create_complement_set, gr_signature_sets_combined)

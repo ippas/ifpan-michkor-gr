@@ -1,0 +1,38 @@
+library(pheatmap)
+library(grid)
+
+# Create a sample matrix with random data
+sample_matrix <- matrix(runif(100), nrow = 10)
+
+# Generate a heatmap using `pheatmap`
+heatmap_object <- pheatmap(sample_matrix)
+
+# Assuming you've already determined which cells to highlight
+# and have their indices stored in highlight_cells dataframe
+
+# Calculate the positions of the highlighted cells according to the clustering
+highlight_cells_mapped <- highlight_cells
+highlight_cells_mapped$rows <- heatmap_object$tree_row$order[highlight_cells$rows]
+highlight_cells_mapped$cols <- heatmap_object$tree_col$order[highlight_cells$cols]
+
+# Use the grid system to navigate to the heatmap plot viewport
+# This step is tricky and requires knowing the structure of the `pheatmap` object's grid layout
+# The viewport name might be different and needs to be determined by inspecting the `pheatmap` object
+seekViewport("heatmap_body")
+
+# Loop through the highlighted cells and draw the rectangles
+for(i in 1:nrow(highlight_cells_mapped)) {
+  # Calculate the center of each cell to highlight
+  cell_center_x <- unit((highlight_cells_mapped$cols[i] - 0.5) / ncol(sample_matrix), "npc")
+  cell_center_y <- unit((nrow(sample_matrix) - highlight_cells_mapped$rows[i] + 0.5) / nrow(sample_matrix), "npc")
+  
+  # Draw the rectangle at the calculated position
+  grid.rect(
+    x = cell_center_x,
+    y = cell_center_y,
+    width = unit(1 / ncol(sample_matrix), "npc"),
+    height = unit(1 / nrow(sample_matrix), "npc"),
+    just = "center",
+    gp = gpar(col = "green", lwd = 2, fill = NA)
+  )
+}

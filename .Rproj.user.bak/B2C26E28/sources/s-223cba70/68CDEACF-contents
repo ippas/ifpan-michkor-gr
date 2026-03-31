@@ -1,0 +1,52 @@
+# Sort y-axis elements in reverse alphabetical order and adjust as a factor
+to_plot <- to_plot %>%
+  arrange(desc(cluster)) %>%
+  mutate(cluster = factor(cluster, levels = unique(cluster)))
+
+to_text_plot <- to_text_plot %>%
+  arrange(desc(cluster)) %>%
+  mutate(cluster = factor(cluster, levels = unique(cluster)))
+
+# Create the combined plot
+ggplot() +
+  # Heatmap Layer
+  geom_tile(data = to_plot, aes(x = variable, y = cluster, fill = factor(value)), color = "black", size = 1, width = 0.7, height = 0.7, na.rm = TRUE) +
+  scale_fill_manual(values = c("0" = "#e2e2e2", "1" = "#ff964f", "2" = "#db5856", "3" = "#592D1D")) + # Custom colors
+  
+  # Text Annotations Layer
+  geom_text(data = to_text_plot, aes(x = 1.05, y = id, label = TF), hjust = 0) +  # Add TF text aligned to the left
+  geom_text(data = to_text_plot, aes(x = 1.1, y = id, label = tissue), hjust = 0) +  # Add tissue text aligned to the right
+  geom_text(data = to_text_plot, aes(x = 1.2, y = id, label = species), hjust = 0) +  # Add species text
+  geom_text(data = to_text_plot, aes(x = 1.25, y = id, label = PMID), hjust = 0) +  # Add PMID text
+  
+  # Faceting based on cluster for both heatmap and text
+  facet_grid(cluster ~ ., scales = "free_y", space = "free_y") +
+  
+  # Adjust scales
+  scale_x_continuous(limits = c(0.9, 1.4), expand = c(0, 0)) +
+  scale_y_reverse() +
+  
+  # Theme adjustments
+  theme_minimal() +
+  theme(
+    axis.text.x.top = element_text(angle = 90, hjust = 1, size = 12, color = "black", vjust = 0.5), # X-axis labels at the top
+    axis.ticks.x.top = element_line(color = "black"), # Ensure ticks are at top if needed
+    axis.text.x = element_blank(), # Hide the default x-axis text at bottom
+    axis.text.y = element_blank(), # Hide y-axis text
+    axis.title.x.top = element_blank(), # Ensure no title at the top x-axis
+    axis.title.x = element_blank(), # Hide the bottom x-axis title if it exists
+    axis.title.y = element_blank(), # Hide y-axis title
+    axis.ticks.length = unit(0, "points"), # Remove tick marks
+    panel.spacing = unit(6, "lines"), # Custom spacing between cells
+    plot.background = element_rect(fill = "white", colour = NA), # Transparent plot background
+    panel.grid.major = element_blank(), # Remove major grid lines
+    panel.grid.minor = element_blank(), # Remove minor grid lines
+    strip.background = element_rect(fill = "white", colour = "black"), # Adjust the background of facet labels
+    legend.position = "bottom", # Move legend to bottom
+    legend.box = "horizontal", # Align legend items horizontally
+    legend.title = element_blank() # Remove legend title
+  ) +
+  
+  # Add a vertical line on the left side only
+  geom_vline(xintercept = 0.9, color = "black", size = 1)
+

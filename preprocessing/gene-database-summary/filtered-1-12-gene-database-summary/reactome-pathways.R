@@ -1,0 +1,187 @@
+if (!requireNamespace("remotes", quietly = TRUE)) install.packages("remotes")
+remotes::install_github("reactome/ReactomeContentService4R")
+
+r_hsa_vector <- c(
+  "R-HSA-112316",
+  "R-HSA-1280215",
+  "R-HSA-1280218",
+  "R-HSA-1428517",
+  "R-HSA-15869",
+  "R-HSA-168249",
+  "R-HSA-196854",
+  "R-HSA-202131",
+  "R-HSA-556833",
+  "R-HSA-70326",
+  "R-HSA-71387",
+  "R-HSA-8953854",
+  "R-HSA-9609507",
+  
+  "R-HSA-71291",
+  "R-HSA-211859",
+  "R-HSA-5357801",
+  "R-HSA-9612973",
+  "R-HSA-168256"
+)
+
+get_genes_reactome <- function(pathway_id){
+  dbp <- ReactomeContentService4R::query(id = pathway_id)
+  data <- ReactomeContentService4R::event2Ids(event.id = pathway_id) 
+  
+  data.frame(
+    name = dbp$displayName,
+    pathway_id = pathway_id,
+    gene_symbol = data$geneSymbol
+  ) -> df
+  
+  return(df)
+}
+
+lapply(r_hsa_vector, function(x){
+  get_genes_reactome(pathway_id = x)
+}) %>% 
+  do.call(rbind, .) -> reactome_data
+
+
+reactome_data %>% 
+  filter(gene_symbol %in% {hgnc_new_regulation %>% 
+      # filter(new_regulation_perc %in% c("both")) %>%
+      # filter(new_regulation_perc %in% c("up", "up_weak")) %>%
+      filter(new_regulation_perc %in% c("down", "down_weak")) %>%
+      .$hgnc_symbol 
+  }) %>% unique() %>% 
+  group_by(name) %>% 
+  nest()
+
+
+reactome_data %>% 
+  filter(gene_symbol %in% {hgnc_new_regulation %>% 
+      # filter(new_regulation_perc %in% c("both")) %>%
+      filter(new_regulation_perc %in% c("up", "up_weak")) %>%
+      # filter(new_regulation_perc %in% c("down", "down_weak")) %>%
+      .$hgnc_symbol 
+  }) %>% unique() %>% 
+  group_by(name) %>% 
+  nest()
+
+
+reactome_data %>% 
+  filter(gene_symbol %in% {hgnc_new_regulation %>% 
+      filter(new_regulation_perc %in% c("both")) %>%
+      # filter(new_regulation_perc %in% c("up", "up_weak")) %>%
+      # filter(new_regulation_perc %in% c("down", "down_weak")) %>%
+      .$hgnc_symbol 
+  }) %>% unique() %>% 
+  group_by(name) %>% 
+  nest()
+  
+
+
+# Reactome Pathways 2024
+
+hgnc_new_regulation %>% 
+  filter(new_regulation_perc == "down") %>% 
+  .$hgnc_symbol 
+
+
+enrichr_multiple_databases(data_vector = {hgnc_new_regulation %>% 
+    filter(new_regulation_perc %in% c("both")) %>% 
+    .$hgnc_symbol},
+    databases = c("Reactome_Pathways_2024")) -> reactome_enrichr_both
+
+reactome_enrichr_both %>% .[[1]] %>% 
+  mutate(n_overlap = str_split(Overlap, "/", simplify = TRUE)[, 1]) %>% 
+  mutate(n_overlap = as.numeric(n_overlap)) %>% 
+  rename(Adjusted.P.value = "fdr") %>% 
+  filter(fdr < 0.05) %>% 
+  filter(n_overlap > 10) %>% 
+  mutate(regulation = "bidirectional")
+
+
+enrichr_multiple_databases(data_vector = {hgnc_new_regulation %>% 
+    filter(new_regulation_perc %in% c("down", "down_weak")) %>% 
+    .$hgnc_symbol},
+    databases = c("Reactome_Pathways_2024")) -> reactome_enrichr_down
+
+
+reactome_enrichr_both %>% .[[1]] %>% 
+  mutate(n_overlap = str_split(Overlap, "/", simplify = TRUE)[, 1]) %>% 
+  mutate(n_overlap = as.numeric(n_overlap)) %>% 
+  rename(Adjusted.P.value = "fdr") %>% 
+  filter(fdr < 0.05) %>% 
+  filter(n_overlap > 10) %>% 
+  mutate(regulation = "bidirectional")
+
+reactome_enrichr_down %>% .[[1]] %>% 
+  mutate(n_overlap = str_split(Overlap, "/", simplify = TRUE)[, 1]) %>% 
+  mutate(n_overlap = as.numeric(n_overlap)) %>% 
+  rename(Adjusted.P.value = "fdr") %>% 
+  filter(fdr < 0.05) %>% 
+  filter(n_overlap > 10) %>% 
+  mutate(regulation = "down")
+
+reactome_enrichr_up %>% .[[1]] %>% 
+  mutate(n_overlap = str_split(Overlap, "/", simplify = TRUE)[, 1]) %>% 
+  mutate(n_overlap = as.numeric(n_overlap)) %>% 
+  rename(Adjusted.P.value = "fdr") %>% 
+  filter(fdr < 0.05) %>% 
+  filter(n_overlap > 10) %>% 
+  mutate(regulation = "up")
+
+
+enrichr_multiple_databases(data_vector = {hgnc_new_regulation %>% 
+    filter(new_regulation_perc %in% c("up", "up_weak")) %>% 
+    .$hgnc_symbol},
+    databases = c("Reactome_Pathways_2024")) -> reactome_enrichr_up
+
+reactome_enrichr_up %>% .[[1]] %>% 
+  mutate(n_overlap = str_split(Overlap, "/", simplify = TRUE)[, 1]) %>% 
+  mutate(n_overlap = as.numeric(n_overlap)) %>% 
+  rename(Adjusted.P.value = "fdr") %>% 
+  filter(fdr < 0.05) %>% 
+  filter(n_overlap > 10) %>% 
+  mutate(regulation = "up")
+
+
+reactome_combined <- bind_rows(
+  reactome_enrichr_both %>% .[[1]] %>% 
+    mutate(n_overlap = str_split(Overlap, "/", simplify = TRUE)[, 1]) %>% 
+    mutate(n_overlap = as.numeric(n_overlap)) %>% 
+    rename(Adjusted.P.value = "fdr") %>% 
+    filter(fdr < 0.05) %>% 
+    filter(n_overlap > 10) %>% 
+    mutate(regulation = "bidirectional"),
+  
+  reactome_enrichr_down %>% .[[1]] %>% 
+    mutate(n_overlap = str_split(Overlap, "/", simplify = TRUE)[, 1]) %>% 
+    mutate(n_overlap = as.numeric(n_overlap)) %>% 
+    rename(Adjusted.P.value = "fdr") %>% 
+    filter(fdr < 0.05) %>% 
+    filter(n_overlap > 10) %>% 
+    mutate(regulation = "down"),
+  
+  reactome_enrichr_up %>% .[[1]] %>% 
+    mutate(n_overlap = str_split(Overlap, "/", simplify = TRUE)[, 1]) %>% 
+    mutate(n_overlap = as.numeric(n_overlap)) %>% 
+    rename(Adjusted.P.value = "fdr") %>% 
+    filter(fdr < 0.05) %>% 
+    filter(n_overlap > 10) %>% 
+    mutate(regulation = "up")
+)
+
+# Wyświetlenie tabeli
+reactome_combined
+
+
+reactome_combined %>% 
+  head
+
+reactome_combined %>% select(Term, Overlap, fdr, regulation, Genes) %>% 
+  view()
+  
+
+reactome_combined %>% select(Term, Overlap, fdr, regulation, Genes) %>% 
+  write.table(., file = "results/figures/gene-database-summary/filtered-1-12-gene-database-summary/enrichr-reactome-0.05-10.tsv", 
+              quote = FALSE,
+              sep = "\t", 
+              row.names = FALSE,
+              col.names = TRUE)

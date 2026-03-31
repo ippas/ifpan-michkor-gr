@@ -1,0 +1,96 @@
+extract_keys_values <- function(data, column, keys) {
+  # This function extracts specific key-value pairs from a specified column in a data frame.
+  # The function splits the specified column by '|' to separate key-value pairs. 
+  # Then, for each row, it finds the value corresponding to the provided key.
+  # If the key doesn't exist in a row, NA is returned.
+  # The function then adds these values as a new column in the data frame and returns the updated data frame.
+  
+  # Split the column by '|' to separate key-value pairs.
+  split_info <- strsplit(as.character(data[[column]]), "\\|")
+  
+  # For each key, extract the corresponding values.
+  for (key in keys) {
+    
+    # For each row, find the value corresponding to the provided key.
+    values <- sapply(split_info, function(x) {
+      
+      # Split the key-value pairs by ':' to separate the keys and the values.
+      # If a pair doesn't contain ':', return the pair and NA.
+      key_value_pairs <- sapply(x, function(y) {
+        if (grepl(":", y)) {
+          return(strsplit(y, ":"))
+        } else {
+          return(list(c(y, NA)))
+        }
+      })
+      
+      # Extract the keys and values.
+      keys <- sapply(key_value_pairs, "[[", 1)
+      values <- sapply(key_value_pairs, "[[", 2)
+      
+      # If the provided key exists, return the corresponding value.
+      # If the key doesn't exist, return NA.
+      if (key %in% keys) {
+        return(values[keys == key])
+      } else {
+        return(NA)
+      }
+    })
+    
+    # Add the values as a new column in the data frame.
+    data[[key]] <- unlist(values)
+  }
+  
+  # Return the updated data frame.
+  return(data)
+}
+
+
+print_simple_database <- function(data,
+                                  remove_cols = c(
+                                    'Info',
+                                    'Ensembl_transcript_id',
+                                    'Alias',
+                                    'HGNC_symbol',
+                                    'Ensembl_transcript_id',
+                                    'RefSeq_mRNA_id'
+                                  )) {
+  
+  # Function Description:
+  # This function prints a simplified version of the database, 
+  # removing specified columns for clarity.
+  # By default, the function removes 'Info', 'Ensembl_transcript_id', and 'Alias' columns.
+  
+  # Check if all the columns specified exist in the data frame.
+  if (!all(remove_cols %in% colnames(data))) {
+    stop("Some columns specified for removal do not exist in the data frame.")
+  }
+  
+  # Remove the specified columns from the data frame.
+  data <- data[ , !(colnames(data) %in% remove_cols)]
+  
+  return(data)
+}
+
+
+pairwise_gene_overlap <- function(df, gene_col, label_col) {
+  # Split the data frame into a list of gene vectors for each label
+  gene_lists <- split(df[[gene_col]], df[[label_col]])
+  
+  # Get the names of all labels
+  labels <- names(gene_lists)
+  
+  # Initialize a matrix to store the overlap counts
+  overlap_matrix <- matrix(nrow = length(labels), ncol = length(labels))
+  rownames(overlap_matrix) <- labels
+  colnames(overlap_matrix) <- labels
+  
+  # Calculate the overlap for each pair of labels
+  for (i in seq_along(gene_lists)) {
+    for (j in seq_along(gene_lists)) {
+      overlap_matrix[i, j] <- length(intersect(gene_lists[[i]], gene_lists[[j]]))
+    }
+  }
+  
+  return(overlap_matrix)
+}

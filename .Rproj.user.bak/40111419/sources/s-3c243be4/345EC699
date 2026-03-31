@@ -1,0 +1,27 @@
+{
+    "id": "345EC699",
+    "path": "~/projects/ifpan-michkor-gr/preprocessing/overlapping-gr-genes/test-creation-secondary-gene-lists.R",
+    "project_path": "preprocessing/overlapping-gr-genes/test-creation-secondary-gene-lists.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": true,
+    "created": 1712749287289.0,
+    "source_on_save": false,
+    "relative_order": 6,
+    "properties": {
+        "tempName": "Untitled5",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "32,0",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1713528180,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1713530311379,
+    "read_only": false,
+    "read_only_alternatives": []
+}

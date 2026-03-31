@@ -1,0 +1,41 @@
+papers_data_preprocessing %>%
+  # drop_na(log2ratio) %>%
+  # filter(log2ratio != "NA") %>%
+  # filter(!(treatment %in% treatment_to_remove)) %>%
+  refine_gene_lists(data = .,
+                    columns = c("source", "tissue", "cell", "dose", "treatment", "treatment_type", "regulation", "comparison", "environment"),
+                    cumsum_thresholds = cumsum_thresholds,
+                    freq_thresholds = freq_thresholds,
+                    
+                    keep_column =  c("simple_tissue", "method")) -> refine_gene_list_with_log2ratio
+
+refine_gene_list_with_log2ratio$refine_gene_lists$metadata %>% 
+  # filter(simple_tissue %in% c("brain", "lung", "blood")) %>% 
+  select(c(simple_tissue, tissue, cell, treatment, gene_count, environment, regulation)) %>% arrange(simple_tissue) %>% 
+  # filter(simple_tissue == "brain") %>% 
+  mutate(tissue_cell = case_when(
+    simple_tissue == "lung" & (cell == "NA" | is.na(cell)) ~ "lung",
+    simple_tissue == "lung" & grepl("ASM", cell, ignore.case = TRUE) ~ "lung-AirwaySmoothMuscle",
+    simple_tissue == "lung" & grepl("A549|BEAS-2B|pHBECs|H1944|H1975|H2122|H460", cell, ignore.case = TRUE) ~ "lung-epithelial",
+    simple_tissue == "blood" & grepl("THP-1|macrophages|mBMDM|hMDM", cell, ignore.case = TRUE) ~ "blood-macrophages",
+    simple_tissue == "blood" & grepl("Tcell|NKcell|Monocyte|Bcell|REH-overexpression-GCR|NALM6", cell, ignore.case = TRUE) ~ "blood-noMacrophages",
+    simple_tissue == "blood" & (cell == "NA" | is.na(cell)) ~ "blood",
+    tissue == "prefrontal-cortex" ~ "brain-cortex",
+    tissue == "ARC" ~ "brain-hypothalamus",
+    tissue == "hippocampus" ~ "brain-hippocampus",
+    tissue == "hippocampla-slices" ~ "brain-hippocampus",
+    tissue == "hippocampal-progenitor-cell-line" ~ "brain-hippocampus",
+    tissue == "hippocampal-slices" ~ "brain-hippocampus",
+    tissue == "cells-derived-from-human-fetal-brain-tissue" ~ "brain-hippocampus",
+    tissue == "cortex" ~ "brain-cortex",
+    tissue == "neuronal-pc12-cells" ~ "brain-neurons",
+    tissue == "hypothalamus" ~ "brain-hypothalamus",
+    grepl("neurones|neurons|neuron", cell, ignore.case = TRUE) ~ "brain-neurons", 
+    grepl("mglia|astrocytes|astrocyte|oligodendrocytes|OPC", cell, ignore.case = TRUE) ~ "brain-glia",
+    TRUE ~ simple_tissue
+  )) %>% 
+  filter(regulation == "up") %>% 
+  filter(gene_count > 50) %>% .$tissue_cell %>% table %>% barplot()
+  
+
+tissue_master_lists %>% names

@@ -1,0 +1,66 @@
+tissue_master_lists %>% names() %>% grepl("_50_",. )
+
+
+tissue_master_lists[tissue_master_lists %>% names() %>% grepl("up_50_fdr",. )] -> tmp
+tissue_master_lists[tissue_master_lists %>% names() %>% grepl("up_50_fdr",. )] %>% 
+  lapply(., function(x){x$metadata}) %>% 
+  bind_rows(.id = "tissue") %>% select(label) %>% unique() -> tmp_fdr_up
+
+tissue_master_lists[tissue_master_lists %>% names() %>% grepl("up_50_log2ratio",. )] %>% 
+  lapply(., function(x){x$metadata}) %>% 
+  bind_rows(.id = "tissue") %>% select(label) %>% unique() -> tmp_log2ratio_up
+
+intersect(tmp_fdr_up, tmp_log2ratio_up) %>% nrow
+
+tissue_master_lists[tissue_master_lists %>% names() %>% grepl("down_50_fdr",. )] %>% 
+  lapply(., function(x){x$metadata}) %>% 
+  bind_rows(.id = "tissue") %>% select(label) %>% unique() -> tmp_fdr_down
+
+tissue_master_lists[tissue_master_lists %>% names() %>% grepl("down_50_log2ratio",. )] %>% 
+  lapply(., function(x){x$metadata}) %>% 
+  bind_rows(.id = "tissue") %>% select(label) %>% unique() -> tmp_log2ratio_down
+
+intersect(tmp_fdr_down, tmp_log2ratio_down) %>% nrow
+
+
+
+results_enrichment_master_genes$master_up50_norm %>% 
+  filter(enrichr_database == "MGI_Mammalian_Phenotype_Level_4_2021") %>%
+  plotEnrich(., showTerms = 40, numChar = 50, y = "Count", orderBy = "Adjusted.P.value", title = "", x = "") +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14),
+    axis.title = element_text(size = 14)
+  ) -> up_plot
+
+results_enrichment_master_genes$master_down50_norm %>% 
+  filter(enrichr_database == "MGI_Mammalian_Phenotype_Level_4_2021") %>% 
+  plotEnrich(., showTerms = 40, numChar = 50, y = "Count", x = "", orderBy = "Adjusted.P.value", title = "") +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(size = 14),
+    axis.text.y = element_text(size = 14),
+    axis.title = element_text(size = 14)
+  ) -> down_plot
+
+up_plot + down_plot
+
+
+results_enrichment_master_genes$ %>% 
+  filter(enrichr_database == "MGI_Mammalian_Phenotype_Level_4_2021") 
+
+regulation_master_lists
+
+lapply(regulation_master_lists, function(x){
+  perform_enrichment_analysis(gene_list = x$hgnc_symbol, "MGI_Mammalian_Phenotype_Level_4_2021", fdr_threshold, overlap_threshold)
+}) -> tmp_enrichment_analysis_results
+
+tmp_enrichment_analysis_results %>% bind_rows(.id = "label") %>% 
+  separate(label, into = c("regulation", "metric", "size")) %>% 
+  select(-size) %>% 
+  write_tsv_xlsx(tsv_file = "results/google-drive/enrichr/master-lists-3metric-MGI-mammalian-phenotype-fdr0.05-overlap3.tsv")
+
+names(tmp_enrichment_analysis_results) <- names(regulation_master_lists)
+
+tmp_enrichment_analysis_results %>% lapply(., nrow)

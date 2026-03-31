@@ -1,0 +1,23 @@
+papers_data_preprocessing %>% 
+  drop_na(log2ratio) %>%
+  filter(regulation == "up") %>%
+  refine_gene_lists(data = .,
+                    columns = c("source", "tissue", "cell", "dose", "treatment", "treatment_type", "regulation", "comparison", "environment"),
+                    cumsum_thresholds = cumsum_thresholds,
+                    freq_thresholds = freq_thresholds,
+                    keep_column =  c("simple_tissue", "method")) 
+  
+  
+papers_data_preprocessing %>% 
+  # drop_na(log2ratio) %>%
+  filter(regulation == "up") %>%
+  refine_gene_lists(data = .,
+                    columns = c("source"),
+                    cumsum_thresholds = cumsum_thresholds,
+                    freq_thresholds = freq_thresholds,
+                    keep_column =  c("simple_tissue")) -> tmp
+
+tmp$master_gene_lists$master_cumsum_0.995 %>% cat(sep = "\n")
+
+
+tmp$refine_gene_lists$metadata %>% .$source %>% unique %>% length()

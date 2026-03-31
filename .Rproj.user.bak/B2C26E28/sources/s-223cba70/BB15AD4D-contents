@@ -1,0 +1,190 @@
+# ##############################################################################
+# ---- prepare data ----
+# ##############################################################################
+factors_rsidGenes_P1e4tss100kb <- read.table(file = "data/factors-pmid38965376/factorID-pmid38965376-rsidP1e4-proteinCodingv110-tss100kb.tsv", 
+                                             sep = "\t", 
+                                             header = TRUE) 
+
+
+lite_grSignatures
+hgnc_symbols_vector_v110
+
+
+factors_rsidGenes_P1e4tss100kb %>% 
+  group_by(factor_id, gene_symbol) %>% 
+  slice_min(order_by = pvalue, with_ties = FALSE) %>% 
+  ungroup-> factors_rsidGenes_P1e4tss100kb_minP
+
+
+# ##############################################################################
+# ---- functions ----
+# ##############################################################################
+generate_and_permute_topn_factors_v2 <- function(
+    gene_df,
+    genes_vector,
+    factor_data,             # zawiera kolumnę: signature_name, gene_symbol, pvalue
+    n_randomization = 10,
+    top_n = 500,
+    seed = NULL
+) {
+  if (!is.null(seed)) {
+    set.seed(seed)
+    seeds_vector <- sample(1:1e6, size = n_randomization, replace = FALSE)
+  } else {
+    seeds_vector <- rep(NA, n_randomization)
+  }
+  
+  original_association <- factor_data %>%
+    inner_join(gene_df, by = "gene_symbol") %>%
+    select(signature_name, gene_symbol, everything()) %>%
+    arrange(pvalue) %>%
+    split(.$signature_name) %>%
+    lapply(function(df) {
+      df %>% head(top_n) %>% mutate(rank = paste0("rank", row_number()))
+      
+    })
+  
+  print(head(original_association))
+  
+  gene_df_list <- set_names(vector("list", n_randomization), paste0("random", seq_len(n_randomization)))
+  association_list <- set_names(vector("list", n_randomization), paste0("random", seq_len(n_randomization)))
+  
+  pb <- txtProgressBar(min = 0, max = n_randomization, style = 3)
+  
+  for (i in seq_len(n_randomization)) {
+    seed_i <- seeds_vector[i]
+    if (!is.na(seed_i)) set.seed(seed_i)
+    
+    random_genes_df <- generate_random_gene_df(
+      gene_df = gene_df,
+      genes_vector = genes_vector,
+      seed = seed_i
+    )
+    
+    assoc <- factor_data %>%
+      inner_join(random_genes_df, by = "gene_symbol") %>%
+      select(signature_name, gene_symbol, everything()) %>%
+      arrange(pvalue) %>%
+      split(.$signature_name) %>%
+      lapply(function(df) {
+        df <- df %>% head(top_n)
+        if (nrow(df) > 0) df %>% mutate(rank = paste0("rank", seq_len(dplyr::n())))
+        else NULL
+      }) %>%
+      purrr::compact()
+    
+    gene_df_list[[i]] <- random_genes_df
+    association_list[[i]] <- assoc
+    setTxtProgressBar(pb, i)
+  }
+  close(pb)
+  
+  pvalues_by_signature <- purrr::map(
+    names(original_association),
+    function(sig_name) {
+      purrr::map(association_list, ~ .x[[sig_name]]) %>%
+        purrr::keep(~ !is.null(.) && nrow(.) == top_n) %>%
+        purrr::map(~ .$pvalue) %>%
+        set_names(paste0("random", seq_along(.))) %>%
+        as.data.frame() %>%
+        mutate(rank = paste0("rank", seq_len(top_n))) %>%
+        column_to_rownames(var = "rank")
+    }
+  ) %>% set_names(names(original_association))
+  
+  summary_pvalues_by_sig <- purrr::map(
+    pvalues_by_signature,
+    ~ {
+      stats <- apply(.x, 1, function(v) {
+        c(
+          min = min(v, na.rm = TRUE),
+          q1 = quantile(v, 0.25, na.rm = TRUE),
+          median = median(v, na.rm = TRUE),
+          mean = mean(v, na.rm = TRUE),
+          q3 = quantile(v, 0.75, na.rm = TRUE),
+          max = max(v, na.rm = TRUE),
+          p5 = quantile(v, 0.05, na.rm = TRUE),
+          p10 = quantile(v, 0.10, na.rm = TRUE),
+          p20 = quantile(v, 0.20, na.rm = TRUE),
+          p30 = quantile(v, 0.30, na.rm = TRUE),
+          p40 = quantile(v, 0.40, na.rm = TRUE),
+          p60 = quantile(v, 0.60, na.rm = TRUE),
+          p80 = quantile(v, 0.80, na.rm = TRUE),
+          p90 = quantile(v, 0.90, na.rm = TRUE)
+        )
+      }) %>%
+        t() %>%
+        as.data.frame() %>%
+        tibble::rownames_to_column("rank")
+      
+      colnames(stats) <- c(
+        "rank", "min_pvalue", "q1_pvalue", "median_pvalue", "mean_pvalue", "q3_pvalue", "max_pvalue",
+        "p5_pvalue", "p10_pvalue", "p20_pvalue", "p30_pvalue", "p40_pvalue", "p60_pvalue", "p80_pvalue", "p90_pvalue"
+      )
+      
+      stats
+    }
+  )
+  
+  original_association <- purrr::imap(
+    original_association,
+    ~ .x %>% left_join(summary_pvalues_by_sig[[.y]], by = "rank")
+  )
+  
+  list(
+    original_association     = original_association,
+    gene_df_list             = gene_df_list,
+    association_list         = association_list,
+    pvalues_by_signature     = pvalues_by_signature,
+    summary_pvalues_by_sig   = summary_pvalues_by_sig
+  )
+}
+
+
+# ##############################################################################
+# ---- analysis ----
+# ##############################################################################
+generate_and_permute_topn_factors_v2(
+  gene_df         = lite_grSignatures,             # taka sama ramka genów jak wcześniej
+  genes_vector    = hgnc_symbols_vector_v110,       # pełna lista symboli genów HGNC
+  factor_data     = factors_rsidGenes_P1e4tss100kb_minP, # Twoje dane z czynnikami
+  n_randomization = 100,
+  top_n           = 200,
+  seed            = 1                            # opcjonalnie
+) -> grSignature_factor_associations_FDRMonteCarlo
+
+
+grSignature_factor_associations_FDRMonteCarlo$original_association[
+  c("metasignature_up", "metasignature_down", "brain_up", "brain_down")
+] <- grSignature_factor_associations_FDRMonteCarlo$original_association[
+  c("metasignature_up", "metasignature_down", "brain_up", "brain_down")
+] %>%
+  map(~ .x %>%
+        as.data.frame() %>%
+        mutate(
+          fdr = case_when(
+            p5_pvalue      > pvalue ~ "< 0.05",
+            p10_pvalue     > pvalue ~ "< 0.1",
+            p20_pvalue     > pvalue ~ "< 0.2",
+            p30_pvalue     > pvalue ~ "< 0.3",
+            p40_pvalue     > pvalue ~ "< 0.4",
+            median_pvalue  > pvalue ~ "< 0.5",
+            p60_pvalue     > pvalue ~ "< 0.6",
+            p80_pvalue     > pvalue ~ "< 0.8",
+            p90_pvalue     > pvalue ~ "< 0.9",
+            TRUE                      ~ "<= 1"
+          )
+        ))
+
+
+
+grSignature_factor_associations_FDRMonteCarlo$original_association$brain_down %>% 
+  filter(fdr %in% c("< 0.05", "< 0.1","< 0.2")) %>% .$gene_symbol %>% unique %>% length()
+# ##############################################################################
+# ---- save to xlsx ----
+# ##############################################################################
+
+save_gr_signature_associations_to_xlsx(
+  data_list = grSignature_factor_associations_FDRMonteCarlo$original_association,
+  output_file = "data/factors-pmid38965376/grSignaturesLite_factorsAssocitionP1e4_withRandomFDRtop200random100-07.07.2025.xlsx"
+)

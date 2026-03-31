@@ -1,0 +1,83 @@
+papers_gene_list %>% 
+  unname() %>%  unlist %>% table %>% as.data.frame() %>% 
+  set_colnames(c("gene_name", "n")) %>% 
+  filter(n > 12) -> tmp
+
+
+# Przykładowa lista wektorów genów
+lista_genow <- list(
+  c("genA", "genB", "genC"),
+  c("genA", "genD"),
+  c("genB", "genE"),
+  c("genA", "genB", "genE")
+)
+
+# Funkcja do obliczania P(A)
+p_a <- function(gen, lista) {
+  sum(sapply(lista, function(x) gen %in% x)) / length(lista)
+}
+
+# Funkcja do obliczania P(A ∩ B)
+p_a_and_b <- function(genA, genB, lista) {
+  sum(sapply(lista, function(x) all(c(genA, genB) %in% x))) / length(lista)
+}
+
+# Funkcja do obliczania P(B|A)
+p_b_given_a <- function(genA, genB, lista) {
+  p_a_and_b(genA, genB, lista) / p_a(genA, lista)
+}
+
+# Przykład użycia
+genA <- "DUSP1"
+genB <- "SGK1"
+
+# Obliczanie prawdopodobieństwa P(B|A)
+p_b_given_a_result <- p_b_given_a(genA, genB, papers_gene_list)
+print(paste("P(B|A) =", p_b_given_a_result))
+
+
+
+
+Copy code
+# Przykładowa lista wektorów genów
+lista_genow <- list(
+  c("genA", "genB", "genC"),
+  c("genA", "genD"),
+  c("genB", "genE"),
+  c("genA", "genB", "genE"),
+  c("genF", "genG"),
+  c("genA", "genF", "genH")
+)
+
+# Funkcje pomocnicze, takie jak wcześniej
+p_a <- function(gen, lista) {
+  sum(sapply(lista, function(x) gen %in% x)) / length(lista)
+}
+
+p_a_and_b <- function(genA, genB, lista) {
+  sum(sapply(lista, function(x) all(c(genA, genB) %in% x))) / length(lista)
+}
+
+p_b_given_a <- function(genA, genB, lista) {
+  p_a_and_b_val <- p_a_and_b(genA, genB, lista)
+  p_a_val <- p_a(genA, lista)
+  if (p_a_val > 0) {
+    return(p_a_and_b_val / p_a_val)
+  } else {
+    return(NA) # Zwraca NA, jeśli genA nie występuje w żadnym wektorze
+  }
+}
+
+# Zbieranie unikalnych genów z listy
+wszystkie_geny <- unique(unlist(lista_genow))
+
+# Obliczanie prawdopodobieństwa warunkowego dla każdej pary genów
+wyniki <- expand.grid(genA = wszystkie_geny, genB = wszystkie_geny)
+wyniki$p_b_given_a <- mapply(p_b_given_a, wyniki$genA, wyniki$genB, MoreArgs = list(lista = lista_genow))
+
+# Usuwanie wyników dla tych samych genów
+wyniki <- wyniki[wyniki$genA != wyniki$genB, ]
+
+# Wyświetlanie wyników
+print(wyniki)
+

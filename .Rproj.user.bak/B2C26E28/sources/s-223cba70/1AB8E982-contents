@@ -1,0 +1,65 @@
+top50_tissue_data %>% 
+  # head %>% 
+  ungroup %>% 
+  select(log2ratio, hgnc_symbol, simple_tissue, label_regulation) %>%
+  filter(hgnc_symbol %in% c("FKBP5", "PER1", "TSC22D3", "PDK4"))
+
+
+top50_tissue_data %>%
+  ungroup() %>%
+  select(log2ratio, hgnc_symbol, simple_tissue, label_regulation) %>%
+  filter(hgnc_symbol %in% c("FKBP5", "PER1", "TSC22D3", "PDK4")) %>%
+  pivot_wider(
+    names_from = hgnc_symbol,
+    values_from = log2ratio
+  )
+
+
+gene_list_log2ratio_top_50 %>% 
+  select(-data) %>% unnest() %>%
+  group_by(label_regulation)
+
+
+gene_list_log2ratio_top_50 %>%
+  select(-data) %>%
+  unnest() %>%
+  group_by(label_regulation) %>%
+  slice_max(order_by = abs(log2ratio), n = 3) %>%
+  ungroup() %>% 
+  select(label_regulation, source, regulation, simple_tissue, treatment, dose, time, hgnc_symbol, log2ratio) %>% 
+  arrange(simple_tissue) %>% 
+  select(-log2ratio)
+
+
+
+
+gene_list_log2ratio_top_50 %>%
+  select(-data) %>%
+  unnest() %>%
+  group_by(label_regulation) %>%
+  slice_max(order_by = abs(log2ratio), n = 3) %>%
+  ungroup() %>%
+  select(label_regulation, source, regulation, simple_tissue, treatment, dose, time, hgnc_symbol, log2ratio) %>%
+  select(-log2ratio) %>%
+  group_by(label_regulation, source, regulation, simple_tissue, treatment, dose, time) %>%
+  summarise(hgnc_symbol = str_c(hgnc_symbol, collapse = ", "), .groups = "drop") %>%
+  rename(hgnc_symbol = "top3") %>% 
+  arrange(regulation, simple_tissue) %>% 
+  select(-label_regulation) %>% 
+  # filter(simple_tissue == "liver")
+  write.table("results/figures/harmonized-tissue-gene-lists/summary-gene-lists-top50/table/top3genes-per-list.csv", sep = ";", quote = F, row.names = F, col.names = T)
+
+top50_tissue_data %>% 
+  ungroup %>% 
+  filter(simple_tissue %in% c("lung", "blood", "brain")) %>% 
+  select(!c(label_figure, n_records_down2, n_records_up2, n_genes_up2, 
+            n_genes_down2, n_lists2,n_expreriments2, n_records_down1, 
+            n_records_up1, n_genes_down1, n_genes_up1, n_records,
+            n_lists1, n_expreriments1, n_records_down, n_records_up, 
+            n_genes_down, n_genes_up, n_lists, n_expreriments, rank_score, 
+            n_list, n_genes_tissue, n_genes)) %>% 
+  head
+  
+  
+  
+  

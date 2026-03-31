@@ -1,0 +1,11 @@
+create_ranked_master_list(papers_data_preprocessing, 
+                          treatment_to_remove = treatment_to_remove, 
+                          cumsum_thresholds, 
+                          freq_thresholds = 10, regulation = "up", simple_tissue = "brain")
+
+c("pmid:34362910_hippocampus_NA_NA_force-swimming_stress_induction_up_FS30_vs_BLAM_in-vivo")
+
+papers_data_preprocessing %>% 
+  filter(source == "pmid:34362910") %>% 
+  filter(!(source %in% c( "FS30_vs_BLAM", "FS120_vs_BLAM", "FS360_vs_BLAM", "FS180_vs_BLAM")))
+  select(comparison) %>% unique

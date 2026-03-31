@@ -1,0 +1,30 @@
+
+papers_data_preprocessing %>% 
+  mutate(label2 = paste0(label, "_", regulation)) %>% 
+  select(label2, gene_list_number, hgnc_symbol) %>% unique() %>%
+  filter(label2 != "pmid:28116096_NA_NA_NA") %>%
+  mutate(gene_list_number = as.numeric(gene_list_number)) %>% 
+  group_by(label2) %>%
+  summarise(count_hgnc_symbols = n_distinct(hgnc_symbol)) %>%
+  as.data.frame() %>% 
+  ungroup() %>% filter(count_hgnc_symbols >= 50) %>% .$count_hgnc_symbols %>% mean
+  
+
+papers_data_preprocessing %>% 
+  # filter(!(treatment %in% c("TNF", "LPS", "vehicle-ethanol", "TNFalpha"))) %>%
+  filter(!(comparison %in% c( "FS30_vs_BLAM", "FS120_vs_BLAM", "FS360_vs_BLAM", "FS180_vs_BLAM"))) %>%
+  # filter(dose != "0mg/kg") %>%
+  filter(source != "marpiech_tissues") %>% 
+  extract_keys_values(., "info", keys = "method") %>% 
+  mutate(simple_tissue = ifelse(source == "michkor-cells", "brain", simple_tissue)) %>% 
+  mutate(regulation = ifelse(regulation == "dwon", "down", regulation)) %>% 
+  mutate(regulation = ifelse(source == "pmid:23303060" & log2ratio > 0, "up", 
+                             ifelse(source == "pmid:23303060" & log2ratio <= 0, "down", regulation))) %>% 
+  filter(!(source == "michkor-cells" & hgnc_symbol == "ARHGAP8")) %>% 
+  filter(!(source %in% c("marpiech_tissues_dex"))) -> papers_data_preprocessing
+
+options(digits = 20)  # Zwiększa liczbę wyświetlanych cyfr znaczących
+papers_data_preprocessing %>% 
+  mutate(fdr = as.numeric(fdr)) %>%
+  select(fdr) %>%
+  summary()

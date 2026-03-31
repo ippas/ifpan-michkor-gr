@@ -1,0 +1,60 @@
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("GEOquery")
+require(GEOquery)
+
+gse <- getGEO("GSE159546", GSEMatrix = TRUE)
+
+class(gse)
+
+length(gse)
+
+names(gse)
+
+eData <- gse[[2]]
+
+eData
+
+names(pData(eData))
+
+eList2 <- getGEOSuppFiles("GSE159546")
+eList2
+
+
+eList2 <- getGEOSuppFiles("GSE11675")
+eList2
+
+tarArchive <- rownames(eList2)[1]
+tarArchive
+
+
+my_id <- "GSE33126"
+gse <- getGEO(my_id)
+
+length(gse)
+
+gse <- getGEO("GSE159546", GSEMatrix = TRUE)
+
+gse <- gse[[2]]
+gse
+
+# pData(gse) ## print the sample information
+# fData(gse) ## print the gene annotation
+exprs(gse) ## print the expression data
+
+gsm_ids <- colnames(exprs(gse))
+
+
+
+gsm_data_list <- lapply(gsm_ids, function(id) {
+  tryCatch({
+    getGEO(id, GSEMatrix = TRUE)
+  }, error = function(e) {
+    NULL  # or handle the error appropriately
+  })
+})
+
+
+lapply(gsm_data_list, Table)
+
+lapply(gsm_data_list, function(x) Meta(x)$supplementary_file)

@@ -1,0 +1,126 @@
+refine_gene_lists(data = filter(papers_data_preprocessing, regulation == "up", simple_tissue == "brain"),
+                  columns = c(
+                    "source",
+                    "tissue",
+                    "cell",
+                    "dose",
+                    "treatment",
+                    "treatment_type",
+                    "regulation",
+                    "comparison",
+                    "environment"
+                  ),
+                  cumsum_thresholds = cumsum_thresholds,
+                  freq_thresholds = freq_thresholds) -> set_data$gr_source_up_brain
+
+refine_gene_lists(data = filter(papers_data_preprocessing, regulation == "up", simple_tissue == "lung"),
+                  columns = c(
+                    "source",
+                    "tissue",
+                    "cell",
+                    "dose",
+                    "treatment",
+                    "treatment_type",
+                    "regulation",
+                    "comparison",
+                    "environment"
+                  ),
+                  cumsum_thresholds = cumsum_thresholds,
+                  freq_thresholds = freq_thresholds) -> set_data$gr_source_up_lung
+
+refine_gene_lists(data = filter(papers_data_preprocessing, regulation == "up", simple_tissue == "kidney"),
+                  columns = c(
+                    "source",
+                    "tissue",
+                    "cell",
+                    "dose",
+                    "treatment",
+                    "treatment_type",
+                    "regulation",
+                    "comparison",
+                    "environment"
+                  ),
+                  cumsum_thresholds = cumsum_thresholds,
+                  freq_thresholds = freq_thresholds) -> set_data$gr_source_up_kidney
+
+refine_gene_lists(data = filter(papers_data_preprocessing, regulation == "up", simple_tissue == "blood"),
+                  columns = c(
+                    "source",
+                    "tissue",
+                    "cell",
+                    "dose",
+                    "treatment",
+                    "treatment_type",
+                    "regulation",
+                    "comparison",
+                    "environment"
+                  ),
+                  cumsum_thresholds = cumsum_thresholds,
+                  freq_thresholds = freq_thresholds) -> set_data$gr_source_up_blood
+
+
+refine_gene_lists(data = filter(papers_data_preprocessing, regulation == "up", simple_tissue == "bone"),
+                  columns = c(
+                    "source",
+                    "tissue",
+                    "cell",
+                    "dose",
+                    "treatment",
+                    "treatment_type",
+                    "regulation",
+                    "comparison",
+                    "environment"
+                  ),
+                  cumsum_thresholds = cumsum_thresholds,
+                  freq_thresholds = freq_thresholds) -> set_data$gr_source_up_bone
+
+
+
+
+set_data$gr_source_up_brain$master_gene_lists$master_cumsum_0.99
+
+set_data$gr_source_up_lung$master_gene_lists$master_cumsum_0.99
+
+set_data$gr_source_up_kidney$master_gene_lists$master_cumsum_0.99
+
+set_data$gr_source_up_bone$master_gene_lists$master_cumsum_0.99
+
+set_data$gr_source_up_blood$master_gene_lists$master_cumsum_0.99
+
+
+list(brain = set_data$gr_source_up_brain$master_gene_lists$master_cumsum_0.99,
+     lung = set_data$gr_source_up_lung$master_gene_lists$master_cumsum_0.99,
+     kidney = set_data$gr_source_up_kidney$master_gene_lists$master_cumsum_0.99,
+     bone = set_data$gr_source_up_bone$master_gene_lists$master_cumsum_0.99,
+     blood = set_data$gr_source_up_blood$master_gene_lists$master_cumsum_0.99
+) %>% jaccard_matrix()
+
+
+jaccard_index(
+  set_data$gr_source_up_blood$master_gene_lists$master_cumsum_0.99,
+  tissue_master_df %>% 
+    filter(regulation == "up",
+           size_list == 50,
+           rank_criterion == "log2ratio",
+           tissue == "blood") %>% .$hgnc_symbol)
+
+
+c(tissue_master_df %>% 
+    filter(regulation == "up",
+           size_list == 50,
+           rank_criterion == "log2ratio",
+           tissue == "blood") %>% .$hgnc_symbol,
+  tissue_master_df %>% 
+    filter(regulation == "up",
+           size_list == 50,
+           rank_criterion == "log2ratio",
+           tissue == "lung") %>% .$hgnc_symbol) %>% unique %>% length()
+
+set_data$gr_source_up_brain$master_gene_lists$master_cumsum_0.99
+
+
+tissue_master_df %>% 
+  filter(regulation == "up",
+         size_list == 50,
+         rank_criterion == "fdr")  %>% 
+  filter(n_lists_filt > 3) %>% .$tissue %>% unique()

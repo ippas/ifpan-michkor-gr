@@ -1,0 +1,63 @@
+# ##############################################################################
+# ---- brain_up examples of qqplot ----
+# ##############################################################################
+
+qqplot_genebass_by_phenocode(
+  genebass_data = genebass_mentalHealth_skat,
+  phenocode = "20518",
+  pvalue_column = "pvalue",
+  highlight_genes = lite_grSignatures %>% filter(signature_name == "brain_up") %>% .$gene_symbol,
+  highlight_color = "blue",
+  label_box_padding = 2,
+  label_point_padding = 0.8,
+  title_text_size = 16,
+  subtitle_text_size = 13,
+  axis_title_size = 14,
+  axis_text_size = 12,
+  label_text_size = 4,
+  label_strategy = "lowest_p",
+  label_fields = c("gene_symbol", "beta", "pvalue", "annotation")
+)
+
+genebass_mentalHealth_skat %>% 
+  filter(phenocode == "20518") %>% 
+  .$gene_symbol %>% unique %>% length()
+
+# 20409
+
+qqplot_genebass_by_phenocode(
+  genebass_data = genebass_mentalHealth_skat,
+  phenocode = "20409",
+  pvalue_column = "pvalue",
+  highlight_genes = lite_grSignatures %>% filter(signature_name == "brain_up") %>% .$gene_symbol,
+  highlight_color = "blue",
+  label_box_padding = 2,
+  label_point_padding = 0.8,
+  title_text_size = 16,
+  subtitle_text_size = 13,
+  axis_title_size = 14,
+  axis_text_size = 12,
+  label_text_size = 4,
+  label_strategy = "lowest_p",
+  label_fields = c("gene_symbol", "beta", "pvalue", "annotation")
+)
+
+# 20514
+
+
+qqplot_genebass_by_phenocode(
+  genebass_data = genebass_mentalHealth_skat,
+  phenocode = "20514",
+  pvalue_column = "pvalue",
+  highlight_genes = lite_grSignatures %>% filter(signature_name == "brain_up") %>% .$gene_symbol,
+  highlight_color = "blue",
+  label_box_padding = 2,
+  label_point_padding = 0.8,
+  title_text_size = 16,
+  subtitle_text_size = 13,
+  axis_title_size = 14,
+  axis_text_size = 12,
+  label_text_size = 4,
+  label_strategy = "lowest_p",
+  label_fields = c("gene_symbol", "beta", "pvalue", "annotation")
+)

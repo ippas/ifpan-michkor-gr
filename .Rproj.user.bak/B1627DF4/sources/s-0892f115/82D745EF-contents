@@ -1,0 +1,114 @@
+compare_gene_vectors <- function(list_vectors) {
+  # Initialize an empty list to store the results
+  intersect_results <- list()
+  
+  # Compare each vector to every other vector
+  for (i in 1:(length(list_vectors) - 1)) {
+    for (j in (i + 1):length(list_vectors)) {
+      # Get the names of the vectors being compared
+      name1 <- names(list_vectors)[i]
+      name2 <- names(list_vectors)[j]
+      
+      # Find the intersection of the two vectors
+      common_genes <- intersect(list_vectors[[i]], list_vectors[[j]])
+      
+      # Store the result in the list with a descriptive name
+      intersect_results[[paste(name1, "vs", name2)]] <- common_genes
+    }
+  }
+  
+  return(intersect_results)
+}
+
+
+intersect_genes <- compare_gene_vectors(gr_gene_list)
+
+extract_comparisons_with <- function(intersect_results, target_name) {
+  # Extract elements with names containing the target_name
+  relevant_results <- intersect_results[grep(target_name, names(intersect_results))]
+  return(relevant_results)
+}
+
+extract_comparisons_with <- function(intersect_results, target_names) {
+  if (length(target_names) != 2) {
+    stop("Please provide exactly two target names.")
+  }
+  
+  # Extract elements with names containing both target names
+  relevant_results <- intersect_results[
+    grepl(target_names[1], names(intersect_results)) & 
+      grepl(target_names[2], names(intersect_results))
+  ]
+  
+  return(relevant_results)
+}
+
+# Using the function
+# target_vector_name <- "marpiech_tissues_dex_16"
+extract_comparisons_with(intersect_genes, "marpiech_tissues_dex_16") %>% .[lengths(.) > 0]
+# print(selected_results)
+
+
+# biobank phenotypes
+selected_phenotypes_mapping <- c(
+  "biobankuk-30280-both_sexes--immature_reticulocyte_fraction-EUR-1e-08.yml" = "Immature reticulocyte fraction",
+  "biobankuk-3064-both_sexes--peak_expiratory_flow_pef_-EUR-1e-08.yml" = "Peak expiratory flow (PEF)",
+  "biobankuk-30870-both_sexes--triglycerides-EUR-1e-08.yml" = "Trciglycerides",
+  "biobankuk-30630-both_sexes--apolipoprotein_a-EUR-1e-08.yml" = "Apolipoprotein A",
+  "biobankuk-20004-both_sexes-1479-operation_code-EUR-1e-08.yml" = "Varicose vein surgery",
+  "biobankuk-sbp-both_sexes--systolic_blood_pressure_automated_reading_adjusted_by_medication-EUR-1e-08.yml" = "Systolic blood pressure",
+  "biobankuk-30620-both_sexes--alanine_aminotransferase-EUR-1e-08.yml" = "Alanine aminotransferase"
+)
+
+
+intersect_genes <- compare_gene_vectors(c(gr_gene_list, filtered_phenotypes))
+
+extract_comparisons_with(intersect_genes, c("marpiech_tissues_dex_18", 
+                                            "biobankuk-30630-both_sexes--apolipoprotein_a-EUR-1e-08.yml")) %>% .[lengths(.) > 0]
+
+
+
+extract_data(results_metabolism,  1:18, 19:ncol(results_metabolism$p_value_matrix)) %>%
+  rename(cluster = Var1, metabolism = Var2) %>% 
+  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
+  arrange(fdr) %>% 
+  filter(fdr < 0.05) %>%
+  # filter(grepl("X-11564", metabolism))
+  filter(overlap_genes == "LRIG1,CPS1")
+  # filter(number_overlap > 0.05) %>% 
+  # filter(cluster == "marpiech_tissues_dex_up") %>% 
+  # filter(metabolism %in% names(metabolism_to_heatmap)) 
+  # mutate(chi2_log = log2(chi2)) %>% 
+  # filter(grepl("SLCO1B1,CPS1", )) 
+  # group_by(overlap_genes) %>% 
+  # nest() %>% 
+  # mutate(data = map(data, ~ .x %>% 
+  #                     arrange(fdr) %>% 
+  #                     slice(1))) %>% 
+  # unnest() %>% 
+  # ungroup %>% 
+  # as.data.frame() 
+
+names(metabolism_to_heatmap)
+
+
+extract_data(results_tissue_metabolism, tissues, setdiff(colnames(results_tissue_metabolism$chi2_value_matrix), tissues)) %>% 
+  rename(tissue = Var1, metabolism = Var2) %>% 
+  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
+  arrange(fdr) %>% 
+  filter(fdr < 0.05) %>% 
+  filter(number_overlap > 1) %>% .$tissue %>%  unique()
+
+metabolism_tissue_to_heatmap
+
+extract_data(results_tissue_metabolism, tissues, setdiff(colnames(results_tissue_metabolism$chi2_value_matrix), tissues)) %>% 
+  rename(tissue = Var1, metabolism = Var2) %>% 
+  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
+  arrange(fdr) %>% 
+  filter(fdr < 0.05) %>% 
+  filter(number_overlap > 1) %>% 
+  select(-chi2) %>% 
+  filter(grepl("X-11381", metabolism)) 
+  filter(tissue == "pituitary-gland") %>% 
+  filter(grepl("Pheny", metabolism))
+

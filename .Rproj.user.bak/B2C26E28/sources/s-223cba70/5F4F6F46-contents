@@ -1,0 +1,41 @@
+plot_data %>% 
+  unnest(data) %>% 
+  group_by(regulation, simple_tissue, hgnc_symbol) %>% 
+  nest() %>% 
+  mutate(sum_rs = map(data, ~ .x$rank_score %>% sum)) %>% 
+  unnest(sum_rs) %>% 
+  group_by(regulation, simple_tissue) %>% 
+  nest() %>% 
+  mutate(top_50_rs = map(data, ~ .x %>% arrange(desc(sum_rs)) %>% head(50))) %>% 
+  select(-data) %>% 
+  unnest(top_50_rs) -> top50_genes_sum_rs
+
+
+top50_genes_sum_rs %>% 
+  select(hgnc_symbol, regulation) %>% 
+  unique %>% 
+  group_by(hgnc_symbol) %>% 
+  nest() %>% 
+  mutate(n_regulation = map(data, ~length(unique(.x$regulation)))) %>% 
+  unnest() %>% 
+  unique() %>% 
+  mutate(group = ifelse(n_regulation == 2, "up_down", regulation)) %>% 
+  select(hgnc_symbol, group) %>% 
+  unique %>% 
+  .$group %>% 
+  table
+
+
+top50_genes_sum_rs%>% 
+  select(-data) %>% 
+  .$hgnc_symbol %>% 
+  table %>% 
+  as.data.frame() %>% 
+  set_colnames(c("hgnc_symbol", "freq")) %>% 
+  arrange(desc(freq))  %>% head(20)
+
+
+
+
+
+

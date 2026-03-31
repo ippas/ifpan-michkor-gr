@@ -1,0 +1,43 @@
+slezak_gene_signatures_preprocessing %>% 
+  filter(signature_name == "michkor_indicate_T.S1_Cx43DGE_n67") %>% 
+  .$rsID %>% unique() %>% length()
+
+slezak_gene_signatures_preprocessing %>% 
+  filter(signature_name == "michkor_indicate_T.S1_Cx43DGE_n67") %>% 
+  .$gene_symbol %>% unique %>% length()
+
+slezak_gene_signatures_preprocessing %>% 
+  filter(signature_name == "michkor_indicate_T.S1_Cx43DGE_n67") %>% 
+  group_by(gene_symbol) %>% 
+  nest() %>% 
+  mutate(n_rsID = map(data, ~nrow(.x))) %>% 
+  unnest(n_rsID) %>% 
+  .$n_rsID %>% mean
+
+slezak_gene_signatures_preprocessing %>% 
+  filter(signature_name == "michkor_indicate_T.S1_Cx43DGE_n67") %>% 
+  group_by(rsID) %>% 
+  nest() %>% 
+  mutate(n_genes = map(data, ~nrow(.x))) %>% 
+  unnest(n_genes) %>% 
+  filter(n_genes > 1) %>% 
+  unnest(data) %>% 
+  .$gene_symbol %>% unique()
+
+
+slezak_gene_signatures_preprocessing %>% 
+  filter(signature_name == "michkor_indicate_T.S1_Cx43DGE_n67") %>% 
+  filter(pvalue < 0.0000001) %>% select(-c(signature_name, signature_derivation, range_plus_minus))
+  group_by(gene_symbol) %>% 
+  nest() %>% 
+  mutate(n_rsID = map(data, ~nrow(.x))) %>% 
+  unnest(n_rsID) 
+  
+slezak_gene_signatures_preprocessing %>% 
+  filter(signature_name == "michkor_indicate_T.S1_Cx43DGE_n67") %>% 
+  filter(pvalue < 0.0001) %>%
+  group_by(gene_symbol) %>% 
+  slice_min(pvalue, with_ties = FALSE) %>%
+  ungroup() %>% 
+  nest(data = everything()) %>% unnest(data) %>% 
+  arrange(pvalue)

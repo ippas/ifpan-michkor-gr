@@ -1,0 +1,40 @@
+liver_intestine_36699046 %>% 
+  left_join(., {result_with_hgnc %>%select(-gene_name)}, by = c("ensembl_id" = "ensembl_gene_id")) %>% 
+  select(-article_source) %>% 
+  mutate(pmid = paste0("pmid:", pmid)) %>% 
+  rename(pmid = "source") %>% 
+  rename(ensembl_id = "ensembl_gene_id") %>%  
+  mutate(index = "corrected") %>% 
+  mutate(gene_list_index = "corrected") %>% 
+  mutate(gene_list_number = "corrected") %>% 
+  mutate(comparison = NA) %>% 
+  mutate(info = paste("log2ratio:", log2ratio, 
+                      "|regulation:", regulation, 
+                      "|species:", species, 
+                      "|tissue:", tissue, 
+                      "|cell:", cell, 
+                      "|environment:", environment, 
+                      "|treatment:", treatment, 
+                      "|dose:", dose, 
+                      "|time:", time, 
+                      "|fdr:", fdr, 
+                      "|fdr_threshold:", fdr_threshold, 
+                      "|method:", method, 
+                      "|strain:", strain, 
+                      "|statistical_method:", statistical_method, 
+                      "|treatment_type:", treatment_type, 
+                      sep = "")) %>% 
+  mutate(simple_tissue = ifelse(tissue == "liver", "liver", "small-intestine")) %>% 
+  mutate(detailed_tissue = tissue) %>% 
+  mutate(label =  paste(source, tissue, "NA", sep = "_")) %>% 
+  select(c("index", "gene_name", "gene_list_index", "gene_list_number", 
+           "source", "ensembl_gene_id", "ensembl_transcript_id", 
+           "refseq_mrna_id", "hgnc_symbol", "alias", "info", "tissue", "cell", 
+           "species", "environment", "treatment", "dose", "time", "log2ratio", 
+           "fdr", "statistical_method", "treatment_type", "regulation", 
+           "comparison", "label", "simple_tissue", "detailed_tissue", "method")) -> processing_liver_intestine_36699046
+
+
+processing_liver_intestine_36699046 %>%
+  filter(simple_tissue == "small-intestine") %>% .$label %>% unique
+z

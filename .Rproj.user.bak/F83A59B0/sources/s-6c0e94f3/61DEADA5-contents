@@ -1,0 +1,19 @@
+gene_list_papers <- list(
+  paper1 = c("GeneA", "GeneB", "GeneC"),
+  paper2 = c("GeneA", "GeneD"),
+  paper3 = c("GeneB", "GeneC", "GeneE", "GeneF")
+)
+
+# Krok 1: Spłaszcz listę i policz wystąpienia każdego genu
+all_genes <- unlist(gene_list_papers)
+gene_frequencies <- table(all_genes)
+
+# Krok 2: Oblicz prawdopodobieństwa występowania dla każdego genu
+total_genes <- sum(gene_frequencies)
+gene_probabilities <- gene_frequencies / total_genes
+
+# Wydrukuj wyniki
+print(gene_probabilities)
+
+
+gene_list_papers %>% unname() %>% unlist() %>%table

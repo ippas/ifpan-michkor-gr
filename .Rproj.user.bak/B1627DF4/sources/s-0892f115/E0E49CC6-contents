@@ -1,0 +1,71 @@
+# function to filter chi2 results from list
+filter_matrices <- function(data, rows_to_filter, cols_to_filter, fdr_threshold = 0.05, overlap_threshold = 2) {
+  
+  data$p_value_matrix %>% 
+    .[rows_to_filter, cols_to_filter] %>% 
+    melt() %>% 
+    mutate(value = p.adjust(value, method = "fdr")) %>% 
+    dcast(Var1 ~ Var2, value.var = "value") %>%
+    column_to_rownames(var = "Var1") %>% 
+    as.matrix() -> fdr_value_matrix
+  
+  extract_data(
+    data,
+    rows_to_filter, cols_to_filter
+  ) %>%
+    mutate(fdr = p.adjust(p_value, method = "fdr")) %>%
+    filter(fdr < fdr_threshold) %>% 
+    filter(number_overlap >= overlap_threshold) %>%
+    group_by(overlap_genes, Var2) %>% 
+    nest() %>% 
+    mutate(data = map(data, ~ .x %>% 
+                        arrange(fdr) %>% 
+                        slice(1))) %>% 
+    unnest() %>% 
+    ungroup %>% 
+    as.data.frame() %>% 
+    .$Var1 %>% 
+    as.character %>% 
+    unique() -> significant_res
+  
+  print(significant_res)
+
+  
+  # Initialize an empty list to store the filtered matrices
+  filtered_list <- list()
+  
+  # Loop through each item in the matrix list by their names
+  for (name in names(data)) {
+    # Extract the matrix using its name
+    matrix <- data[[name]]
+    # Apply the filter using the provided indices for phenotypes and tissue clusters
+    filtered_matrix <- matrix[rows_to_filter, cols_to_filter]
+    # Add the filtered matrix to the list with the same name
+    filtered_list[[name]] <- filtered_matrix
+  }
+  
+  filtered_list$fdr_value_matrix <- fdr_value_matrix
+  
+  # Initialize an empty list to store the filtered matrices
+  filtered_list_significant <- list()
+  
+  # Loop through each item in the matrix list by their names
+  for (name in names(filtered_list)) {
+    # Extract the matrix using its name
+    matrix <- filtered_list[[name]]
+    # Apply the filter using the provided indices for phenotypes and tissue clusters
+    filtered_matrix <- matrix[significant_res, cols_to_filter]
+    # Add the filtered matrix to the list with the same name
+    filtered_list_significant[[name]] <- filtered_matrix
+  }
+  
+  # Return the filtered list with the same names as the original list elements
+  return(filtered_list_significant)
+}
+
+
+filter_matrices(chi2_results_phenotypes,
+                !rownames(chi2_results_phenotypes$p_value_matrix) %in% tissues_clusters,
+                tissues_clusters[10:27]) -> chi2_phenotypes_filter
+
+

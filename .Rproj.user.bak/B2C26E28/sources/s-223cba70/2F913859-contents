@@ -1,0 +1,137 @@
+
+# wczytanie
+read_tsv("data/databases/pgc_gene_list.tsv", col_names = T) %>% 
+  unique() %>%
+  rename(file = "pgc_gwas") %>% 
+  mutate(trait = case_when(
+    grepl("14102594", pgc_gwas) ~ "BIP",
+    grepl("14671971", pgc_gwas) ~ "ET",
+    grepl("14671980", pgc_gwas) ~ "ED",
+    grepl("14671989", pgc_gwas) ~ "ASD",
+    grepl("14671998", pgc_gwas) ~ "BIP",
+    grepl("14672019", pgc_gwas) ~ "CDG",
+    grepl("14672040", pgc_gwas) ~ "CDG",
+    grepl("14672085", pgc_gwas) ~ "MDD",
+    grepl("14672133", pgc_gwas) ~ "PTSD",
+    grepl("14672187", pgc_gwas) ~ "SUD",
+    grepl("14842689", pgc_gwas) ~ "ANX",
+    grepl("14842692", pgc_gwas) ~ "SUD",
+    grepl("19193084", pgc_gwas) ~ "SCZ",
+    grepl("19426775", pgc_gwas) ~ "SCZ",
+    grepl("22564390", pgc_gwas) ~ "ADHD",
+    grepl("22564402", pgc_gwas) ~ "BIP",
+    grepl("22745573", pgc_gwas) ~ "MDD",
+    grepl("24268882", pgc_gwas) ~ "SUD",
+    grepl("26349322", pgc_gwas) ~ "PTSD",
+    grepl("27061255", pgc_gwas) ~ "MDD",
+    grepl("27216117", pgc_gwas) ~ "BIP",
+    pgc_gwas == "raw/daner_adhd_meta_filtered_NA_iPSYCH23_PGC11_sigPCs_woSEX_2ell6sd_EUR_Neff_70.meta.gz" ~ "ADHD",
+    pgc_gwas == "raw/daner_pgc_mdd_meta_w2_no23andMe_rmUKBB.gz" ~ "MDD",
+    pgc_gwas == "raw/CLOZUK_PGC2noclo.METAL.assoc.dosage.fix.gz" ~ "SCZ",
+    pgc_gwas == "raw/daner_PGC_SCZ52_0513a.hq2.gz" ~ "SCZ",
+    pgc_gwas == "raw/PGC.ASD.euro.all.25Mar2015.txt.gz" ~ "ASD",
+    pgc_gwas == "raw/scz.swe.pgc1.2013-11b/scz.swe.pgc1.results.v3.txt.gz" ~ "SCZ"
+  )) -> pgc_genes_df
+
+
+pgc_genes_df %>% 
+  select(trait, gene_symbol) %>% 
+  unique() %>% 
+  group_by(trait) %>% 
+  nest %>% 
+  mutate(n_genes = map(data, ~nrow(.x))) %>% 
+  unnest(n_genes) %>% 
+  select(-data)
+
+pgc_genes_df %>% 
+  select(trait, pgc_gwas) %>% 
+  unique() %>% 
+  .$trait %>% 
+  table %>% 
+  as.data.frame() %>% 
+  
+
+pgc_genes_df %>% 
+  .$rsid %>% unique %>% length()
+
+pgc_genes_df %>% 
+  .$gene_symbol %>% unique %>% length()
+
+
+pgc_genes_df %>% 
+  .$file %>% unique()
+
+pgc_genes_df %>%
+  select(file, gene_symbol) %>%
+  unique() %>% 
+  distinct() %>%
+  group_by(file) %>%
+  summarise(gene_list = list(gene_symbol), .groups = "drop") %>%
+  deframe() %>% lapply(., length) %>% unname() %>% unlist() %>% sd
+
+
+split(pgc_genes_df$gene_symbol, pgc_genes_df$file) -> pgc_gene_lists
+
+
+# overlap
+analyze_gene_list_overlap(
+  row_lists = pgc_gene_lists,
+  col_lists = c(gr_database_blocked_gene_lists$master_and_tissue_gene_lists_down, gr_database_blocked_gene_lists$master_and_tissue_gene_lists_up),
+  reference_hgnc_vector = hgnc_symbols_vector_v110, 
+  keep_original_data = TRUE, 
+  fdr_threshold = 1, 
+  overlap_threshold = 0
+) -> pgc_overlap_results
+
+
+pgc_overlap_results$significant_uniq_data$df %>%
+  filter(gene_overlap_count > 2) %>% 
+  # select(!fdr) %>% 
+  rename(Var1 = "gr_list") %>% 
+  rename(Var2 = "pgc_gwas") %>% 
+  mutate(trait = case_when(
+    pgc_gwas == "raw/27061255/pgc-mdd2025_top10k_eur_v3-49-24-11.tsv.gz" ~ "MDD",
+    pgc_gwas == "raw/14672019/BDSCZvsCONT.sumstats.gz" ~ "schizophrenia-BD",
+    TRUE ~ "schizophrenia"
+  )) %>% filter(p_value < 0.05) %>% 
+  select(c(gr_list, overlap_genes, trait, pgc_gwas))
+
+
+pgc_overlap_results$significant_uniq_data$df %>%
+  # filter(gene_overlap_count > 2) %>% 
+  rename(Var1 = "gr_list") %>% 
+  rename(Var2 = "pgc_gwas") %>% 
+  select(pgc_gwas) %>% 
+  unique() %>% 
+  mutate(trait = case_when(
+    grepl("14102594", pgc_gwas) ~ "BIP",
+    grepl("14671971", pgc_gwas) ~ "ET",
+    grepl("14671980", pgc_gwas) ~ "ED",
+    grepl("14671989", pgc_gwas) ~ "ASD",
+    grepl("14671998", pgc_gwas) ~ "BIP",
+    grepl("14672019", pgc_gwas) ~ "CDG",
+    grepl("14672040", pgc_gwas) ~ "CDG",
+    grepl("14672085", pgc_gwas) ~ "MDD",
+    grepl("14672133", pgc_gwas) ~ "PTSD",
+    grepl("14672187", pgc_gwas) ~ "SUD",
+    grepl("14842689", pgc_gwas) ~ "ANX",
+    grepl("14842692", pgc_gwas) ~ "SUD",
+    grepl("19193084", pgc_gwas) ~ "SCZ",
+    grepl("19426775", pgc_gwas) ~ "SCZ",
+    grepl("22564390", pgc_gwas) ~ "ADHD",
+    grepl("22564402", pgc_gwas) ~ "BIP",
+    grepl("22745573", pgc_gwas) ~ "MDD",
+    grepl("24268882", pgc_gwas) ~ "SUD",
+    grepl("26349322", pgc_gwas) ~ "PTSD",
+    grepl("27061255", pgc_gwas) ~ "MDD",
+    grepl("27216117", pgc_gwas) ~ "BIP",
+    pgc_gwas == "raw/daner_adhd_meta_filtered_NA_iPSYCH23_PGC11_sigPCs_woSEX_2ell6sd_EUR_Neff_70.meta.gz" ~ "ADHD",
+    pgc_gwas == "raw/daner_pgc_mdd_meta_w2_no23andMe_rmUKBB.gz" ~ "MDD",
+    pgc_gwas == "raw/CLOZUK_PGC2noclo.METAL.assoc.dosage.fix.gz" ~ "SCZ",
+    pgc_gwas == "raw/daner_PGC_SCZ52_0513a.hq2.gz" ~ "SCZ",
+    pgc_gwas == "raw/PGC.ASD.euro.all.25Mar2015.txt.gz" ~ "ASD",
+    pgc_gwas == "raw/scz.swe.pgc1.2013-11b/scz.swe.pgc1.results.v3.txt.gz" ~ "SCZ"
+  )) %>% .$trait %>% table
+
+
+

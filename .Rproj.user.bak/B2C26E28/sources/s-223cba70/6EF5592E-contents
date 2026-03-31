@@ -1,0 +1,31 @@
+# Instalacja i załadowanie potrzebnych pakietów
+if (!"rWikiPathways" %in% installed.packages()) {
+  if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+  BiocManager::install("rWikiPathways")
+}
+
+if (!requireNamespace("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install("BridgeDbR")
+library(BridgeDbR)
+# Ustaw preferowany kod identyfikatora (np. Entrez Gene 'L')
+wpid <- "WP411"
+
+
+# Pobranie listy xref‐ów (identyfikatorów genów)
+xrefs <- getXrefList(pathway = wpid, systemCode = "L")
+
+rWikiPathways::getPathwayInfo("WP411")
+# Wyświetlenie pierwszych kilku wyników
+head(xrefs)
+
+
+wp <- getPathway("WP411")
+
+wp[[1]] %>% class
+library(xml2)
+nodes <- xml_find_all(wp[[1]], ".//Xref[@Database='Entrez Gene']")
+ids <- xml_attr(nodes, "ID")
+ids <- unique(ids)
+length(ids); head(ids)

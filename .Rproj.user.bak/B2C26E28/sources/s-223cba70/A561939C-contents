@@ -1,0 +1,130 @@
+papers_data_preprocessing %>% 
+  mutate(simple_tissue = ifelse(source == "michkor-cells", "brain", simple_tissue)) %>% 
+  filter(!(simple_tissue %in% c("placenta", "cartilage", "liver", "small-intestine", "spleen"))) %>% 
+  .$simple_tissue %>% unique() %>%  
+  lapply(., function(tissue){
+    print(tissue)
+    
+    create_ranked_master_list(papers_data_preprocessing, 
+                              treatment_to_remove = treatment_to_remove, 
+                              cumsum_thresholds, 
+                              freq_thresholds = 10, regulation = "up", simple_tissue = {{tissue}})
+  }) -> tissue_master_up_df
+
+names(tissue_master_up_df) <- papers_data_preprocessing %>% 
+  filter(!(simple_tissue %in% c("placenta", "cartilage", "liver", "small-intestine", "spleen"))) %>% 
+  .$simple_tissue %>% unique()
+
+tissue_master_up_df %>% 
+  bind_rows(., .id = "tissue") %>% 
+  filter(tissue != "Other") %>% 
+  mutate(regulation = "up") %>% as.data.frame() -> tissue_master_up_df
+
+
+papers_data_preprocessing %>% 
+  mutate(simple_tissue = ifelse(source == "michkor-cells", "brain", simple_tissue)) %>% 
+  filter(!(simple_tissue %in% c("placenta", "cartilage", "liver", "small-intestine", "spleen", "Other"))) %>% 
+  .$simple_tissue %>% unique() %>%  
+  lapply(., function(tissue){
+    print(tissue)
+    
+    create_ranked_master_list(papers_data_preprocessing, 
+                              treatment_to_remove = treatment_to_remove, 
+                              cumsum_thresholds, 
+                              freq_thresholds = 10, regulation = "down", simple_tissue = {{tissue}})
+  }) -> tissue_master_down_df
+
+names(tissue_master_down_df) <- papers_data_preprocessing %>% 
+  filter(!(simple_tissue %in% c("placenta", "cartilage", "liver", "small-intestine", "spleen", "Other"))) %>% 
+  .$simple_tissue %>% unique()
+
+tissue_master_down_df %>% 
+  bind_rows(., .id = "tissue") %>% 
+  filter(tissue != "Other") %>% 
+  mutate(regulation = "down") %>% as.data.frame() -> tissue_master_down_df
+
+
+rbind(tissue_master_up_df, tissue_master_down_df) %>% 
+  rename(sum_rank_score = sum_score) %>% 
+  write.table(file = "results/summary-table-lists/tissue-master-lists-rank-score-log2ratio-top50.tsv", sep = "\t", quote = F, col.names = T, row.names = F)
+
+
+
+################################################################################
+papers_data_preprocessing %>% 
+  mutate(simple_tissue = ifelse(source == "michkor-cells", "brain", simple_tissue)) %>% 
+  filter(!(simple_tissue %in% c("placenta", "cartilage", "liver", "small-intestine", "spleen"))) %>% 
+  .$simple_tissue %>% unique() %>%  
+  lapply(., function(tissue){
+    print(tissue)
+    
+    create_ranked_master_list(papers_data_preprocessing, 
+                              treatment_to_remove = treatment_to_remove, 
+                              cumsum_thresholds, size_list = 50,
+                              freq_thresholds = freq_thresholds, regulation = "up", simple_tissue = {{tissue}})
+  }) -> tissue_master_up_df
+
+names(tissue_master_up_df) <- papers_data_preprocessing %>% 
+  filter(!(simple_tissue %in% c("placenta", "cartilage", "liver", "small-intestine", "spleen"))) %>% 
+  .$simple_tissue %>% unique()
+
+tissue_master_up_df %>% 
+  bind_rows(., .id = "tissue") %>% 
+  filter(tissue != "Other") %>% 
+  mutate(regulation = "up") %>% as.data.frame() -> tissue_master_up_df
+
+
+papers_data_preprocessing %>% 
+  mutate(simple_tissue = ifelse(source == "michkor-cells", "brain", simple_tissue)) %>% 
+  filter(!(simple_tissue %in% c("placenta", "cartilage", "liver", "small-intestine", "spleen", "Other"))) %>% 
+  .$simple_tissue %>% unique() %>%  
+  lapply(., function(tissue){
+    print(tissue)
+    
+    create_ranked_master_list(papers_data_preprocessing, 
+                              treatment_to_remove = treatment_to_remove, 
+                              cumsum_thresholds, size_list = 50,
+                              freq_thresholds = freq_thresholds, regulation = "down", simple_tissue = {{tissue}})
+  }) -> tissue_master_down_df
+
+names(tissue_master_down_df) <- papers_data_preprocessing %>% 
+  filter(!(simple_tissue %in% c("placenta", "cartilage", "liver", "small-intestine", "spleen", "Other"))) %>% 
+  .$simple_tissue %>% unique()
+
+tissue_master_down_df %>% 
+  bind_rows(., .id = "tissue") %>% 
+  filter(tissue != "Other") %>% 
+  mutate(regulation = "down") %>% as.data.frame() -> tissue_master_down_df
+
+
+rbind(tissue_master_up_df, tissue_master_down_df) %>% 
+  rename(sum_rank_score = sum_score) %>% 
+  write.table(file = "results/summary-table-lists/tissue-master-lists-rank-score-log2ratio-top50-size50.tsv", sep = "\t", quote = F, col.names = T, row.names = F)
+
+
+################################################################################ 
+# kegg_pathway_df %>% 
+#   # filter(kegg_pathway_id %in% synapse_data$Pathway_ID) %>% 
+#   filter(gene_symbol %in% tissue_master_up_lists$`adrenal-gland`) %>% 
+#   as.data.frame() 
+# 
+# 
+# # Define the data as vectors
+# pathway_id <- c("04724", "04727", "04725", "04728", "04726", "04720", "04730", "04723", "04721", "04722")
+# pathway_name <- c("Glutamatergic synapse", "GABAergic synapse", "Cholinergic synapse", "Dopaminergic synapse",
+#                   "Serotonergic synapse", "Long-term potentiation", "Long-term depression", 
+#                   "Retrograde endocannabinoid signaling", "Synaptic vesicle cycle", "Neurotrophin signaling pathway")
+# 
+# # Create a data frame
+# synapse_data <- data.frame(Pathway_ID = pathway_id, Pathway_Name = pathway_name) %>% 
+#   mutate(Pathway_ID = paste0("hsa", Pathway_ID))
+# 
+# # Print the data frame to the console
+# print(synapse_data)
+# 
+# 
+# kegg_pathway_df %>% 
+#   # filter(kegg_pathway_id %in% synapse_data$Pathway_ID) %>% 
+#   filter(gene_symbol %in%  master_lung_up) %>% 
+#   as.data.frame()
+# 

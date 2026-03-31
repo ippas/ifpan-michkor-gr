@@ -1,0 +1,123 @@
+papers_data_preprocessing %>%filter(source == "pmid:28381250")
+  filter(!is.na(log2ratio)) %>% 
+  filter(regulation %in% c("up", "down")) %>% 
+  filter(!is.na(hgnc_symbol)) %>% 
+  mutate(label_regulation = paste0(label, "_", regulation)) -> raw_input_gene_lists
+  
+
+
+raw_input_gene_lists %>% dim()
+
+raw_input_gene_lists %>% 
+  .$label_regulation %>% unique %>% length()
+
+# summary all gene lists 
+raw_input_gene_lists %>% 
+  select(regulation, simple_tissue, label_regulation, hgnc_symbol) %>% 
+  unique() %>% 
+  group_by(label_regulation) %>% 
+  nest() %>% 
+  mutate(n_genes = map(data, ~nrow(.x))) %>% 
+  unnest(n_genes) %>% 
+  .$n_genes %>% summary
+  
+raw_input_gene_lists %>% 
+  select(regulation, simple_tissue, label_regulation, hgnc_symbol, log2ratio) %>% 
+  unique() %>% 
+  group_by(label_regulation) %>% 
+  nest() %>% 
+  mutate(n_genes = map(data, ~nrow(.x))) %>% 
+  unnest(n_genes) %>% .$n_genes %>% sum
+
+
+# summary gene lists by regulation
+raw_input_gene_lists %>%
+  select(regulation, simple_tissue, label_regulation, hgnc_symbol) %>% 
+  unique() %>% 
+  group_by(label_regulation) %>% 
+  nest() %>% 
+  mutate(n_genes = map(data, ~nrow(.x))) %>% 
+  unnest(c(data, n_genes)) %>% 
+  select(-hgnc_symbol) %>% 
+  unique() %>%   
+  ungroup %>% 
+  group_by(regulation) %>%
+  nest() %>% 
+  mutate(n_label = map(data, ~length(unique(.x$label_regulation)))) %>% 
+  mutate(mean = map(data, ~mean(.x$n_genes))) %>% 
+  mutate(median = map(data, ~median(.x$n_genes))) %>% 
+  mutate(min = map(data, ~min(.x$n_genes))) %>% 
+  mutate(max = map(data, ~max(.x$n_genes))) %>% 
+  mutate(sd = map(data, ~sd(.x$n_genes))) %>% 
+  select(-data) %>% 
+  unnest()
+  
+
+
+# selection dublicates genes inside lists
+raw_input_gene_lists %>% 
+  select(regulation, simple_tissue, label_regulation, hgnc_symbol, log2ratio) %>% 
+  unique() %>% 
+  group_by(label_regulation, hgnc_symbol) %>% 
+  nest() %>% 
+  mutate(n_repetitions = map(data, ~nrow(.x))) %>% 
+  unnest(n_repetitions) %>% 
+  filter(n_repetitions > 1) %>% 
+  .$hgnc_symbol %>% 
+  unique() %>% 
+  length()
+  
+# summary gene lists by regulation, filter by n_genes >= 50
+raw_input_gene_lists %>% 
+  select(regulation, simple_tissue, label_regulation, hgnc_symbol, log2ratio) %>% 
+  unique() %>% 
+  group_by(label_regulation, hgnc_symbol) %>% 
+  slice_max(log2ratio, with_ties = FALSE) %>%
+  ungroup() %>% 
+  group_by(label_regulation) %>% 
+  nest() %>% 
+  mutate(n_genes = map(data, ~nrow(.x))) %>% 
+  unnest(c(data, n_genes)) %>% 
+  ungroup %>% 
+  filter(n_genes >= 50) %>% 
+  group_by(regulation) %>% 
+  nest()  %>% 
+  mutate(n_label = map(data, ~length(unique(.x$label_regulation)))) %>% 
+  mutate(mean = map(data, ~mean(.x$n_genes))) %>% 
+  mutate(median = map(data, ~median(.x$n_genes))) %>% 
+  mutate(min = map(data, ~min(.x$n_genes))) %>% 
+  mutate(max = map(data, ~max(.x$n_genes))) %>% 
+  mutate(sd = map(data, ~sd(.x$n_genes))) %>% 
+  select(-data) %>% 
+  unnest()
+
+
+raw_input_gene_lists %>%
+  select(regulation, simple_tissue, label_regulation, hgnc_symbol, source, log2ratio, treatment, dose, time, treatment_type, environment, comparison) %>% 
+  unique() %>% 
+  group_by(label_regulation, hgnc_symbol) %>% 
+  slice_max(log2ratio, with_ties = FALSE) %>%
+  ungroup() %>% 
+  group_by(label_regulation) %>% 
+  nest() %>% 
+  mutate(n_genes = map(data, ~nrow(.x))) %>% 
+  unnest(c(data, n_genes)) %>% 
+  ungroup %>%
+  filter(n_genes < 50) %>% 
+  .$hgnc_symbol %>%  unique %>% length()
+
+
+
+raw_input_gene_lists %>%
+  select(regulation, simple_tissue, label_regulation, hgnc_symbol, source, log2ratio, treatment, dose, time, treatment_type, environment, comparison,cell, info) %>% 
+  unique() %>% 
+  group_by(label_regulation, hgnc_symbol) %>% 
+  slice_max(log2ratio, with_ties = FALSE) %>% 
+  ungroup() %>% 
+  group_by(label_regulation) %>%
+  nest() %>% 
+  mutate(n_genes = map(data, ~nrow(.x))) %>% 
+  unnest(c(data, n_genes)) %>% 
+  ungroup %>%
+  filter(n_genes >= 50) %>% 
+  mutate(log2ratio = as.numeric(log2ratio)) -> gene_list_log2ratio_min_50_genes

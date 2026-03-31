@@ -1,0 +1,26 @@
+{
+    "id": "A8D8C912",
+    "path": "~/projects/ifpan-michkor-gr/preprocessing/overlapping-gr-genes/gene-database-preprocessing.R",
+    "project_path": "preprocessing/overlapping-gr-genes/gene-database-preprocessing.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1705939529853.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "121,0",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1712851319,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1712851319702,
+    "read_only": false,
+    "read_only_alternatives": []
+}

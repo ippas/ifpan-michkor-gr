@@ -1,0 +1,35 @@
+filter_matrices <- function(matrix_list, significant_phenotypes, tissue_clusters_range) {
+  # This function takes a list of matrices and applies a filtering operation
+  # to each matrix based on specified row and column indices. The result is
+  # a list of filtered matrices with the same names as the original list elements.
+  
+  # Arguments:
+  # matrix_list: A list where each element is a matrix that contains data to be filtered.
+  # significant_phenotypes: A vector of row indices representing significant phenotypes.
+  #                         These rows are the ones to keep after filtering.
+  # tissue_clusters_range: A vector of column indices representing a range of tissue clusters.
+  #                        These columns are the ones to keep after filtering.
+  
+  # Initialize an empty list to store the filtered matrices
+  filtered_list <- list()
+  
+  # Loop through each item in the matrix list by their names
+  for (name in names(matrix_list)) {
+    # Extract the matrix using its name
+    matrix <- matrix_list[[name]]
+    # Apply the filter using the provided indices for phenotypes and tissue clusters
+    filtered_matrix <- matrix[significant_phenotypes, tissue_clusters_range]
+    # Add the filtered matrix to the list with the same name
+    filtered_list[[name]] <- filtered_matrix
+  }
+  
+  # Return the filtered list with the same names as the original list elements
+  return(filtered_list)
+}
+
+filter_matrices(
+  matrix_list = chi2_results_phenotypes,
+  significant_phenotypes = significant_phenotypes,
+  tissue_clusters_range = 10:27
+) -> tmp
+

@@ -1,0 +1,82 @@
+# Assuming 'pheatmap_metabolism_clusters' is your heatmap data
+heatmap_matrix <- log2(heatmap_metabolism_clusters + 1)
+
+# Draw the heatmap without the green frames first
+pheatmap_object <- pheatmap(
+  heatmap_matrix,
+  cluster_rows = TRUE,
+  cluster_cols = TRUE,
+  display_numbers = TRUE,
+  labels_col = cluster_mapping_metabolism,
+  fontsize = 12,             
+  fontsize_row = 12,          
+  fontsize_col = 12
+)
+
+# Now, you need to calculate the positions for the cells you want to highlight.
+# Let's say you want to highlight the cells at certain indices:
+highlight_cells <- c("row_index1_col_index1", "row_index2_col_index2") # replace with actual indices
+
+# You would need to know the row and column numbers after clustering.
+# These can be extracted from the pheatmap object.
+row_order <- pheatmap_object$tree_row$order
+col_order <- pheatmap_object$tree_col$order
+
+# You will need to map your highlight_cells to the new order.
+
+# Now, overlay the green rectangles.
+# You would loop through your 'highlight_cells' and calculate their new positions based on row_order and col_order
+# Then, you can draw the rectangles like this:
+for(cell in highlight_cells_mapped) {
+  rect(
+    xleft = cell$left, 
+    ybottom = cell$bottom,
+    xright = cell$right, 
+    ytop = cell$top, 
+    border = "green",
+    lwd = 2,
+    col = NA  # To avoid filling the rectangle with color
+  )
+}
+
+library(pheatmap)
+library(pheatmap)
+library(grid)
+
+# Create a sample matrix with random data
+set.seed(123)
+sample_matrix <- matrix(runif(100), nrow = 10)
+
+# Generate a heatmap using `pheatmap`
+heatmap_object <- pheatmap(sample_matrix)
+
+# Determine which cells to highlight with a green frame
+# Selecting some random cells to highlight
+highlight_cells <- data.frame(
+  rows = c(2, 5), # Row indices of cells to highlight
+  cols = c(3, 8)  # Column indices of cells to highlight
+)
+
+# Map the highlight cells to the order
+highlight_cells$rows <- heatmap_object$tree_row$order[highlight_cells$rows]
+highlight_cells$cols <- heatmap_object$tree_col$order[highlight_cells$cols]
+
+# Calculate the coordinates of the cells to highlight
+cell_width <- 1 / ncol(sample_matrix)
+cell_height <- 1 / nrow(sample_matrix)
+
+# Add the rectangles
+for(i in 1:nrow(highlight_cells)) {
+  row <- highlight_cells$rows[i]
+  col <- highlight_cells$cols[i]
+  
+  grid.rect(
+    x = (col - 1 + 0.5) * cell_width,
+    y = (nrow(sample_matrix) - row + 0.5) * cell_height,
+    width = cell_width,
+    height = cell_height,
+    just = "centre",
+    gp = gpar(col = "green", lwd = 2, fill = NA)
+  )
+}
+

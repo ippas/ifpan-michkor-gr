@@ -1,0 +1,48 @@
+install.packages("gplots")
+
+library(gplots)
+library(pheatmap)
+library(reshape2)
+library(dplyr)
+
+# ... [Your data loading and preprocessing code here]
+
+# Visualize chi-squared tissue specific results for the significant phenotypes
+chi2_results$p_value_matrix %>%  
+  .[21:29, 47:ncol(chi2_results$p_value_matrix)] %>% 
+  reshape2::melt() %>% 
+  arrange(value) %>%
+  mutate(fdr = p.adjust(value, "fdr")) %>% 
+  filter(fdr < 0.05) %>% 
+  .$Var2 %>% as.character() -> significant_results
+
+heatmap_data <-  chi2_results$chi2_value_matrix[significant_results, 21:29]
+
+# Create a matrix of significance stars based on the FDR-adjusted p-values
+significance_matrix <- matrix('', nrow = length(significant_results), ncol = 9)
+fdr_values <- chi2_results$p_value_matrix[significant_results, 21:29] %>% 
+  apply(2, p.adjust, method = "fdr")
+
+# Generate a color scale of white, red, and blue
+color_scale <- colorRampPalette(c("blue", "white", "red"))(100)
+
+# Plot the heatmap using heatmap.2 with the new color scale
+heatmap.2(log2(heatmap_data + 1), 
+          cellnote = significance_matrix,  # Add significance stars
+          notecol = "black",  # Color of the significance stars
+          col = color_scale,  # Use the white-red-blue color scale
+          trace = "none",     # Remove trace lines
+          main = "Overlap with PRS Models from Biobank UK Phenotypes",
+          margins = c(8, 8))  
+
+
+# Generate a color scale of red, white, and blue
+color_scale <- colorRampPalette(c("red", "white", "blue"))(100)
+
+# Plot the heatmap using pheatmap with the new color scale
+pheatmap(log2(heatmap_data + 1), 
+                         cluster_rows = TRUE,
+                         cluster_cols = TRUE,
+                         color = color_scale,  # Use the red-white-blue color scale
+                         main = "Overlap with P)
+

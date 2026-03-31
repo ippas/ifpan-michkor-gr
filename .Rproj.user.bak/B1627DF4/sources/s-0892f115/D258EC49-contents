@@ -1,0 +1,46 @@
+metabolism_data_preprocessing %>% 
+  filter(
+    grepl("omicspred_metabolon", source) |
+      grepl("omicspred_nithingale_", source)
+  ) %>% 
+  filter(hgnc_symbol %in% hgnc_symbols_vector_v110) %>% dim
+  filter(    grepl("omicspred_nithingale_", source)) %>% 
+  select(gene_list_index) %>%  unique %>% dim
+  
+
+gr_gene_database_preproccesing %>% 
+  filter(
+    grepl("omicspred_metabolon", source) |
+      grepl("omicspred_nithingale_", source) |
+      grepl("marpiech_tissues_dex", source) |
+      gene_list_index == "all_significant_genes_marpiech"
+  ) %>% 
+  mutate(source = ifelse(source == "pmid:NA", "marpiech_tissues_dex", source)) %>%
+  extract_keys_values("info", c("BiomarkerName", "BiochemicalName")) %>%
+  mutate(label = ifelse(
+    is.na(BiochemicalName),
+    ifelse(is.na(BiomarkerName), gene_list_index, BiomarkerName),
+    BiochemicalName
+  )) %>%
+  mutate(label = ifelse(
+    source == "marpiech_tissues_dex",
+    paste0(source, "_", gene_list_number),
+    label
+  )) %>% 
+  mutate(label = ifelse(
+    gene_list_index == "all_significant_genes_marpiech",
+    tissue,
+    label
+  ))  %>%
+  select(c(source, gene_list_index, gene_list_number, hgnc_symbol, label)) %>%
+  filter(!is.na(hgnc_symbol)) %>% 
+  distinct() %>%
+  filter(!(hgnc_symbol %in% hgnc_to_remove)) %>% 
+  group_by(gene_list_number) %>%
+  nest() %>%
+  mutate(n_genes = map_int(data, ~ nrow(.))) %>% 
+  unnest(cols = c(data)) %>% 
+  ungroup() %>% 
+  filter(    grepl("omicspred_metabolon", source)) %>% 
+  select(gene_list_index) %>% unique() %>% dim
+  filter(n_genes > 2) 

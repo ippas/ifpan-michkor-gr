@@ -1,0 +1,5 @@
+filter_phenotypes_by_category(
+  genes_list = genes_phenotypes_PanUkBiobank,
+  path_metafile = "data/phenotypes/panukbiobank-phenotype-category.csv",
+  category_name = "Depression"
+)

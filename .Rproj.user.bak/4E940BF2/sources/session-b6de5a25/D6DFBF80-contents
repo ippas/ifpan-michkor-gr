@@ -1,0 +1,33 @@
+install.packages("ComplexHeatmap")
+
+# load packages
+require(tidyverse)
+require(magrittr)
+require(Comp)
+
+# read data
+gr_gene_database_raw <- read.csv("data/overlapping-gr-genes/geneBase_060723.tsv", sep = "\t") 
+
+gr_gene_database_raw %>% head
+
+gr_gene_database_raw %>%  colnames()
+
+
+gr_gene_database_raw %>% 
+  extract_keys_values("Info", c("tissue", "cell", "enviroment", " treatment", "dose", "time", "Log2Ratio")) -> gr_gene_database
+
+gr_gene_database %>%   
+  # tail(100) %>% 
+  print_simple_database() %>% 
+  mutate(Source = str_replace_all(Source, "PMID: ", "")) %>% 
+  filter(Source != "marpiech_tissues_dex") %>% 
+  filter(Source != "michkor-cells-dex") %>% 
+  mutate(Gene_name = tolower(Gene_name)) %>% 
+  mutate(label = paste0(Source, "_", tissue, "_", cell)) -> gr_gene_database_preprocessing
+
+
+
+pairwise_gene_overlap(gr_gene_database_preprocessing, "Gene_name", "label") -> overlap_matrix
+
+
+

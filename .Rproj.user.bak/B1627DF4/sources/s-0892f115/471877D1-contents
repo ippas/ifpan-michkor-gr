@@ -1,0 +1,36 @@
+metabolon_database_raw <- read.csv("data/overlapping-gr-genes/metabolon-joined-all.tsv", sep = "\t") 
+
+metabolon_database_raw %>% 
+  extract_keys_values("Info", c("Super Pathway", "Biochemical Name", "Sub Pathway")) -> metabolon_database
+
+# Preprocess the gene database
+metabolon_database %>%   
+  print_simple_database() %>%
+  mutate(Source = str_replace_all(Source, "PMID: ", "")) %>%
+  # filter(Source != "michkor-cells-dex") %>%
+  mutate(Gene_name = tolower(Gene_name)) %>% 
+  filter(!is.na(`Super Pathway`)) %>% 
+  mutate(label = `Super Pathway`) %>% 
+  # mutate(label = ifelse(Source == "marpiech_tissues_dex", paste0(Source, "_", Gene_list_number), label)) %>% 
+  filter(Gene_name %in% {filtered_biomart_by_go %>% .$gene_name %>% tolower() %>% unique()}) -> metabolon_filter_biomart
+
+
+
+# Split gene names by label
+split(metabolon_filter_biomart$Gene_name, metabolon_filter_biomart$label) -> metabolon_list
+
+# Get unique total genes
+total_genes = filtered_biomart_by_go %>% .$gene_name %>% tolower() %>% unique()
+
+# Perform chi-square tests
+results <- perform_chi2_tests(metabolon_list, total_genes)
+
+# Create heatmaps
+pheatmap(log2(results$chi2_value_matrix+1), cluster_rows = T, cluster_cols = T, display_numbers = T)
+pheatmap(results$p_value_matrix, cluster_rows = T, cluster_cols = T, display_numbers = T)
+
+Heatmap(log2(results$chi2_value_matrix+1), 
+        name = "overlap", 
+        col = color_palette, 
+        show_row_names = TRUE, 
+        show_column_names = TRUE)

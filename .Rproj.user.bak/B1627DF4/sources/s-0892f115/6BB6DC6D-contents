@@ -1,0 +1,28 @@
+library(dplyr)
+
+# Assuming my_vector is already defined as before
+my_vector <- c(23110767, 24342991, 23339081, 17026526, 16503919, 18489715, 
+               23633533, 21846803, 22778218, 11556892, 19564873, 23736296, 
+               23650397, 16844382, 15505804)
+
+# Convert the numeric vector to a character vector
+my_vector <- as.character(my_vector)
+
+# Define a function to check if any element of my_vector_str is in a given string
+contains_any_my_vector <- function(x) {
+  any(sapply(my_vector, function(v) grepl(v, x)))
+}
+
+# Filter papers_data_preprocessing$label based on this function
+papers_data_preprocessing %>%
+  dplyr::filter(sapply(label, contains_any_my_vector)) %>%
+  .$label %>%
+  unique()
+
+
+
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+test_result <- getBM(attributes = c('ensembl_gene_id', 'external_gene_name'), 
+                     filters = 'ensembl_gene_id', 
+                     values = "ENSG00000139618",  # Replace with a valid Gene ID from your data
+                     mart = ensembl)

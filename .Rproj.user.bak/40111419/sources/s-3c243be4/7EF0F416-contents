@@ -1,0 +1,64 @@
+
+perform_overlap_permutation_analysis_parallel <- function(permutations,
+                                                          seed = NULL,
+                                                          num_cores = 1,
+                                                          reference_hgnc_vector,
+                                                          size_reference_list,
+                                                          comparison_gene_list,
+                                                          overlap_threshold,
+                                                          fdr_threshold) {
+  # Set up the future plan for parallel processing
+  plan(multisession, workers = num_cores)
+  
+  # Initialize the progress bar
+  handlers(global = TRUE)
+  p <- progressor(along = 1:permutations)
+  
+  # Function to perform a single permutation
+  perform_single_permutation <- function(i) {
+
+    # Existing code for setting seed and generating permutation seeds
+    if (!is.null(seed)) {
+      set.seed(seed)
+      permutation_seeds <- sample(1000000, size = permutations)
+    } else {
+      permutation_seeds <- rep(NULL, permutations)
+    }
+    
+    # Use tryCatch to handle errors
+    tryCatch({
+      # Perform random gene set analysis
+      analyze_random_gene_sets(
+        seed = permutation_seeds[i],
+        reference_hgnc_vector = reference_hgnc_vector,
+        size_reference_list = size_reference_list,
+        comparison_gene_list = comparison_gene_list,
+        overlap_threshold = overlap_threshold,
+        fdr_threshold = fdr_threshold
+      ) -> results
+      
+      # Return the number of rows
+      number_significant_results <- nrow(results$significant_uniq_data$df)
+      rm(results)
+      return(number_significant_results)
+    }, error = function(e) {
+      # In case of an error, return or print 0
+      # Uncomment the line below to print the error message, if needed
+      # print(e)
+      return(0)
+    })
+    
+    # Signal progress
+    p()
+  }
+  
+  # Execute permutations in parallel with a progress bar
+  results <- with_progress({
+    future_lapply(1:permutations, perform_single_permutation)
+  })
+  
+  # Reset the future plan
+  plan(sequential)
+  
+  return(results)
+}

@@ -1,0 +1,48 @@
+create_master_list_normalized_per_tissue <- function(tissue_master_data, regulation, size_list_tissue, rank_criterion, size_list = 50) {
+  
+  pattern <- paste(regulation, size_list_tissue, rank_criterion, sep = "_")
+  
+  # Filter the list for entries with names matching 'up_50_log2ratio'
+  filtered_lists <- tissue_master_data[grepl("up_50_log2ratio", names(tissue_master_data))]
+  
+  # Extract 'ranked_scores_data' from each list element
+  ranked_data <- lapply(filtered_lists, function(x) {
+    x$ranked_scores_data
+  })
+  
+  # Process each data frame to compute scores
+  processed_lists <- lapply(ranked_data, function(x) {
+    n_list <- length(x)
+    
+    if (n_list == 0) {
+      NULL
+    } else {
+      x %>%
+        bind_rows(.id = "list_name") %>%
+        select(-list_name) %>%
+        group_by(hgnc_symbol) %>%
+        nest() %>%
+        mutate(score_tissue = map(data, ~sum(.x$score))) %>%
+        unnest(score_tissue) %>%
+        arrange(desc(score_tissue)) %>%
+        mutate(norm_score = score_tissue / n_list) %>%
+        select(-data) %>%
+        mutate(n_list = n_list)
+    }
+  })
+  
+  # Combine processed data, compute final scores, and get the top 50 entries
+  final_result <- processed_lists %>%
+    bind_rows(.id = "name") %>%
+    select(-name) %>%
+    group_by(hgnc_symbol) %>%
+    nest() %>%
+    mutate(sum_norm_score = map(data, ~sum(.x$norm_score))) %>%
+    unnest(sum_norm_score) %>%
+    arrange(desc(sum_norm_score)) %>%
+    select(-data) %>%
+    head(50) %>%
+    as.data.frame()
+  
+  return(final_result)
+}

@@ -1,0 +1,142 @@
+###
+# load data
+
+pgc_mdd2025_no23andMe_eur <- pgc_mdd2025_no23andMe_ur <- read.table(file = "data/pgc-genes/pgc_mdd2025_no23andMe_eur.tsv", header = TRUE)
+
+intesection_results_all_gr_signatures <- read.table(file = "data/pgc-genes/intesection_results_all_gr_signatures.tsv", header = TRUE)
+
+pgc_mdd2025_no23andMe_eur %>% 
+  mutate(range_plus_minus = "all") %>% 
+  mutate(signature_derivation = "GWAS") %>% 
+  mutate(signature_name = "GWAS") %>% 
+  mutate(gene_symbol = "None") %>% 
+  select(c(rsID, chromosome, position, pvalue, gene_symbol, signature_name, signature_derivation, range_plus_minus)) -> pgc_mdd2025_no23andMe_eur_processing
+  
+rbind(
+  {pgc_mdd2025_no23andMe_eur_processing %>% 
+      filter(!(rsID %in% 
+                 {intesection_results_all_gr_signatures %>% 
+                     filter(signature_derivation == "frequent") %>% 
+                     .$rsID})) %>% 
+      mutate(signature_derivation = "frequent") 
+  },
+  {pgc_mdd2025_no23andMe_eur_processing %>% 
+      filter(!(rsID %in% 
+                 {intesection_results_all_gr_signatures %>% filter(signature_derivation == "juszczak_PMID:35405299") %>% .$rsID})) %>% 
+      mutate(signature_derivation = "juszczak_PMID:35405299") 
+  },
+  {pgc_mdd2025_no23andMe_eur_processing %>% 
+    filter(!(rsID %in% 
+               {intesection_results_all_gr_signatures %>% filter(signature_derivation == "tissue_cell") %>% .$rsID})) %>% 
+    mutate(signature_derivation = "tissue_cell") 
+  },
+  {pgc_mdd2025_no23andMe_eur_processing %>% 
+      filter(!(rsID %in% 
+                 {intesection_results_all_gr_signatures %>% filter(signature_derivation == "universal") %>% .$rsID})) %>% 
+      mutate(signature_derivation = "universal") 
+  },
+  {pgc_mdd2025_no23andMe_eur_processing %>% 
+      filter(!(rsID %in% 
+                 {intesection_results_all_gr_signatures %>% filter(signature_derivation == "marpiech_cluster") %>% .$rsID})) %>% 
+      mutate(signature_derivation = "marpiech_cluster") 
+  },
+  intesection_results_all_gr_signatures 
+) %>% 
+  filter(range_plus_minus != "100") %>% 
+  select(rsID, pvalue, range_plus_minus, signature_derivation) %>% 
+  unique() %>% 
+  ggplot(aes(x = -log10(pvalue))) +
+  geom_histogram(binwidth = 0.1, fill = "gray80") +
+  geom_vline(xintercept = c(5, 8), linetype = "dashed", color = "red", size = 0.7) +
+  labs(title = "Histogram -log10(p-value)",
+       x = expression(-log[10](p)),
+       y = "Liczba obserwacji (log10)") +
+  scale_y_log10() +
+  theme_minimal() +
+  facet_grid(signature_derivation ~ range_plus_minus)
+
+
+pgc_mdd2025_no23andMe_eur_processing %>% 
+  filter(!(rsID %in% 
+             {intesection_results_all_gr_signatures %>% filter(signature_derivation == "universal") %>% .$rsID})) %>% 
+  mutate(signature_derivation = "universal") 
+
+pgc_mdd2025_no23andMe_eur_processing %>% 
+  filter(!(rsID %in% 
+             {intesection_results_all_gr_signatures %>% filter(signature_derivation == "marpiech_cluster") %>% .$rsID})) %>% 
+  mutate(signature_derivation = "marpiech_cluster") 
+
+
+  
+
+
+ggplot(pgc_mdd2025_no23andMe_eur, aes(x = -log10(pvalue))) +
+  geom_histogram(binwidth = 0.1, fill = "gray80") +
+  labs(title = "Histogram -log10(p-value)",
+       x = expression(-log[10](p)),
+       y = "Liczba obserwacji (log10)") +
+  scale_y_log10() +
+  theme_minimal()
+
+ggplot(pgc_mdd2025_no23andMe_eur, aes(x = -log10(pvalue))) +
+  geom_density(fill = "gray80", alpha = 0.7) +
+  labs(title = "Density plot -log10(p-value)",
+       x = expression(-log[10](p),
+       y = "Gęstość") +
+  theme_minimal()
+
+# histogram
+intesection_results_all_gr_signatures %>% 
+  filter(range_plus_minus != "100") %>% 
+  select(rsID, pvalue, range_plus_minus, signature_derivation) %>% 
+  unique() %>% 
+  ggplot(aes(x = -log10(pvalue))) +
+  geom_histogram(binwidth = 0.1, fill = "gray80") +
+  geom_vline(xintercept = c(5, 8), linetype = "dashed", color = "red", size = 0.7) +
+  labs(title = "Histogram -log10(p-value)",
+       x = expression(-log[10](p)),
+       y = "Liczba obserwacji (log10)") +
+  scale_y_log10() +
+  theme_minimal() +
+  facet_grid(signature_derivation ~ range_plus_minus)
+
+
+intesection_results_all_gr_signatures %>% 
+  filter(range_plus_minus != "100") %>% 
+  group_by(signature_derivation, range_plus_minus) %>% 
+  nest() %>% 
+  mutate(n_rsid_pvalue_10e8 = map(data, ~ .x %>% 
+                             filter(pvalue < 0.00000001) %>% 
+                             .$rsID %>% unique %>% length)) %>% 
+  mutate(n_genes_pvalue_10e8 = map(data, ~ .x %>% 
+                                    filter(pvalue < 0.00000001) %>% 
+                                    .$gene_symbol %>% unique %>% length)) %>%
+  mutate(n_rsid_pvalue_10e5_10e8 = map(data, ~ .x %>% 
+                                    filter(pvalue > 0.00000001 & pvalue < 0.00001) %>% 
+                                    .$rsID %>% unique %>% length)) %>% 
+  mutate(n_genes_pvalue_10e5_10e8 = map(data, ~ .x %>% 
+                                     filter(pvalue > 0.00000001 & pvalue < 0.00001) %>% 
+                                     .$gene_symbol %>% unique %>% length)) %>%
+  mutate(n_rsid_pvalue_higher_10e5 = map(data, ~ .x %>% 
+                                         filter(pvalue > 0.00001) %>% 
+                                         .$rsID %>% unique %>% length)) %>% 
+  mutate(n_genes_pvalue_higher_10e5 = map(data, ~ .x %>% 
+                                          filter(pvalue > 0.00001) %>% 
+                                          .$gene_symbol %>% unique %>% length)) %>%
+  unnest(n_rsid_pvalue_10e8, n_genes_pvalue_10e8,
+         n_rsid_pvalue_10e5_10e8, n_genes_pvalue_10e5_10e8,
+         n_rsid_pvalue_higher_10e5, n_genes_pvalue_higher_10e5)
+
+
+intesection_results_all_gr_signatures %>% 
+  filter(pvalue < 0.00000001) %>% 
+  filter(range_plus_minus == "100000") %>% 
+  filter(signature_derivation == "tissue_cell") %>% arrange(pvalue) %>% 
+  head(150)  %>% tail(25)
+
+# fist
+intesection_results_all_gr_signatures %>% 
+  head
+
+
+# PMID:39814019

@@ -1,0 +1,20 @@
+papers_data_preprocessing %>% 
+  filter(!(treatment %in% c("TNF", "LPS", "vehicle-ethanol", "TNFalpha"))) %>% 
+  filter(!(source %in% c("marpiech_tissues_dex",  "pmid:37217509"))) %>%
+  filter(source != "marpiech_tissues") %>% 
+  mutate(label = paste(source, tissue, cell, treatment, treatment_type, time, dose, regulation, sep = "_")) %>% 
+  select(-c(index, gene_name, ensembl_gene_id, ensembl_transcript_id, refseq_mrna_id, hgnc_symbol, alias, info, fdr, log2ratio)) -> tmp
+
+
+tmp <- papers_data_preprocessing %>% 
+  # filter(!(treatment %in% c("TNF", "LPS", "vehicle-ethanol", "TNFalpha"))) %>% 
+  # filter(!(source %in% c("marpiech_tissues_dex",  "pmid:37217509"))) %>% 
+  # filter(source != "marpiech_tissues") %>% 
+  mutate(label = paste(source, tissue, cell, treatment, treatment_type, regulation, sep = "_")) %>% 
+  select(c(hgnc_symbol, label)) %>% 
+  split(.$label, .$hgnc_symbol) %>% 
+  lapply(., unique) %>% 
+  lapply(., function(x){x$hgnc_symbol})
+
+
+tmp %>% length()

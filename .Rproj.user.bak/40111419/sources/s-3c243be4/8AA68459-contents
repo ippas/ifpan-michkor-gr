@@ -1,0 +1,11 @@
+names_list <- c("example-1e-05", "sample-1e-06", "test-1e-07", "demo-1e-08")
+patterns_to_remove <- c("-1e-05", "-1e-06", "-1e-07", "-1e-08")
+
+# Create a combined pattern using paste to match any of the patterns
+pattern <- paste(patterns_to_remove, collapse = "|")
+
+# Replace the matched patterns with an empty string
+cleaned_names <- sapply(names_list, function(x) gsub(pattern, "", x))
+
+# See the cleaned names
+print(cleaned_names)

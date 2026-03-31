@@ -146,7 +146,7 @@ processing_overlap_results <- function(data, genes_list, rows_to_filter, cols_to
   
   # Prepare the output list containing all processed data
   output_list <- list(
-    original_data = list(list = original_list, df = original_df, rows = original_rows, cols = original_rows, overlap_genes = original_overlap_genes),
+    original_data = list(list = original_list, df = original_df, rows = original_rows, cols = original_cols, overlap_genes = original_overlap_genes),
     significant_data = list(list = significant_list, df = significant_df, rows = significant_rows, cols = significant_cols, overlap_genes = significant_overlap_genes),
     significant_uniq_data = list(list = significant_uniq_list, df = significant_uniq_df, rows = significant_uniq_rows, cols = significant_uniq_cols, overlap_genes = significant_uniq_overlap_genes),
     gene_list_sizes = gene_list_sizes

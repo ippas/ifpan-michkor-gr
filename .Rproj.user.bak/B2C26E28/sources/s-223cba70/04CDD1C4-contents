@@ -1,0 +1,2 @@
+hgnc_symbols_df_v110 %>% 
+  write_tsv_xlsx(., tsv_file = "results/")

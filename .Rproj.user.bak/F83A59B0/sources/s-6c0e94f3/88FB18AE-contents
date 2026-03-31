@@ -1,0 +1,93 @@
+# papers_gene_list %>% unname() %>% unlist %>% unique() -> original_genes
+# 
+# sample(hgnc_symbols_vector_v110, length(original_genes)) -> random_genes
+# 
+# map_df <- data.frame(original = original_genes,
+#                      random = random_genes)
+# 
+# 
+# 
+# replace_genes <- function(gene_vector, mapping_df) {
+#   sapply(gene_vector, function(gene) {
+#     if (gene %in% mapping_df$original) {
+#       return(mapping_df$random[match(gene, mapping_df$original)])
+#     } else {
+#       return(gene) # Return the gene as is if not found in the mapping
+#     }
+#   })
+# }
+# 
+# random_gene_list <- lapply(papers_gene_list, replace_genes, mapping_df = map_df)
+# 
+# random_gene_list %>% lapply(., length)
+# 
+# names(random_gene_list) <- paste0("random", seq_along(random_gene_list))
+# random_gene_list
+
+
+generate_random_gene_list_dependent <- function(gene_list, gene_vector, seed = NULL) {
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+  
+  # Extract unique genes from the gene list
+  original_genes <- unique(unlist(unname(gene_list)))
+  
+  # Sample random genes
+  random_genes <- sample(gene_vector, length(original_genes))
+  
+  # Create a mapping dataframe
+  map_df <- data.frame(original = original_genes, random = random_genes)
+  
+  # Function to replace original genes with random genes
+  replace_genes <- function(gene_vector, mapping_df) {
+    sapply(gene_vector, function(gene) {
+      if (gene %in% mapping_df$original) {
+        return(mapping_df$random[match(gene, mapping_df$original)])
+      } else {
+        return(gene) # Return the gene as is if not found in the mapping
+      }
+    })
+  }
+  
+  # Create random_gene_list by applying the replacement function
+  random_gene_list <- lapply(gene_list, replace_genes, mapping_df = map_df)
+  
+  # Name each element in the list
+  names(random_gene_list) <- paste0("random", seq_along(random_gene_list))
+  
+  return(random_gene_list)
+}
+
+generate_random_gene_list_dependent <- function(gene_list, gene_vector, seed = NULL) {
+  if (!is.null(seed)) {
+    set.seed(seed)
+  }
+  
+  original_genes <- unique(unlist(unname(gene_list)))
+  random_genes <- sample(gene_vector, length(original_genes))
+  
+  # Create a named vector for faster lookup
+  gene_replacement <- setNames(random_genes, original_genes)
+  
+  # Replace genes using vectorized operations where possible
+  replace_genes <- function(gene_vector, replacement_vector) {
+    # Use the replacement vector for fast lookup
+    replaced_genes <- replacement_vector[gene_vector]
+    # Replace NA values with original genes (for genes not found in the mapping)
+    replaced_genes[is.na(replaced_genes)] <- gene_vector[is.na(replaced_genes)]
+    return(replaced_genes)
+  }
+  
+  random_gene_list <- lapply(gene_list, replace_genes, replacement_vector = gene_replacement)
+  
+  names(random_gene_list) <- paste0("random", seq_along(random_gene_list))
+  
+  return(random_gene_list)
+}
+
+Sys.time() -> start_time
+random_gene_list2 <- generate_random_gene_list_dependent(papers_gene_list, hgnc_symbols_vector_v110, seed = 123)
+Sys.time() -> end_time
+
+end_time - start_time

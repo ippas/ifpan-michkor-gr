@@ -1,0 +1,27 @@
+{
+    "id": "4E03A5DC",
+    "path": "~/projects/ifpan-michkor-gr/preprocessing/gr-list-preprocessing-part2.R",
+    "project_path": "preprocessing/gr-list-preprocessing-part2.R",
+    "type": "r_source",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1712568267764.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "tempName": "Untitled4",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "5,41",
+        "scrollLine": "0"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1713522092,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1713522092887,
+    "read_only": false,
+    "read_only_alternatives": []
+}

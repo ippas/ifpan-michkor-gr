@@ -1,0 +1,111 @@
+papers_data_preprocessing %>% 
+  filter(treatment != "PHA") %>% 
+  filter(treatment != "vitamin-d3") %>% 
+  filter(treatment != "vehicle-DMSO") %>% 
+  drop_na(!!!sym("log2ratio")) %>% 
+  filter(get("log2ratio") != "NA") %>% 
+  refine_gene_lists_to_rank_score(
+    data = .,
+    columns =  c(
+      "source",
+      "tissue",
+      "cell",
+      "dose",
+      "treatment",
+      "treatment_type",
+      "regulation",
+      "comparison",
+      "time",
+      "environment"
+    ),
+    size_threshold = 0,
+    # keep_column =  c("simple_tissue", "method"),
+    keep_column =  c("simple_tissue", "method", "detailed_tissue"),
+    arrange_by = "log2ratio"
+  ) -> tmp2
+  
+
+tmp$metadata %>%   filter(gene_count >= 50) %>% dim
+
+gene_list_df <- tmp$gene_lists %>%lapply(., function(x) paste(x, collapse = "|")) %>%  enframe(name = "label", value = "gene_list") %>% unnest()
+
+
+tmp$metadata %>% 
+  select(!c(method, simple_tissue)) %>% 
+  left_join(., gene_list_df, by = "label") %>% 
+  write_tsv(., file= "results/wp2-tables/table2-gene-lists.tsv", col_names = TRUE)
+
+
+tmp$metadata %>% 
+  select(!c(method, simple_tissue)) %>% 
+  left_join(., gene_list_df, by = "label") %>% 
+  select(c(label, regulation, gene_count, detailed_tissue)) %>% 
+  filter(gene_count >= 50) %>% 
+  mutate(simple_tissue = detailed_tissue) %>% 
+  mutate(simple_tissue = ifelse(simple_tissue == "lung-epithelial", "lung", simple_tissue)) %>% 
+  mutate(simple_tissue = ifelse(simple_tissue == "lung-AirwaySmoothMuscle", "lung", simple_tissue)) %>% 
+  mutate(simple_tissue = ifelse(simple_tissue == "brain-glia", "brain", simple_tissue)) %>% 
+  mutate(simple_tissue = ifelse(simple_tissue == "brain-organ", "brain", simple_tissue)) %>% 
+  mutate(simple_tissue = ifelse(simple_tissue == "blood-noMacrophages", "blood", simple_tissue)) %>% 
+  mutate(simple_tissue = ifelse(simple_tissue == "blood-macrophages", "blood", simple_tissue)) %>%
+  mutate(label = paste0(simple_tissue, "_", regulation)) %>% .$label %>% table %>% as.data.frame() %>% 
+  set_colnames(c("label", "count")) %>% 
+  filter(label %in% c("brain_up", "brain_down", "lung_up", "lung_down", "blood_down", "blood_up"))
+
+
+tmp$metadata %>% 
+  select(!c(method, simple_tissue)) %>% 
+  left_join(., gene_list_df, by = "label") %>% 
+  # select(c(label, regulation, gene_count, detailed_tissue)) %>% 
+  filter(gene_count > 50) %>% 
+  filter(grepl("|CCL2|", gene_list)) %>% 
+  select(-gene_list)
+
+
+tmp$gene_lists
+
+# Usuń elementy krótsze niż 50 genów
+filtered_gene_lists <- tmp$gene_lists[sapply(tmp$gene_lists, length) >= 50]
+
+# Wybierz pierwsze 50 genów z każdego elementu listy
+first_50_genes <- lapply(filtered_gene_lists, function(genes) genes[1:50])
+
+do.call(rbind, lapply(seq_along(first_50_genes), function(i) {
+  data.frame(label = names(first_50_genes)[i], genes = first_50_genes[[i]])
+})) %>% 
+  set_colnames(c("label", "gene")) %>% 
+  filter(gene == "ZBTB16") %>% 
+  filter(grepl("lung", label)) %>% 
+  filter(grepl())
+
+# ZBTB16
+
+
+
+
+tmp$metadata %>%
+  
+  
+  select(label, dose, gene_count, treatment)  %>% filter(dose != "NA") %>% mutate(dose_treatment = paste0(dose, "_", treatment)) %>% 
+  filter(treatment == "dexamethasone") %>%
+  mutate(
+    level_dose = if_else(
+      dose %in% c(
+        "1µM", "1μM", "4mg/day", "10µg/g/day", "40mg/kg", "5mg/kg vs 15mg/kg" 
+      ), "wysoka", "niska")) %>% 
+  filter(level_dose == "wysoka") %>% .$dose %>% unique()
+
+tmp$log2ratio %>% lapply(., function(x) {min(abs(x))}) %>% 
+  do.call(rbind, .) %>%  
+  as.data.frame() %>% 
+  rownames_to_column(var = "label") %>% 
+  set_colnames(c("label", "min_log2ratio")) -> min_log2ratio_df
+
+tmp$metadata %>% 
+  left_join(., min_log2ratio_df, by = "label") %>% 
+  arrange(desc(min_log2ratio)) %>% head(30)
+  
+  filter(min_log2ratio <= 0.5) %>% .$gene_count %>% mean
+
+  
+      

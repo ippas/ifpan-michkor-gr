@@ -1,0 +1,102 @@
+gr_gene_database_preproccesing %>% 
+  filter(!grepl("omicspred_metabolon", source)) %>%
+  filter(!grepl("omicspred_nithingale_", source)) %>% 
+  filter(!grepl("marpiech", source)) %>% 
+  filter(!grepl("marpiech", gene_list_index)) %>% 
+  select(c(source, tissue)) %>% 
+  unique() %>% 
+  .$tissue %>% table %>% 
+  as.data.frame() %>% 
+  set_colnames(c("tissue", "freq")) %>% 
+  arrange(desc(freq)) %>% 
+
+
+get_title <- function(pmid) {
+  if (pmid == "" || is.na(pmid)) {
+    return(NA)
+  }
+  tryCatch({
+    paper <- entrez_fetch(db="pubmed", id=pmid, rettype="xml", parsed=FALSE)
+    parsed_paper <- xmlParse(paper)
+    title <- xpathSApply(parsed_paper, "//ArticleTitle", xmlValue)
+    if (length(title) > 0) title[1] else NA
+  }, error = function(e) NA)
+}
+
+
+unique_pmids <- unique(papers_data_preprocessing$source) %>% str_replace_all(., "pmid:", "")
+
+titles <- sapply(unique_pmids, get_title)
+titles_df <- data.frame(source = unique_pmids, title = titles)
+
+
+papers_data_preprocessing %>% 
+  filter(!grepl("marpiech", source)) %>% 
+  filter(!grepl("marpiech", gene_list_index )) %>% 
+  select(c(source, label, tissue)) %>%
+  unique() %>% 
+  as.data.frame() %>% 
+  mutate(source = str_replace(source, "pmid:", "")) %>% 
+  left_join(titles_df, by = "source") %>% 
+  write_xlsx(., "results/gr-list-papers.xlsx")
+
+
+queued_publication_df <- data.frame(
+  pmid = c(36266471, 36266471, 32492425, 33203447, 35011590,  37187293, 34731602, 36284713,  ),
+  tissue = c("PBMCs", "neurons", "PTSD", "chondrocytes", "macrophages", "mesenhymal-stem-cells", "liver", "macrophages")
+)
+
+unique_pmids <- unique(queued_publication_df$pmid) 
+
+titles <- sapply(unique_pmids, get_title)
+titles_df <- data.frame(pmid = unique_pmids, title = titles)
+
+
+queued_publication_df%>% 
+  left_join(titles_df, by = "pmid") %>% 
+  write_xlsx(., "results/gr-list-papers-queued.xlsx")
+
+
+queued_tissue()
+queued_pmid(36266471, 32492425, 33203447, 35011590,)
+
+
+
+pmid <- "28500512 "  # Replace with the actual PMID
+paper <- entrez_fetch(db="pubmed", id=pmid, rettype="xml", parsed=TRUE)
+# Example of extracting the title
+title <- xpathSApply(paper, "//ArticleTitle", xmlValue)
+print(title)
+
+
+
+
+papers_data_preprocessing %>% 
+  filter(!grepl("marpiech", source)) %>% 
+  filter(!grepl("marpiech", gene_list_index )) %>% 
+  select(c(source, label, tissue)) %>%
+  unique() %>% 
+  as.data.frame() %>% 
+  mutate(source = str_replace(source, "pmid:", "")) %>% 
+  filter(source == 30704470)
+
+
+
+
+# Connect to the Ensembl database
+ensembl <- useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+
+# List of RefSeq IDs
+gene_ids <- c("NM_001286446.2", "NM_001361041.2", "NM_000441.2", 
+              "XR_922613.2", "XM_017011524.1", "XR_001754038.2", 
+              "XM_005268160.4")
+
+# Query the database for gene symbols
+gene_info <- getBM(attributes = c('refseq_mrna', 'hgnc_symbol'), 
+                   filters = 'refseq_mrna', 
+                   values = gene_ids, 
+                   mart = ensembl)
+
+# Print the results
+print(gene_info)
+

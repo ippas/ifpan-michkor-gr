@@ -1,0 +1,37 @@
+extract_data(chi2_results_metabolism,  
+             tissues_clusters[10:27],
+             !rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters) %>%
+  rename(cluster = Var1, metabolism = Var2) %>% 
+  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
+  arrange(fdr) %>% 
+  filter(fdr < 0.05) %>% 
+  filter(number_overlap > 1) %>% 
+  filter(!(metabolism %in% c("X-11564", "X-11261", "X-21470", "X-21467"))) %>%
+  # filter((overlap_genes %in% c( "LRIG1,CPS1","SLCO1B1,CPS1", "CPS1,SLC16A9", "SLCO1B1,CYP3A43"))) %>% 
+  # group_by(overlap_genes, cluster) %>% 
+  # nest() %>% 
+  # mutate(data = map(data, ~ .x %>% 
+  #                     arrange(fdr) %>% 
+  #                     slice(1))) %>% 
+  # unnest() %>% 
+  # ungroup %>% 
+  # as.data.frame() %>% 
+  .$overlap_genes %>%
+  strsplit(., split = ",") %>% 
+  unlist %>% 
+  unique() %>%  unique() %>% length
+  intersect(c("LRIG1", "CPS1", "SLCO1B1", "CYP3A43", "SLC16A9"))
+  walk(., ~cat(.x, "\n"))  %>% length()
+
+  filter(metabolism %in% c("X-11564", "X-11261", "X-21470", "X-21467")) %>% .$overlap_genes
+
+
+extract_data(chi2_results_metabolism,  
+             tissues_clusters[10:27],
+             !rownames(chi2_results_metabolism$p_value_matrix) %in% tissues_clusters) %>%
+  rename(cluster = Var1, metabolism = Var2) %>% 
+  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
+  arrange(fdr) %>% 
+  filter(fdr < 0.05) %>% 
+  filter(number_overlap > 1) %>% 
+  filter(overlap_genes %in% c("LRIG1,CPS1", "LRIG1,CPS1", "SLCO1B1,CPS1", "CPS1,SLC16A9", "SLCO1B1,CYP3A43"))

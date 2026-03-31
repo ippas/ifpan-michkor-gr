@@ -1,0 +1,54 @@
+papers_data_preprocessing %>% 
+  filter(!(treatment %in% treatment_to_remove)) %>% 
+  refine_gene_lists(data = .,
+                    columns = c("source", "tissue", "cell", "treatment", "treatment_type", "regulation", "comparison", "environment", "dose"),
+                    cumsum_thresholds = cumsum_thresholds,
+                    freq_thresholds = freq_thresholds,
+                    keep_column =  c("simple_tissue", "method")) -> tmp 
+  
+
+tmp$refine_gene_lists$metadata %>%
+  write.table(., file = "results/summary-table-lists/list-summary-v2.tsv", sep = "\t", col.names = T, quote = F, row.names = F)
+
+tmp$refine_gene_lists$metadata %>% 
+  drop_na(dose) %>% 
+  filter(dose != "NA") %>%  select(source, dose) %>% unique() %>% .$source %>% table %>% as.data.frame() %>%  arrange(desc(Freq)) %>% filter(Freq > 1) %>% .[,1]  %>%  as.character()-> pmid_multiple_dose
+
+c("pmid:11556892", "pmid:23650397", "pmid:23303060")
+
+tmp$refine_gene_lists$metadata %>%  
+  filter(source %in% pmid_multiple_dose) %>% select(c(source, dose, treatment)) %>% 
+  filter(source != "pmid:11556892")
+
+
+tmp$refine_gene_lists$metadata %>% 
+  drop_na(dose) %>% 
+  filter(dose != "NA") %>%  select(source, dose) %>% unique() %>% .$source %>% table %>% 
+
+papers_data_preprocessing %>% 
+  drop_na(log2ratio) %>%
+  filter(log2ratio != "NA") %>% 
+  filter(!(treatment %in% treatment_to_remove)) %>% 
+  refine_gene_lists(data = .,
+                    columns = c("source", "tissue", "cell", "treatment", "treatment_type", "regulation", "comparison", "environment"),
+                    cumsum_thresholds = cumsum_thresholds,
+                    freq_thresholds = freq_thresholds,
+                    keep_column =  c("simple_tissue", "method")) -> tmp 
+
+tmp$refine_gene_lists$metadata %>% dim
+
+
+
+papers_data_preprocessing %>% 
+  drop_na(log2ratio) %>%
+  drop_na(fdr) %>% 
+  filter(log2ratio != "NA") %>% 
+  filter(fdr != "NA") %>% 
+  filter(!(treatment %in% treatment_to_remove)) %>% 
+  refine_gene_lists(data = .,
+                    columns = c("source", "tissue", "cell", "treatment", "treatment_type", "regulation", "comparison", "environment"),
+                    cumsum_thresholds = cumsum_thresholds,
+                    freq_thresholds = freq_thresholds,
+                    keep_column =  c("simple_tissue", "method")) -> tmp 
+
+tmp$refine_gene_lists$metadata %>% dim

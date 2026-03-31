@@ -172,14 +172,7 @@ papers_data_preprocessing %>%
 
 
 ################################################################################
-
-  
-
-
 papers_data_preprocessing %>% 
-  filter(!(treatment %in% c("TNF", "LPS", "vehicle-ethanol", "TNFalpha"))) %>%
-  filter(!(comparison %in% c( "FS30_vs_BLAM", "FS120_vs_BLAM", "FS360_vs_BLAM", "FS180_vs_BLAM"))) %>%
-  filter(dose != "0mg/kg") %>%
   filter(source != "marpiech_tissues") %>% 
   extract_keys_values(., "info", keys = "method") %>% 
   mutate(simple_tissue = ifelse(source == "michkor-cells", "brain", simple_tissue)) %>% 
@@ -187,8 +180,206 @@ papers_data_preprocessing %>%
   mutate(regulation = ifelse(source == "pmid:23303060" & log2ratio > 0, "up", 
                              ifelse(source == "pmid:23303060" & log2ratio <= 0, "down", regulation))) %>% 
   filter(!(source == "michkor-cells" & hgnc_symbol == "ARHGAP8")) %>% 
+  filter(!(source %in% c("marpiech_tissues_dex"))) %>% 
   filter(!(source %in% c("marpiech_tissues_dex"))) -> papers_data_preprocessing
 
+papers_data_preprocessing %>% head
+
+
+# save as raw preprocessing database
+write.table(papers_data_preprocessing, 
+            file = "results/wp2-tables/table1-raw-database-preprocessing.tsv",
+            col.names = TRUE,
+            row.names = FALSE,
+            quote = FALSE,
+            sep = "\t")
+
+papers_data_preprocessing %>% 
+  filter(!(treatment %in% c("TNF", "LPS", "vehicle-ethanol", "TNFalpha"))) %>% 
+  filter(!(comparison %in% c( "FS30_vs_BLAM", "FS120_vs_BLAM", "FS360_vs_BLAM", "FS180_vs_BLAM"))) %>% 
+  filter(is.na(dose) | dose != "0mg/kg") %>%  
+  mutate(source = ifelse(source == "michkor-cells", "pmid:28381250", source)) -> papers_data_preprocessing
+
+
+
+################################################################################
+# correcting log2ratio and regulation
+
+papers_data_preprocessing %>% 
+  filter(source == "pmid:34272384") %>% 
+  mutate(log2ratio = ifelse(source == "pmid:34272384", as.numeric(log2ratio)*-1, log2ratio) %>% as.character()) %>% 
+  mutate(log2ratio = ifelse(source == "pmid:34272384" & regulation == "down", "tmp-up", regulation) %>% as.character()) %>% 
+  mutate(log2ratio = ifelse(source == "pmid:34272384" & regulation == "up", "tmp-down", regulation) %>% as.character()) %>% 
+  filter(hgnc_symbol == "FKBP5")
+
+
+papers_data_preprocessing %>% 
+  mutate(
+    log2ratio = if_else(
+      source == "pmid:34272384", 
+      as.numeric(log2ratio) * -1, 
+      as.numeric(log2ratio)
+    ) %>% as.character(),
+    regulation = case_when(
+      source == "pmid:34272384" & regulation == "down" ~ "up",
+      source == "pmid:34272384" & regulation == "up"   ~ "down",
+      TRUE ~ regulation
+    )
+  ) %>% 
+  mutate(
+    log2ratio = if_else(
+      source == "pmid:24926665", 
+      as.numeric(log2ratio) * -1, 
+      as.numeric(log2ratio)
+    ) %>% as.character(),
+    regulation = case_when(
+      source == "pmid:24926665" & regulation == "down" ~ "up",
+      source == "pmid:24926665" & regulation == "up"   ~ "down",
+      TRUE ~ regulation
+    )
+  ) -> papers_data_preprocessing2
+
+# prepare mapper gene_name to hgnc_symbol based on gr-database
+papers_data_preprocessing %>% 
+  filter(species == "mouse") %>% 
+  select(gene_name, ensembl_gene_id, hgnc_symbol) %>% 
+  unique -> mouse_genes_to_hgnc_mapper
+
+mouse_genes_to_hgnc_mapper %>% 
+  filter(ensembl_gene_id %in% liver_intestine_36699046$ensembl_id) %>% dim
+
+# read data from paper 36699046
+liver_intestine_36699046 <- read.csv("data/overlapping-gr-genes/liver-intestine-36699046.tsv", sep = "\t")
+
+# Function to retrieve and format gene information
+get_mouse_gene_info <- function(ensembl_ids) {
+  # Connect to the Ensembl database for mouse genes
+  ensembl_mouse <- biomaRt::useMart("ensembl", dataset = "mmusculus_gene_ensembl", host = "https://www.ensembl.org")
+  
+  # Retrieve data from Ensembl
+  gene_data <- biomaRt::getBM(
+    attributes = c("ensembl_gene_id", "mgi_symbol", 
+                   "ensembl_transcript_id", "refseq_mrna", 
+                   "hgnc_symbol", "external_synonym"),
+    filters = "ensembl_gene_id",
+    values = ensembl_ids,
+    mart = ensembl_mouse
+  )
+  
+  # Convert missing values to NA
+  gene_data[gene_data == ""] <- NA
+  
+  # Group by Ensembl Gene ID and MGI symbol, then concatenate multiple values with "|"
+  gene_data <- gene_data %>%
+    group_by(ensembl_gene_id, mgi_symbol, hgnc_symbol) %>%
+    summarise(
+      ensembl_transcript_id = paste(unique(ensembl_transcript_id[!is.na(ensembl_transcript_id)]), collapse = "|"),
+      refseq_mrna_id = paste(unique(refseq_mrna[!is.na(refseq_mrna)]), collapse = "|"),
+      alias = paste(unique(external_synonym[!is.na(external_synonym)]), collapse = "|"),
+      .groups = "drop"
+    )
+  
+  return(gene_data)
+}
+
+# prepare information about ensemb_id from 36699046
+liver_intestine_36699046 %>% 
+  # filter(!grepl("Rik", gene_name)) %>% 
+  .$ensembl_id -> ensembl_ids_36699046
+
+
+result <- get_mouse_gene_info(ensembl_ids_36699046)
+
+result %>% 
+  rename(mgi_symbol = "gene_name") -> result
+
+result %>% select(-hgnc_symbol) %>% left_join(., mouse_genes_to_hgnc_mapper[, c("gene_name", "hgnc_symbol")], by = "gene_name") -> result_with_hgnc
+
+result_with_hgnc
+
+papers_data_preprocessing2 %>%
+  filter(source == "pmid:36699046") %>% 
+  colnames()
+
+
+liver_intestine_36699046 %>% 
+  left_join(., {result_with_hgnc %>%select(-gene_name)}, by = c("ensembl_id" = "ensembl_gene_id")) %>% 
+  select(-article_source) %>% 
+  mutate(pmid = paste0("pmid:", pmid)) %>% 
+  rename(pmid = "source") %>% 
+  rename(ensembl_id = "ensembl_gene_id") %>%  
+  mutate(index = "corrected") %>% 
+  mutate(gene_list_index = "corrected") %>% 
+  mutate(gene_list_number = "corrected") %>% 
+  mutate(comparison = NA) %>% 
+  mutate(info = paste("log2ratio:", log2ratio, 
+                      "|regulation:", regulation, 
+                      "|species:", species, 
+                      "|tissue:", tissue, 
+                      "|cell:", cell, 
+                      "|environment:", environment, 
+                      "|treatment:", treatment, 
+                      "|dose:", dose, 
+                      "|time:", time, 
+                      "|fdr:", fdr, 
+                      "|fdr_threshold:", fdr_threshold, 
+                      "|method:", method, 
+                      "|strain:", strain, 
+                      "|statistical_method:", statistical_method, 
+                      "|treatment_type:", treatment_type, 
+                      sep = "")) %>% 
+  mutate(simple_tissue = ifelse(tissue == "liver", "liver", "small-intestine")) %>% 
+  mutate(detailed_tissue = tissue) %>% 
+  mutate(label =  paste(source, tissue, "NA", sep = "_")) %>% 
+  select(c("index", "gene_name", "gene_list_index", "gene_list_number", 
+           "source", "ensembl_gene_id", "ensembl_transcript_id", 
+           "refseq_mrna_id", "hgnc_symbol", "alias", "info", "tissue", "cell", 
+           "species", "environment", "treatment", "dose", "time", "log2ratio", 
+           "fdr", "statistical_method", "treatment_type", "regulation", 
+           "comparison", "label", "simple_tissue", "detailed_tissue", "method")) -> processing_liver_intestine_36699046
+
+
+papers_data_preprocessing2 %>% 
+  filter(source != "pmid:36699046") %>% 
+  rbind(., processing_liver_intestine_36699046) %>% 
+  mutate(time = ifelse(source == "pmid:22673229", "1.5h", time)) %>% 
+  mutate(log2ratio = as.character(log2ratio)) -> papers_data_preprocessing2
+
+papers_data_preprocessing2 %>% 
+  mutate(time = recode(time, 
+                       "1" = "1h", 
+                       "10" = "10h", 
+                       "2" = "2h", 
+                       "4" = "4h", 
+                       "24" = "24h", 
+                       "3m" = "3months",
+                       "8weeks" = "8weeks",
+                       "18h" = "18h")) -> papers_data_preprocessing2
+
+papers_data_preprocessing2 -> papers_data_preprocessing
+
+# PMID: 28381250
+
+papers_data_preprocessing %>% 
+  filter(!(treatment %in% c("NA", "PHA", "formoterol", "aldosterone", "vehicle-DMSO", "vitamin-d3", "mifepristone", "eplerenone"))) %>% # clean treatment 
+  mutate(treatment = ifelse(treatment == "corticoterone", "corticosterone", treatment)) %>% 
+  mutate(treatment_type = ifelse(time == "3weeks", "chronic", treatment_type)) %>% 
+  mutate(treatment_type = ifelse(time == "3m", "chronic", treatment_type)) %>% 
+  mutate(treatment_type = ifelse(time %in% c("1h", "2h", "3h", "4h", "5h", "6h", "12h", "18h", "24h") & is.na(treatment_type), "acute", treatment_type)) %>% 
+  mutate(label = paste(label, treatment, dose, time, treatment_type, environment, comparison, sep = "_")) -> papers_data_preprocessing
+  
+
+################################################################################
+write.table(papers_data_preprocessing, 
+            file = "results/wp2-tables/table2-filter-database-preprocessing.tsv",
+            col.names = TRUE,
+            row.names = FALSE,
+            quote = FALSE,
+            sep = "\t")
+
+
+
+papers_data_preprocessing %>% dim
 
 papers_data_preprocessing %>% 
   filter(!(source %in% c("marpiech_tissues_dex"))) %>%
@@ -198,4 +389,8 @@ papers_data_preprocessing %>%
 
 
 
+# przygotować wyczyszczoną wersję bazy genów GR-zależnych
+
+
 # split(papers_data_preprocessing$hgnc_symbol, papers_data_preprocessing$label) %>% lapply(., unique) -> papers_gene_list
+

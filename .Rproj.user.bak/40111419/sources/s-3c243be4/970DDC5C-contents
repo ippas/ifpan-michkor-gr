@@ -1,0 +1,173 @@
+################################################################################
+# tissue: PMID
+
+process_tissue_data(
+  data = gr_database_blocked_genes_list$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata,
+  columns = c("source", "tissue", "system", "simple_tissue"),
+  additional_columns = c("treatment") # Add or remove as needed
+) %>% barplot_tissue_data()
+  
+
+# Example of processing data
+processed_data <- process_data(
+  data = gr_database_blocked_genes_list$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata,
+  columns = c("source", "tissue", "system", "simple_tissue"),
+  additional_columns = c("cell", "treatment", "dose") # Add or remove as needed
+)
+
+# Example of plotting data
+plot_data(processed_data, count_column = "simple_tissue")
+  
+
+gr_database_blocked_genes_list$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata  %>% 
+  # select(c(tissue, cell)) %>% unique %>% as.data.frame() %>% 
+  mutate(tissue = ifelse(is.na(tissue), cell, tissue)) %>% 
+  # select(tissue) %>%
+  categorize_tissue(tissue_column = "tissue") %>%
+  select(c(source, tissue, system, simple_tissue)) %>% unique() %>%
+  select(source, simple_tissue) %>% 
+  unique() %>%
+  .$simple_tissue %>% table() %>% 
+  as.data.frame() %>% 
+  set_colnames(c("tissue", "freq")) %>% 
+  arrange(desc(freq)) %>% 
+  ggplot(., aes(x = reorder(tissue, -freq), y = freq)) + 
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+
+################################################################################
+# tissue: PMID + cell
+gr_database_blocked_genes_list$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata %>% 
+  # select(c(tissue, cell)) %>% unique %>% as.data.frame() %>% 
+  mutate(tissue = ifelse(is.na(tissue), cell, tissue)) %>% 
+  # select(tissue) %>%
+  categorize_tissue(tissue_column = "tissue") %>%
+  select(c(source, tissue, cell, system, simple_tissue)) %>% unique() %>%
+  select(source, cell, simple_tissue) %>% 
+  unique() %>%
+  .$simple_tissue %>% table() %>% 
+  as.data.frame() %>% 
+  set_colnames(c("tissue", "freq")) %>% 
+  arrange(desc(freq)) %>% 
+  ggplot(., aes(x = reorder(tissue, -freq), y = freq)) + 
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+
+###############################################################################
+# tissue: PMID + cell + treatment
+gr_database_blocked_genes_list$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata %>% 
+  # select(c(tissue, cell)) %>% unique %>% as.data.frame() %>% 
+  mutate(tissue = ifelse(is.na(tissue), cell, tissue)) %>% 
+  # select(tissue) %>%
+  categorize_tissue(tissue_column = "tissue") %>%
+  select(c(source, tissue, cell, treatment, system, simple_tissue)) %>% unique() %>%
+  select(source, cell, treatment, simple_tissue) %>% unique() %>% as.data.frame()
+
+
+gr_database_blocked_genes_list$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata  %>% 
+  # select(c(tissue, cell)) %>% unique %>% as.data.frame() %>% 
+  mutate(tissue = ifelse(is.na(tissue), cell, tissue)) %>% 
+  # select(tissue) %>%
+  categorize_tissue(tissue_column = "tissue") %>%
+  select(c(source, tissue, cell, treatment, system, simple_tissue)) %>% unique() %>%
+  select(source, cell, treatment, simple_tissue) %>% 
+  unique() %>%
+  .$simple_tissue %>% table() %>% 
+  as.data.frame() %>% 
+  set_colnames(c("tissue", "freq")) %>% 
+  arrange(desc(freq)) %>% 
+  ggplot(., aes(x = reorder(tissue, -freq), y = freq)) + 
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+  
+###############################################################################
+# tissue: PMID + cell + treatment + dose
+gr_database_blocked_genes_list$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata %>% 
+  # select(c(tissue, cell)) %>% unique %>% as.data.frame() %>% 
+  mutate(tissue = ifelse(is.na(tissue), cell, tissue)) %>% 
+  # select(tissue) %>%
+  categorize_tissue(tissue_column = "tissue") %>%
+  select(c(source, tissue, cell, treatment, system, simple_tissue, dose)) %>% unique() %>%
+  select(source, cell, treatment, simple_tissue, dose) %>% 
+  unique() %>% 
+  as.data.frame()  %>% filter(simple_tissue == "brain")
+
+
+gr_database_blocked_genes_list$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata  %>% 
+  # select(c(tissue, cell)) %>% unique %>% as.data.frame() %>% 
+  mutate(tissue = ifelse(is.na(tissue), cell, tissue)) %>% 
+  # select(tissue) %>%
+  categorize_tissue(tissue_column = "tissue") %>%
+  select(c(source, tissue, cell, treatment, system, simple_tissue, dose)) %>% unique() %>%
+  select(source, cell, treatment, simple_tissue, dose) %>% 
+  unique() %>%
+  .$simple_tissue %>% table() %>% 
+  as.data.frame() %>% 
+  set_colnames(c("tissue", "freq")) %>% 
+  arrange(desc(freq)) %>% 
+  ggplot(., aes(x = reorder(tissue, -freq), y = freq)) + 
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+
+###############################################################################
+# tissue: PMID + cell + treatment + dose + type
+gr_database_blocked_genes_list$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata %>% 
+  # select(c(tissue, cell)) %>% unique %>% as.data.frame() %>% 
+  mutate(tissue = ifelse(is.na(tissue), cell, tissue)) %>% 
+  # select(tissue) %>%
+  categorize_tissue(tissue_column = "tissue") %>%
+  select(c(source, tissue, cell, treatment, system, simple_tissue, dose, treatment_type)) %>% unique() %>%
+  select(source, cell, treatment, simple_tissue, dose, treatment_type) %>% 
+  unique()
+
+
+gr_database_blocked_genes_list$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata  %>% 
+  # select(c(tissue, cell)) %>% unique %>% as.data.frame() %>% 
+  mutate(tissue = ifelse(is.na(tissue), cell, tissue)) %>% 
+  # select(tissue) %>%
+  categorize_tissue(tissue_column = "tissue") %>%
+  select(c(source, tissue, cell, treatment, system, simple_tissue, dose, treatment_type)) %>% unique() %>%
+  select(source, cell, treatment, simple_tissue, dose, treatment_type) %>% 
+  unique() %>%
+  .$simple_tissue %>% table() %>% 
+  as.data.frame() %>% 
+  set_colnames(c("tissue", "freq")) %>% 
+  arrange(desc(freq)) %>% 
+  ggplot(., aes(x = reorder(tissue, -freq), y = freq)) + 
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+
+###############################################################################
+# tissue: PMID + cell + treatment + dose + type + time
+gr_database_blocked_genes_list$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata %>% 
+  # select(c(tissue, cell)) %>% unique %>% as.data.frame() %>% 
+  mutate(tissue = ifelse(is.na(tissue), cell, tissue)) %>% 
+  # select(tissue) %>%
+  categorize_tissue(tissue_column = "tissue") %>%
+  select(c(source, tissue, cell, treatment, system, simple_tissue, dose, treatment_type, time)) %>% unique() %>%
+  select(source, cell, treatment, simple_tissue, dose, treatment_type, time) %>% 
+  unique()
+
+gr_database_blocked_genes_list$GR_dependent_gene_lists_pmid_tissue_cell_treatment_type_time_dose_regulation$metadata  %>% 
+  # select(c(tissue, cell)) %>% unique %>% as.data.frame() %>% 
+  mutate(tissue = ifelse(is.na(tissue), cell, tissue)) %>% 
+  # select(tissue) %>%
+  categorize_tissue(tissue_column = "tissue") %>%
+  select(c(source, tissue, cell, treatment, system, simple_tissue, dose, treatment_type, time)) %>% unique() %>%
+  select(source, cell, treatment, simple_tissue, dose, treatment_type, time) %>% 
+  unique() %>%
+  .$simple_tissue %>% table() %>% 
+  as.data.frame() %>% 
+  set_colnames(c("tissue", "freq")) %>% 
+  arrange(desc(freq)) %>% 
+  ggplot(., aes(x = reorder(tissue, -freq), y = freq)) + 
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = 3, color = "red", linetype = "dashed") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+
+

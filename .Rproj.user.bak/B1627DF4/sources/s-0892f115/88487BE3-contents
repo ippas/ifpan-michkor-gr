@@ -1,0 +1,20 @@
+extract_data(chi2_results, !rownames(chi2_results$p_value_matrix) %in% excluded_rows, excluded_rows[1:9]) %>% 
+  rename(paper = Var1, tissue = Var2) %>% 
+  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
+  arrange(fdr) %>% 
+  filter(fdr < 0.05) %>% .$paper %>% unique() %>%  as.character()
+
+
+extract_data(chi2_results, !rownames(chi2_results$p_value_matrix) %in% excluded_rows, excluded_rows[1:9]) %>% 
+  rename(paper = Var1, tissue = Var2) %>% 
+  mutate(fdr = p.adjust(p_value, method = "fdr")) %>% 
+  arrange(fdr) %>% 
+  filter(fdr < 0.05) %>% 
+  filter(paper == "michkor-cells_NA_astrocyte")
+
+
+gr_gene_database %>%
+  filter(
+    grepl("omicspred_metabolon", source) |
+      grepl("omicspred_nithingale_", source)
+  ) %>% .$gene_list_index %>% unique() %>%  length

@@ -1,0 +1,83 @@
+read_genes_from_phenotype_models( = "data/prs-models-pan-biobank-uk/") -> genes_phenotypes_PanUkBiobank
+
+read.csv("data/phenotypes/panukbiobank-phenotype-category.csv") %>%
+  filter(category_type == "320_Origin_Categories") %>%
+  group_by(category_name) %>%
+  nest() %>%
+  mutate(n = map_int(data, nrow)) %>%
+  filter(n >= 10, n <= 300) %>%
+  pull(category_name) 
+
+lapply(categories_biobankuk, function(x){
+  filter_phenotypes_by_category(
+    genes_list = genes_phenotypes_PanUkBiobank,
+    category_name = x,
+    path_metafile = "data/phenotypes/panukbiobank-phenotype-category.csv"
+  ) %>% unname() %>%
+    unlist %>%
+    unique() # This line sets the name of each list element
+}) %>%
+  lapply(., length) %>%
+  setNames(categories_biobankuk) %>%
+  do.call(rbind, .) %>%
+  as.data.frame %>%
+  rownames_to_column(., var = "category") %>%
+  rename(n_genes=V1) -> biobank_category_size_df
+
+
+
+overlap_resutls_random_dependent_fdr0.01 %>%
+  enframe(name = "category", value = "data") %>%
+  mutate(n_overlap_genes = map_dbl(data, ~ .x$significant_data$df$overlap_genes %>%
+                                     strsplit(., ",") %>%
+                                     unlist() %>%
+                                     unique() %>%
+                                     length())) %>%
+  # Arrange the data from largest to smallest number of unique genes
+  arrange(desc(n_overlap_genes)) %>%
+  select(c(category, n_overlap_genes)) %>%
+  as.data.frame() %>%
+  left_join(., biobank_category_size_df, by = "category") %>%
+  left_join(., overlap_results_preprocessing[, -2], by = "category") -> tmp_df
+
+
+
+
+
+# tmp_df %>% 
+#   ggplot(aes(x = log2(n_genes), y = log2(n_overlap_genes))) +
+#   geom_point()
+# 
+# tmp_df %>%  head
+# 
+# tmp_df %>% 
+#   ggplot(aes(x = log2(n_genes), y = log2(signif_overlap))) +
+#   geom_point() +
+#   geom_smooth(method = "lm", se = T) 
+# 
+# 
+# tmp_df %>% 
+#   mutate(n_overlap_by_n_genes = n_overlap_genes/n_genes) %>% 
+#   mutate(signif_overlap_by_phenotypes = signif_overlap/number_phenotypes) %>% 
+#   mutate(n_genes_by_pheno = n_genes/number_phenotypes)-> tmp_df
+
+
+p1 <- gene_overlap_regression_plot(
+  data = biobank_category_overlap_info, 
+  x_var = n_genes, 
+  y_var = signif_phenotypes, 
+  x_transform = TRUE, 
+  y_transform = TRUE, 
+  y_divisor = 1
+)
+
+p2 <- gene_overlap_regression_plot(
+  data = biobank_category_overlap_info, 
+  x_var = n_genes, 
+  y_var = signif_phenotypes/number_phenotypes, 
+  x_transform = TRUE, 
+  y_transform = TRUE, 
+  y_divisor = 1
+)
+
+p1 + p2

@@ -1,0 +1,22 @@
+
+genebass_df <- read.delim("data/databases/genebass/Pvalue_Burden_1e-10_lite.tsv", header = TRUE, sep = "\t")
+
+
+genebass_df %>% dim
+
+genebass_df %>% 
+  mutate(description = str_replace_all(description, " ", "_")) %>% 
+  mutate(label = paste0(phenocode, "_", description)) %>%
+  select(c(gene_symbol, label)) %>% 
+  unique() -> preprocessing_genebass_df
+
+
+preprocessing_genebass_df %>% head
+
+# Konwersja do listy wektorów
+genebass_list <- split(preprocessing_genebass_df$gene_symbol, preprocessing_genebass_df$label)
+
+# Wyświetlenie wynikowej listy
+lapply(genebass_list, length) %>% unname() %>% unlist %>% hist
+
+genebass_list %>% unname %>% unlist %>% table %>% as.data.frame() %>% .$Freq %>% summary

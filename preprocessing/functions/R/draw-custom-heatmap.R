@@ -172,13 +172,13 @@ draw_custom_heatmap <- function(data_list,
   
   # Create color ramp
   pastel_colors <- colorRampPalette(c(palette))(100)
-  # pastel_colors <- colorRamp2(c(0, 2, 4, 6, 8), palette)
+  pastel_colors <- colorRamp2(c(0, 2, 4, 6, 8), palette)
   
   
   # Define the heatmap with cell_fun to add text inside each cell
   ht <- Heatmap(chi2_matrix, name = "example", 
                 col = pastel_colors,
-                cluster_rows = T, cluster_columns = T, 
+                # cluster_rows = T, cluster_columns = T, 
                 row_names_max_width = row_names_margin,
                 column_names_max_height = column_names_margin,
                 # heatmap_legend_param = list(direction = "horizontal"),
@@ -384,5 +384,415 @@ draw_custom_heatmap <- function(data_list,
 #   col_significant = F,
 #   gene_list_sizes = T
 # )
+draw_custom_heatmap_v2 <- function(data_list, 
+                                   data_type,
+                                   p_thresholds = c(0.05, 0.01),
+                                   color_rects = c("green", "red"),
+                                   lwd_rect = 2,
+                                   alpha_rect = 1,
+                                   apply_filling = TRUE,
+                                   color_filling = "green",
+                                   size_filling = 1,
+                                   alpha_filling = 1,
+                                   pch_filling = 16,
+                                   palette = c(
+                                     "pastel_blue"       = "#69A6D1",
+                                     "pastel_light_blue" = "#94DFFF",
+                                     "white"             = "#ffffcc",
+                                     "pastel_orange"     = "#fed976",
+                                     "pastel_red"        = "#fc4e2a"
+                                   ),
+                                   color_scale_range = NULL,
+                                   gene_list_sizes = TRUE,
+                                   col_mapping_vector = NULL, 
+                                   row_mapping_vector = NULL,
+                                   col_significant = FALSE,
+                                   overlap_threshold = 3,
+                                   ...
+) {
+  if (gene_list_sizes) {
+    # kolumny
+    if (is.null(col_mapping_vector)) {
+      data_list[[data_type]]$list$p_value_matrix %>% colnames() -> col_mapping_vector
+      names(col_mapping_vector) <- col_mapping_vector
+      intersect(names(col_mapping_vector), names(data_list$gene_list_sizes)) %>%
+        as.data.frame() %>%
+        setNames("original_name") %>%
+        mutate(name = col_mapping_vector[original_name],
+               size = data_list$gene_list_sizes[original_name]) %>%
+        mutate(new_name = paste0(name, " (", size, ")")) %>%
+        select(original_name, new_name) -> col_mapping_df
+      col_mapping_vector <- setNames(col_mapping_df$new_name, col_mapping_df$original_name)
+    } else {
+      intersect(names(col_mapping_vector), names(data_list$gene_list_sizes)) %>%
+        as.data.frame() %>%
+        setNames("original_name") %>%
+        mutate(name = col_mapping_vector[original_name],
+               size = data_list$gene_list_sizes[original_name]) %>%
+        mutate(new_name = paste0(name, " (", size, ")")) %>%
+        select(original_name, new_name) -> col_mapping_df
+      col_mapping_vector <- setNames(col_mapping_df$new_name, col_mapping_df$original_name)
+    }
+    
+    # wiersze
+    if (is.null(row_mapping_vector)) {
+      data_list[[data_type]]$list$p_value_matrix %>% rownames() -> row_mapping_vector
+      names(row_mapping_vector) <- row_mapping_vector
+      intersect(names(row_mapping_vector), names(data_list$gene_list_sizes)) %>%
+        as.data.frame() %>%
+        setNames("original_name") %>%
+        mutate(name = row_mapping_vector[original_name],
+               size = data_list$gene_list_sizes[original_name]) %>%
+        mutate(new_name = paste0(name, " (", size, ")")) %>%
+        select(original_name, new_name) -> row_mapping_df
+      row_mapping_vector <- setNames(row_mapping_df$new_name, row_mapping_df$original_name)
+    } else {
+      intersect(names(row_mapping_vector), names(data_list$gene_list_sizes)) %>%
+        as.data.frame() %>%
+        setNames("original_name") %>%
+        mutate(name = row_mapping_vector[original_name],
+               size = data_list$gene_list_sizes[original_name]) %>%
+        mutate(new_name = paste0(name, " (", size, ")")) %>%
+        select(original_name, new_name) -> row_mapping_df
+      row_mapping_vector <- setNames(row_mapping_df$new_name, row_mapping_df$original_name)
+    }
+  }
+  
+  if (length(p_thresholds) != length(color_rects)) {
+    stop("The number of thresholds and colors must be the same.")
+  }
+  
+  data <- data_list[[data_type]]$list
+  cols_to_filter <- data_list[[data_type]]$cols
+  rows_to_filter <- data_list[[data_type]]$rows
+  
+  if (col_significant) {
+    data <- lapply(data, function(mat) mat[rows_to_filter, cols_to_filter])
+  }
+  
+  replace_names_in_data(data, col_mapping_vector, row_mapping_vector) -> data
+  
+  chi2_matrix <- log2(data$chi2_value_matrix + 1)
+  number_overlap_matrix <- data$number_overlap_matrix
+  p_matrix <- data$p_value_matrix
+  
+  # kolorowanie - ustalanie zakresu skali
+  if (is.null(color_scale_range)) {
+    color_scale_range <- range(chi2_matrix, na.rm = TRUE)
+  }
+  
+  n_colors <- length(palette)
+  scale_values <- seq(color_scale_range[1], color_scale_range[2], length.out = n_colors)
+  pastel_colors <- colorRamp2(scale_values, palette)
+  
+  row_names_margin <- unit(max(nchar(rownames(chi2_matrix))) * 0.25, "cm")
+  column_names_margin <- unit(max(nchar(colnames(chi2_matrix))) * 0.25, "cm")
+  
+  ht <- Heatmap(
+    chi2_matrix,
+    name = "example",
+    col = pastel_colors,
+    row_names_max_width = row_names_margin,
+    column_names_max_height = column_names_margin,
+    heatmap_legend_param = list(
+      title = "log2(chi2 + 1)",
+      direction = "horizontal",
+      legend_width = unit(6, "cm"),
+      legend_height = unit(1, "cm"),
+      labels_gp = gpar(fontsize = 10),
+      title_gp = gpar(fontsize = 12)
+    ),
+    cell_fun = function(j, i, x, y, width, height, fill) {
+      val <- sprintf("%.1f", chi2_matrix[i, j])
+      ovl <- number_overlap_matrix[i, j]
+      grid.text(sprintf("%s (%d)", val, ovl), x, y, gp = gpar(fontsize = 10))
+    },
+    ...
+  )
+  
+  legends <- lapply(seq_along(p_thresholds), function(t) {
+    Legend(
+      labels = paste0("p < ", p_thresholds[t]),
+      border = color_rects[t],
+      direction = "horizontal",
+      grid_width = unit(1, "cm"),
+      grid_height = unit(1, "cm")
+    )
+  })
+  
+  draw(ht,
+       annotation_legend_side = "bottom",
+       heatmap_legend_side = "bottom",
+       merge_legend = TRUE,
+       annotation_legend_list = do.call(c, legends))
+  
+  row_order <- row_order(ht)
+  col_order <- column_order(ht)
+  p_matrix <- p_matrix[row_order, col_order]
+  number_overlap_matrix <- number_overlap_matrix[row_order, col_order]
+  
+  for (t in seq_along(p_thresholds)) {
+    threshold <- p_thresholds[t]
+    color <- color_rects[t]
+    
+    highlight_pairs_p <- as.data.frame(p_matrix) %>%
+      tibble::rownames_to_column("row_names") %>%
+      tidyr::pivot_longer(-row_names, names_to = "col_names", values_to = "value") %>%
+      filter(value < threshold)
+    
+    highlight_pairs_overlap <- as.data.frame(number_overlap_matrix) %>%
+      tibble::rownames_to_column("row_names") %>%
+      tidyr::pivot_longer(-row_names, names_to = "col_names", values_to = "value") %>%
+      filter(value >= overlap_threshold)
+    
+    highlight_pairs <- inner_join(highlight_pairs_p, highlight_pairs_overlap, by = c("row_names", "col_names"))
+    
+    row_idx <- match(highlight_pairs$row_names, rownames(p_matrix))
+    col_idx <- match(highlight_pairs$col_names, colnames(p_matrix))
+    
+    for (i in seq_along(row_idx)) {
+      x <- (col_idx[i] - 0.5) / ncol(p_matrix)
+      y <- (nrow(p_matrix) - row_idx[i] + 0.5) / nrow(p_matrix)
+      
+      decorate_heatmap_body("example", {
+        grid.rect(x = x, y = y,
+                  width = 1 / ncol(p_matrix),
+                  height = 1 / nrow(p_matrix),
+                  just = "center",
+                  gp = gpar(col = color, lwd = lwd_rect, alpha = alpha_rect, fill = NA))
+      })
+    }
+  }
+  
+  if (apply_filling && exists("highlight_pairs")) {
+    row_idx <- match(highlight_pairs$row_names, rownames(p_matrix))
+    col_idx <- match(highlight_pairs$col_names, colnames(p_matrix))
+    
+    for (i in seq_along(row_idx)) {
+      x_left <- (col_idx[i] - 1) / ncol(p_matrix)
+      y_bottom <- (nrow(p_matrix) - row_idx[i]) / nrow(p_matrix)
+      width <- 1 / ncol(p_matrix)
+      height <- 1 / nrow(p_matrix)
+      
+      decorate_heatmap_body("example", {
+        grid.rect(x = x_left + width / 2, y = y_bottom + height / 2,
+                  width = width, height = height, just = "center",
+                  gp = gpar(col = NA, fill = NA))
+        
+        seq_x <- seq(x_left + width / 20, x_left + width, by = width / 10)
+        seq_y <- seq(y_bottom + height / 20, y_bottom + height, by = height / 10)
+        for (xx in seq_x) {
+          for (yy in seq_y) {
+            grid.points(x = xx, y = yy,
+                        pch = pch_filling,
+                        size = unit(size_filling, "mm"),
+                        gp = gpar(col = color_filling, alpha = alpha_filling))
+          }
+        }
+      })
+    }
+  }
+  
+  decorate_heatmap_body("example", {
+    grid.rect(gp = gpar(fill = "transparent", col = "black", lwd = 2))
+  })
+}
 
-
+draw_custom_heatmap_v3 <- function(data_list, 
+                                   data_type,
+                                   p_thresholds = c(0.05, 0.01),
+                                   color_rects = c("green", "red"),
+                                   lwd_rect = 2,
+                                   alpha_rect = 1,
+                                   apply_filling = TRUE,
+                                   color_filling = "green",
+                                   size_filling = 1,
+                                   alpha_filling = 1,
+                                   pch_filling = 16,
+                                   palette = c(
+                                     "pastel_blue"       = "#69A6D1",
+                                     "pastel_light_blue" = "#94DFFF",
+                                     "white"             = "#ffffcc",
+                                     "pastel_orange"     = "#fed976",
+                                     "pastel_red"        = "#fc4e2a"
+                                   ),
+                                   color_scale_range = NULL,
+                                   gene_list_sizes = TRUE,
+                                   col_only_n_genes = FALSE,
+                                   col_mapping_vector = NULL, 
+                                   row_mapping_vector = NULL,
+                                   col_significant = FALSE,
+                                   overlap_threshold = 3,
+                                   ...) {
+  if (gene_list_sizes) {
+    # kolumny
+    data_cols <- colnames(data_list[[data_type]]$list$p_value_matrix)
+    if (is.null(col_mapping_vector)) {
+      col_mapping_vector <- setNames(data_cols, data_cols)
+    }
+    common_cols <- intersect(names(col_mapping_vector), names(data_list$gene_list_sizes))
+    col_mapping_df <- data.frame(original_name = common_cols) %>%
+      mutate(
+        name = col_mapping_vector[original_name],
+        size = data_list$gene_list_sizes[original_name],
+        new_name = if (col_only_n_genes) {
+          as.character(size)
+        } else {
+          paste0(name, " (", size, ")")
+        }
+      )
+    col_mapping_vector <- setNames(col_mapping_df$new_name, col_mapping_df$original_name)
+    
+    # wiersze
+    data_rows <- rownames(data_list[[data_type]]$list$p_value_matrix)
+    if (is.null(row_mapping_vector)) {
+      row_mapping_vector <- setNames(data_rows, data_rows)
+    }
+    common_rows <- intersect(names(row_mapping_vector), names(data_list$gene_list_sizes))
+    row_mapping_df <- data.frame(original_name = common_rows) %>%
+      mutate(
+        name = row_mapping_vector[original_name],
+        size = data_list$gene_list_sizes[original_name],
+        new_name = paste0(name, " (", size, ")")
+      )
+    row_mapping_vector <- setNames(row_mapping_df$new_name, row_mapping_df$original_name)
+  }
+  
+  if (length(p_thresholds) != length(color_rects)) {
+    stop("The number of thresholds and colors must be the same.")
+  }
+  
+  data <- data_list[[data_type]]$list
+  cols_to_filter <- data_list[[data_type]]$cols
+  rows_to_filter <- data_list[[data_type]]$rows
+  
+  if (col_significant) {
+    data <- lapply(data, function(mat) mat[rows_to_filter, cols_to_filter])
+  }
+  
+  replace_names_in_data(data, col_mapping_vector, row_mapping_vector) -> data
+  
+  chi2_matrix <- log2(data$chi2_value_matrix + 1)
+  number_overlap_matrix <- data$number_overlap_matrix
+  p_matrix <- data$p_value_matrix
+  
+  if (is.null(color_scale_range)) {
+    color_scale_range <- range(chi2_matrix, na.rm = TRUE)
+  }
+  
+  n_colors <- length(palette)
+  scale_values <- seq(color_scale_range[1], color_scale_range[2], length.out = n_colors)
+  pastel_colors <- colorRamp2(scale_values, palette)
+  
+  row_names_margin <- unit(max(nchar(rownames(chi2_matrix))) * 0.25, "cm")
+  column_names_margin <- unit(max(nchar(colnames(chi2_matrix))) * 0.25, "cm")
+  
+  ht <- Heatmap(
+    chi2_matrix,
+    name = "example",
+    col = pastel_colors,
+    row_names_max_width = row_names_margin,
+    column_names_max_height = column_names_margin,
+    heatmap_legend_param = list(
+      title = "log2(chi2 + 1)",
+      direction = "horizontal",
+      legend_width = unit(6, "cm"),
+      legend_height = unit(1, "cm"),
+      labels_gp = gpar(fontsize = 10),
+      title_gp = gpar(fontsize = 12)
+    ),
+    cell_fun = function(j, i, x, y, width, height, fill) {
+      val <- sprintf("%.1f", chi2_matrix[i, j])
+      ovl <- number_overlap_matrix[i, j]
+      grid.text(sprintf("%s (%d)", val, ovl), x, y, gp = gpar(fontsize = 10))
+    },
+    ...
+  )
+  
+  legends <- lapply(seq_along(p_thresholds), function(t) {
+    Legend(
+      labels = paste0("p < ", p_thresholds[t]),
+      border = color_rects[t],
+      direction = "horizontal",
+      grid_width = unit(1, "cm"),
+      grid_height = unit(1, "cm")
+    )
+  })
+  
+  draw(ht,
+       annotation_legend_side = "bottom",
+       heatmap_legend_side = "bottom",
+       merge_legend = TRUE,
+       annotation_legend_list = do.call(c, legends))
+  
+  row_order <- row_order(ht)
+  col_order <- column_order(ht)
+  p_matrix <- p_matrix[row_order, col_order]
+  number_overlap_matrix <- number_overlap_matrix[row_order, col_order]
+  
+  for (t in seq_along(p_thresholds)) {
+    threshold <- p_thresholds[t]
+    color <- color_rects[t]
+    
+    highlight_pairs_p <- as.data.frame(p_matrix) %>%
+      tibble::rownames_to_column("row_names") %>%
+      tidyr::pivot_longer(-row_names, names_to = "col_names", values_to = "value") %>%
+      filter(value < threshold)
+    
+    highlight_pairs_overlap <- as.data.frame(number_overlap_matrix) %>%
+      tibble::rownames_to_column("row_names") %>%
+      tidyr::pivot_longer(-row_names, names_to = "col_names", values_to = "value") %>%
+      filter(value >= overlap_threshold)
+    
+    highlight_pairs <- inner_join(highlight_pairs_p, highlight_pairs_overlap, by = c("row_names", "col_names"))
+    
+    row_idx <- match(highlight_pairs$row_names, rownames(p_matrix))
+    col_idx <- match(highlight_pairs$col_names, colnames(p_matrix))
+    
+    for (i in seq_along(row_idx)) {
+      x <- (col_idx[i] - 0.5) / ncol(p_matrix)
+      y <- (nrow(p_matrix) - row_idx[i] + 0.5) / nrow(p_matrix)
+      
+      decorate_heatmap_body("example", {
+        grid.rect(x = x, y = y,
+                  width = 1 / ncol(p_matrix),
+                  height = 1 / nrow(p_matrix),
+                  just = "center",
+                  gp = gpar(col = color, lwd = lwd_rect, alpha = alpha_rect, fill = NA))
+      })
+    }
+  }
+  
+  if (apply_filling && exists("highlight_pairs")) {
+    row_idx <- match(highlight_pairs$row_names, rownames(p_matrix))
+    col_idx <- match(highlight_pairs$col_names, colnames(p_matrix))
+    
+    for (i in seq_along(row_idx)) {
+      x_left <- (col_idx[i] - 1) / ncol(p_matrix)
+      y_bottom <- (nrow(p_matrix) - row_idx[i]) / nrow(p_matrix)
+      width <- 1 / ncol(p_matrix)
+      height <- 1 / nrow(p_matrix)
+      
+      decorate_heatmap_body("example", {
+        grid.rect(x = x_left + width / 2, y = y_bottom + height / 2,
+                  width = width, height = height, just = "center",
+                  gp = gpar(col = NA, fill = NA))
+        
+        seq_x <- seq(x_left + width / 20, x_left + width, by = width / 10)
+        seq_y <- seq(y_bottom + height / 20, y_bottom + height, by = height / 10)
+        for (xx in seq_x) {
+          for (yy in seq_y) {
+            grid.points(x = xx, y = yy,
+                        pch = pch_filling,
+                        size = unit(size_filling, "mm"),
+                        gp = gpar(col = color_filling, alpha = alpha_filling))
+          }
+        }
+      })
+    }
+  }
+  
+  decorate_heatmap_body("example", {
+    grid.rect(gp = gpar(fill = "transparent", col = "black", lwd = 2))
+  })
+}

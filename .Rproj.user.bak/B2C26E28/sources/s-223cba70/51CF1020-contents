@@ -1,0 +1,9 @@
+phenotypes_signatures_gr$significant_data$df
+
+
+phenotypes_signatures_gr$significant_data$df %>% 
+  arrange(fdr)
+  filter(grepl("up", Var2)) %>% 
+  dim
+
+  .$Var1 %>% table

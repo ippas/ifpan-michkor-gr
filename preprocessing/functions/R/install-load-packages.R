@@ -72,8 +72,3 @@ source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-summar
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-barplot-summary.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/gene-overlap-manhattan-plot.R")
 source("preprocessing/functions/R/overlapping-genes-analysis/create-gene-pie-chart.R")
-
-<<<<<<< HEAD
-
-=======
->>>>>>> a021f33 (identify gr-dependent gene lists)

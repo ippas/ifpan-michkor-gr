@@ -1,0 +1,39 @@
+gr_gene_database %>%
+  filter(regulation == "up") %>%
+  .$hgnc_symbol %>% 
+  na.omit() %>% 
+  table %>% 
+  as.data.frame() %>% 
+  arrange(desc(Freq)) %>% head(17) %>% 
+  set_colnames(c("upregulated", "freq"))
+
+gr_gene_database %>%
+  filter(regulation == "down") %>%
+  .$hgnc_symbol %>% 
+  na.omit() %>% 
+  table %>% 
+  as.data.frame() %>% 
+  arrange(desc(Freq)) %>% head(16) %>% 
+  set_colnames(c("downregulated", "freq"))
+
+gr_gene_database %>% 
+  filter(regulation %in% c("donw", "up")) %>%
+  .$hgnc_symbol %>% 
+  na.omit() %>% 
+  table %>% 
+  as.data.frame() %>% 
+  arrange(desc(Freq)) %>% 
+  head(20) %>% 
+  set_colnames(c("gene", "freq"))
+
+gr_gene_database %>% 
+  filter(grepl("Metabolon", gene_list_index)) %>% 
+  head
+  .$gene_name %>%  
+  table %>%
+  na.omit() %>%
+  as.data.frame() %>% 
+  arrange(desc(Freq)) %>% head(30) %>% 
+  set_colnames(c("metabolon", "freq"))
+  
+gr_gene_database 

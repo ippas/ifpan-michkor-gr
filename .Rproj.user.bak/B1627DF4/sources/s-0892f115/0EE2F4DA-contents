@@ -1,0 +1,40 @@
+extract_keys_values <- function(data, column, keys) {
+  
+  # Split the column by '|' to separate key-value pairs.
+  split_info <- strsplit(as.character(data[[column]]), "\\|")
+  
+  # For each key, extract the corresponding values.
+  for (key in keys) {
+    
+    # For each row, find the value corresponding to the provided key.
+    values <- sapply(split_info, function(x) {
+      
+      # Split the key-value pairs by ':' to separate the keys and the values.
+      key_value_pairs <- lapply(x, function(y) {
+        if (grepl(":", y)) {
+          strsplit(y, ":")[[1]]
+        } else {
+          return(c(y, NA))
+        }
+      })
+      
+      # Extract the keys and values.
+      keys <- sapply(key_value_pairs, function(z) if(length(z) > 0) z[1] else NA)
+      values <- sapply(key_value_pairs, function(z) if(length(z) > 1) z[2] else NA)
+      
+      # If the provided key exists, return the corresponding value.
+      # If the key doesn't exist, return NA.
+      if (key %in% keys) {
+        return(values[keys == key])
+      } else {
+        return(NA)
+      }
+    })
+    
+    # Add the values as a new column in the data frame.
+    data[[key]] <- unlist(values)
+  }
+  
+  # Return the updated data frame.
+  return(data)
+}

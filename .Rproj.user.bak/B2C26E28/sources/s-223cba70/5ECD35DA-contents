@@ -1,0 +1,42 @@
+gene_list_log2ratio_top_50 %>% 
+  select(-data) %>% 
+  unnest(top_50_genes) %>% 
+  .$hgnc_symbol %>% table %>% 
+  as.data.frame() %>% 
+  set_colnames(c("hgnc_symbol", "freq")) %>% 
+  arrange(desc(freq)) -> freq_top_genes
+
+
+papers_data_preprocessing %>%
+  .$hgnc_symbol %>%
+  table() %>%
+  as.data.frame() %>% 
+  set_colnames(c("hgnc_symbol", "freq")) -> freq_all_genes
+
+
+freq_all_genes %>% 
+  filter(hgnc_symbol %in% freq_top_genes$hgnc_symbol) %>% 
+  .$freq %>% 
+  table %>% 
+  as.data.frame() %>% 
+  set_colnames(c("freq_genes", "n_genes")) %>% 
+  mutate(propability = n_genes/number_genes) %>% 
+  mutate(cumsum = cumsum(propability)) %>% 
+  mutate(rev_cumsum = 1 - cumsum) %>% 
+  mutate(freq_genes = ifelse(rev_cumsum < 0.16, "more_than_12", as.character(freq_genes))) %>% 
+  group_by(freq_genes) %>% 
+  summarise(n_genes = sum(n_genes), propability = sum(propability)) %>%
+  ungroup() %>% 
+  mutate(freq_genes = factor(freq_genes, levels = c(as.character(1:12), "more_than_12"))) %>% 
+  arrange(freq_genes) %>% 
+  mutate(cumsum = cumsum(propability)) -> data_pie_chart
+  
+n <- 12
+custom_palette <-c(brewer.pal(n = n + 1, name = "Paired")[-c(11, 12)], "white")
+
+ggplot(data_pie_chart, aes(x = "", y = n_genes, fill = freq_genes)) +
+  geom_bar(stat = "identity", width = 1, color = "black") +
+  coord_polar("y", start = 0) +
+  theme_void() +
+  labs(fill = "Gene Frequency") +
+  ggtitle("Distribution of Gene Frequency")

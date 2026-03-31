@@ -1,0 +1,36 @@
+tissue_master_df %>% 
+  filter(regulation == "up", rank_criterion == "log2ratio", size_list == 50) %>% 
+  group_by(tissue) %>% 
+  nest() %>% 
+  mutate(data = map(data, ~mutate(.x, rank_tissue = c(50:1)))) %>% 
+  unnest %>% 
+  as.data.frame() %>% 
+  select(c(hgnc_symbol, rank_tissue)) %>% 
+  group_by(hgnc_symbol) %>% 
+  nest() %>% 
+  mutate(sum_rank_tissue = map(data, ~sum(.x$rank_tissue))) %>% 
+  unnest(sum_rank_tissue) %>% 
+  arrange(desc(sum_rank_tissue)) %>% head(50) %>% .$hgnc_symbol -> new_up_list
+
+
+create_master_norm_tissue_list(data_master_tissue = tissue_master_df, regulation = "up", rank_criterion = "log2ratio", n_top = 50)
+
+tissue_master_df %>% 
+  filter(regulation == "down", rank_criterion == "log2ratio", size_list == 50) %>% 
+  group_by(tissue) %>% 
+  nest() %>% 
+  mutate(data = map(data, ~mutate(.x, rank_tissue = c(50:1)))) %>% 
+  unnest %>% 
+  as.data.frame() %>% 
+  select(c(hgnc_symbol, rank_tissue)) %>% 
+  group_by(hgnc_symbol) %>% 
+  nest() %>% 
+  mutate(sum_rank_tissue = map(data, ~sum(.x$rank_tissue))) %>% 
+  unnest(sum_rank_tissue) %>% 
+  arrange(desc(sum_rank_tissue)) %>% head(50) %>% .$hgnc_symbol -> new_down_list
+  
+
+regulation_norm_master_lists$up_50_log2ratio_nListPlus2$gene_list
+
+jaccard_index(regulation_norm_master_lists$up_50_log2ratio_nListPlus3$gene_list,
+              new_up_list)

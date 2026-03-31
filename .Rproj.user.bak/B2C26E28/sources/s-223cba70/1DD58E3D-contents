@@ -1,0 +1,68 @@
+# 
+
+# Function to read Excel sheets with an option to skip rows
+read_excel_sheets <- function(file_path, skip_rows = 0, use_sheet_names = TRUE, clean_names = TRUE) {
+  # Read the names of the Excel sheets from the given file
+  sheets <- excel_sheets(file_path)
+  
+  # Optionally clean sheet names
+  if (use_sheet_names && clean_names) {
+    cleaned_names <- sheets %>%
+      trimws() %>%
+      gsub(" ", "", .) %>%
+      gsub("-", "_", .)
+  } else {
+    cleaned_names <- sheets
+  }
+  
+  # Load all sheets into a list
+  data <- lapply(sheets, function(sheet) {
+    read_excel(file_path, sheet = sheet, skip = skip_rows)
+  })
+  
+  # Optionally assign sheet names as list names
+  if (use_sheet_names) {
+    names(data) <- cleaned_names
+  }
+  
+  return(data)
+}
+
+# read data
+slezak_data_file1 <- read_excel_sheets(
+  file_path = "data/external-gene-signatures/Suppl_file_1_25_03_11.xlsx",
+  skip_rows = 1,
+  use_sheet_names = TRUE
+)
+
+
+slezak_data_file2 <- read_excel_sheets(
+  file_path = "data/external-gene-signatures/Suppl_file_2_25_03_12.xlsx",
+  skip_rows = 1,
+  use_sheet_names = TRUE
+)
+
+slezak_data_file2[[1]] %>% 
+  filter(FDR < 0.1)
+
+slezak_data_file1 %>% 
+  .[4:13] %>% 
+  lapply(., function(x){x$gene_name}) -> slezak_signatures_list
+
+slezak_signatures_list$michkor_indicate_T.S1_Cx43DGE <- slezak_data_file2$T.S1_Cx43DGE %>% filter(FDR < 0.1) %>% .$gene_name
+
+slezak_signatures_list
+
+
+gr_genes_signatures_multi_approach_df %>%
+  bind_rows(
+    map_dfr(names(slezak_signatures_list), function(signature) {
+      tibble(
+        hgnc_symbol = slezak_signatures_list[[signature]],
+        signature_name = signature
+      )
+    }) %>%
+      mutate(signature_derivation = "slezak")
+  ) %>% 
+  write.table("results/gr-signatures/gr-signatures-multi-approach-05.04.2025.tsv", 
+              quote = F, sep = "\t", col.names = TRUE, row.names = FALSE)
